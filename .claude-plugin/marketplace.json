@@ -1,0 +1,14 @@
+{
+  "name": "mare-mods",
+  "owner": {
+    "name": "orladigital"
+  },
+  "description": "Mods do Claude Code para quem usa a Maré",
+  "plugins": [
+    {
+      "name": "barra-de-uso",
+      "source": "./plugins/barra-de-uso",
+      "description": "Faixa acima do prompt com o contexto como uma praia, a janela de 5h, a semana e o Explain dos pedidos de permissão"
+    }
+  ]
+}
