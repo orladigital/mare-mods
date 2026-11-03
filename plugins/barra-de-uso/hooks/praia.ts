@@ -156,7 +156,7 @@ export const praiaSvg = (pct: number, animado: boolean, W: number): string => {
     `<linearGradient id="mar" x1="0" x2="1"><stop offset="0" stop-color="${COR.fundo}"/><stop offset="1" stop-color="${COR.beira}"/></linearGradient>`,
     `<linearGradient id="ola" gradientUnits="userSpaceOnUse" x1="0" x2="${PERIODO_OLA}" spreadMethod="repeat"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".26"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`,
     `<linearGradient id="molhada" gradientUnits="userSpaceOnUse" x1="${fr}" x2="${fr + AREIA_SVG.largura}"><stop offset="0" stop-color="${AREIA_SVG.molhada}"/><stop offset="1" stop-color="${COR.areia}"/></linearGradient>`,
-    `<linearGradient id="veu"gradientUnits="userSpaceOnUse" x1="${cx}" x2="${fr}"><stop offset="0" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity=".75"/></linearGradient>`,
+    `<linearGradient id="veu" gradientUnits="userSpaceOnUse" x1="${cx}" x2="${fr}"><stop offset="0" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity=".75"/></linearGradient>`,
     `<clipPath id="agua"><path d="${beira(4, 0)}">${vaiEVem}</path></clipPath>`,
     `<clipPath id="moldura"><rect width="${W}" height="${H}" rx="5"/></clipPath>`,
     '</defs>',
