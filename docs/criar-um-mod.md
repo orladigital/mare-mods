@@ -33,11 +33,26 @@ Carregue o mod direto da pasta numa sessão do terminal; `/reload-plugins` recar
 claude --plugin-dir plugins/<mod>
 ```
 
-Antes do PR, na pasta do mod:
+Antes do PR, na pasta do mod. A checagem de tipos (`tsc`) só roda aqui: o CI não a faz.
 
 ```bash
 claude plugin validate . && claude plugin test . && npx -y -p typescript@5.6.3 tsc -p . --noEmit
 ```
+
+## Enviar
+
+Push por HTTPS que cria ou altera arquivos em `.github/workflows/` precisa de uma credencial com o escopo
+`workflow`; sem ele, o GitHub recusa o push. Para dar o escopo ao `gh` e usar o token dele só nesse push:
+
+```bash
+gh auth login -h github.com -p https -s workflow --web
+```
+
+```bash
+git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push -u origin <branch>
+```
+
+Os outros pushes seguem normais.
 
 ## O que aprendemos fazendo o barra-de-uso
 

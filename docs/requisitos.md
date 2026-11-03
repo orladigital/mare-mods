@@ -6,7 +6,8 @@ O que todo mod cumpre para entrar no `mare-mods`. O template de PR traz esta lis
 
 - `claude plugin validate plugins/<mod>` e `claude plugin test plugins/<mod>` passam, e a checagem de tipos
   (`npx -y -p typescript@5.6.3 tsc -p plugins/<mod> --noEmit`, com os tipos que o Claude Code gera ao
-  carregar o mod) não acusa erro.
+  carregar o mod) não acusa erro. O CI valida e testa, mas não checa os tipos: ele não tem login, e sem
+  login o Claude Code não gera os tipos. A checagem de tipos é de quem abre o PR.
 - Os testes montam a interface em cada superfície que o mod diz suportar (`terminal`, `desktop`), e não só
   numa delas.
 - O mod foi carregado de verdade, ao menos no terminal (`claude --plugin-dir plugins/<mod>`), e quem abriu o
