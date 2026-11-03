@@ -1,5 +1,10 @@
 # Changelog do barra-de-uso
 
+## 0.1.1 (2026-11-03)
+
+- Corrige a praia do app, que não aparecia: o desenho saía com dois atributos colados e o app recusava
+  o SVG. Um teste novo confere que todos os desenhos do app são SVG bem formado.
+
 ## 0.1.0 (2026-11-02)
 
 Primeira versão.
