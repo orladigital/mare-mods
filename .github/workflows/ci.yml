@@ -1,7 +1,7 @@
 name: ci
 
-# A cada PR e a cada push na main: valida o marketplace, e valida, testa e checa os tipos de cada mod; procura
-# segredos e dados pessoais. O Claude Code fica numa versão fixa, a mínima que o README promete: um teste que
+# A cada PR e a cada push na main: valida o marketplace, e valida e testa cada mod; procura segredos e dados
+# pessoais. O Claude Code fica numa versão fixa, a mínima que o README promete: um teste que
 # quebra aqui foi quebrado pelo PR, não por uma versão nova do Claude Code (essa é a função do canário).
 
 on:
@@ -19,36 +19,33 @@ jobs:
   mods:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Instala o Claude Code na versão mínima
         run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSAO}" && claude --version
       - name: Valida o marketplace
         run: claude plugin validate .
-      - name: Valida, testa e checa os tipos de cada mod
+      - name: Valida e testa cada mod
+        # A checagem de tipos não roda aqui: o Claude Code só escreve os tipos ao carregar o mod numa sessão
+        # logada, e o CI não tem login. Ela é feita por quem abre o PR (docs/requisitos.md).
         run: |
           set -euo pipefail
           for mod in plugins/*/; do
             echo "::group::${mod}"
             claude plugin validate "${mod}"
             claude plugin test "${mod}"
-            # Os tipos são escritos pelo Claude Code quando ele carrega o mod; sem eles, o passo avisa e segue.
-            if [ -f "${mod}.claude-plugin/types/tsconfig.json" ]; then
-              npx -y -p typescript@5.6.3 tsc -p "${mod}" --noEmit
-            else
-              echo "::warning::${mod}: sem os tipos gerados, a checagem de tipos não rodou"
-            fi
             echo "::endgroup::"
           done
+          echo "::notice::A checagem de tipos é feita por quem abre o PR, na própria máquina (docs/requisitos.md)."
 
   segredos:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
           fetch-depth: 0
