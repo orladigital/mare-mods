@@ -1,0 +1,60 @@
+name: canario
+
+# Toda segunda às 9h (Brasília), os mesmos testes do CI na versão mais nova do Claude Code. A API de mods
+# está em early access e pode mudar entre versões: se algo quebrar, abre uma issue (ou comenta na que já
+# estiver aberta) para quem cuida do repo, antes de alguém do time ver a faixa sumir.
+
+on:
+  schedule:
+    - cron: '0 12 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  RESPONSAVEL: guilherme-ruy-orla
+
+jobs:
+  canario:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instala o Claude Code mais novo
+        id: versao
+        run: |
+          npm install -g @anthropic-ai/claude-code@latest
+          echo "versao=$(claude --version | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Valida e testa todos os mods
+        id: testes
+        run: |
+          set -euo pipefail
+          claude plugin validate .
+          for mod in plugins/*/; do
+            echo "::group::${mod}"
+            claude plugin validate "${mod}"
+            claude plugin test "${mod}"
+            echo "::endgroup::"
+          done
+      - name: Avisa por issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSAO: ${{ steps.versao.outputs.versao }}
+          LOG: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create canario --color B60205 --description 'Mods quebrados numa versão nova do Claude Code' --force
+          aberta=$(gh issue list --label canario --state open --json number --jq '.[0].number // empty')
+          texto="O canário falhou com o Claude Code ${VERSAO}. Log: ${LOG}"
+          if [ -n "${aberta}" ]; then
+            gh issue comment "${aberta}" --body "${texto}"
+          else
+            gh issue create --title "Canário: Claude Code ${VERSAO} quebrou algum mod" --label canario \
+              --assignee "${RESPONSAVEL}" --body "${texto}"
+          fi

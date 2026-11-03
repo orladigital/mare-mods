@@ -1,0 +1,66 @@
+name: ci
+
+# A cada PR e a cada push na main: valida o marketplace, e valida, testa e checa os tipos de cada mod; procura
+# segredos e dados pessoais. O Claude Code fica numa versão fixa, a mínima que o README promete: um teste que
+# quebra aqui foi quebrado pelo PR, não por uma versão nova do Claude Code (essa é a função do canário).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  CLAUDE_CODE_VERSAO: 2.1.316
+
+jobs:
+  mods:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instala o Claude Code na versão mínima
+        run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSAO}" && claude --version
+      - name: Valida o marketplace
+        run: claude plugin validate .
+      - name: Valida, testa e checa os tipos de cada mod
+        run: |
+          set -euo pipefail
+          for mod in plugins/*/; do
+            echo "::group::${mod}"
+            claude plugin validate "${mod}"
+            claude plugin test "${mod}"
+            # Os tipos são escritos pelo Claude Code quando ele carrega o mod; sem eles, o passo avisa e segue.
+            if [ -f "${mod}.claude-plugin/types/tsconfig.json" ]; then
+              npx -y -p typescript@5.6.3 tsc -p "${mod}" --noEmit
+            else
+              echo "::warning::${mod}: sem os tipos gerados, a checagem de tipos não rodou"
+            fi
+            echo "::endgroup::"
+          done
+
+  segredos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Procura segredos (gitleaks)
+        run: docker run --rm -v "${PWD}:/repo" zricethezav/gitleaks:v8.18.4 detect --source /repo --redact --verbose
+      - name: Procura dados pessoais
+        # Caminho de usuário real (só /Users/exemplo vale nos testes) e id de sessão do app desktop.
+        run: |
+          set -uo pipefail
+          achados=$(grep -rnE '/Users/[A-Za-z]|local_[0-9a-f]{8}-' --exclude-dir=.git . | grep -v '/Users/exemplo' || true)
+          if [ -n "${achados}" ]; then
+            echo "${achados}"
+            echo "::error::dados pessoais nos arquivos acima: troque por exemplos"
+            exit 1
+          fi
