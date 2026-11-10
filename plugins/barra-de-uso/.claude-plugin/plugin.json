@@ -1,6 +1,7 @@
 {
   "name": "barra-de-uso",
   "version": "0.1.1",
+  "author": { "name": "Guilherme R." },
   "description": "Faixa acima do prompt com o contexto da sessão como uma praia, a janela de 5h e a semana, o botão Explain para pedidos de permissão e um menu de ajustes",
   "types": "./types/index.d.ts"
 }
