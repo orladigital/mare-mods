@@ -25,6 +25,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+      - name: Confere as cópias do código comum
+        # comum/ é a fonte única; cada mod leva uma cópia gerada (docs/adr/0002-codigo-comum-por-copia.md).
+        # Falha se alguém editou comum/ ou uma cópia sem rodar `node scripts/copiar-comum.mjs`.
+        run: node --test scripts/copiar-comum.test.mjs && node scripts/copiar-comum.mjs --conferir
       - name: Instala o Claude Code na versão mínima
         run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSAO}" && claude --version
       - name: Valida o marketplace

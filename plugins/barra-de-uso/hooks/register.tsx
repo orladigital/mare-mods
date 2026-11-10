@@ -3,10 +3,8 @@ import type { EngineInterface, Register, RenderSurface, SessionRateLimit } from 
 
 import type { Ajustes, Medida } from '../types'
 import { NOME_OLA, NOME_SEMANA, PADRAO, larguraDasBarras, lerAjustes, marAnimado } from './ajustes'
-import {
-  FILTRO_LOG_PERMISSAO, campoTexto, comandoRetomar, corDoRisco, descreverPedido, modoPede, pedidosNoLog,
-  promptExplicacao, separarRisco, situacaoNoLog,
-} from './explicar'
+import { FILTRO_LOG_PERMISSAO, modoPede, pedidosNoLog, situacaoNoLog } from './comum/permissao'
+import { campoTexto, comandoRetomar, corDoRisco, descreverPedido, promptExplicacao, separarRisco } from './explicar'
 import { ALTURA_FINA, barraFinaSvg, barraTerminal, detalhar, janelas, limitesVigentes, pctTxt, rotuloTerminal } from './limites'
 import type { Janela } from './limites'
 import { ALTURA, contextoTerminal, praiaSvg } from './praia'
