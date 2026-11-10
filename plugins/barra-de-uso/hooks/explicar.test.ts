@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { campoTexto, comandoRetomar, corDoRisco, descreverPedido, modoPede, promptExplicacao, separarRisco } from './explicar'
+import { campoTexto, comandoRetomar, corDoRisco, descreverPedido, promptExplicacao, separarRisco } from './explicar'
 
 describe('explicar o pedido de permissão', () => {
   test('Bash: resume pelo comando', async () => {
@@ -28,23 +28,7 @@ describe('explicar o pedido de permissão', () => {
   })
 })
 
-describe('quando o "perguntar" vira pedido na tela', () => {
-  test('manual e plano pedem; auto não', async () => {
-    expect(modoPede('default', 'Bash')).toBe(true)
-    expect(modoPede('plan', 'Bash')).toBe(true)
-    expect(modoPede('auto', 'Bash')).toBe(false)
-    expect(modoPede('bypassPermissions', 'Bash')).toBe(false)
-  })
-
-  test('aceitar edições só pede fora das edições', async () => {
-    expect(modoPede('acceptEdits', 'Edit')).toBe(false)
-    expect(modoPede('acceptEdits', 'Bash')).toBe(true)
-  })
-
-  test('modo desconhecido (terminal) fica com o evento de pedido', async () => {
-    expect(modoPede(undefined, 'Bash')).toBe(false)
-  })
-
+describe('o modo da sessão no app', () => {
   test('lê o modo do arquivo da sessão no app', async () => {
     expect(campoTexto('{"permissionMode":"default"}', 'permissionMode')).toBe('default')
     expect(campoTexto('{', 'permissionMode')).toBe(undefined)

@@ -13,6 +13,8 @@ plugins/<mod>/
 ├── hooks/hooks.json             # { "modules": ["./register.tsx"] }
 ├── hooks/register.tsx           # export const register: Register = on => { ... }
 ├── hooks/*.test.ts(x)           # testes, rodados por `claude plugin test`
+├── hooks/comum/                 # cópia gerada do código comum (se o mod usa); não editar à mão
+├── comum.json                   # os arquivos de comum/ que o mod usa (opcional)
 ├── types/index.d.ts             # o contrato do $.state do mod (interface PluginState)
 ├── tsconfig.json                # { "extends": "./.claude-plugin/types/tsconfig.json" }
 ├── README.md
@@ -38,6 +40,26 @@ Antes do PR, na pasta do mod. A checagem de tipos (`tsc`) só roda aqui: o CI n�
 ```bash
 claude plugin validate . && claude plugin test . && npx -y -p typescript@5.6.3 tsc -p . --noEmit
 ```
+
+## Código comum
+
+Código que mais de um mod usa fica em `comum/`, na raiz, com o teste ao lado (decisão no
+[ADR 0002](adr/0002-codigo-comum-por-copia.md)). Um mod não importa de outro, então cada um leva uma cópia:
+
+1. Declare em `plugins/<mod>/comum.json` os arquivos que o mod usa, ex.: `["permissao.ts"]`.
+2. Rode, na raiz do repositório:
+
+   ```bash
+   node scripts/copiar-comum.mjs
+   ```
+
+   O script escreve as cópias em `plugins/<mod>/hooks/comum/`, cada arquivo com o teste dele, e apaga as que o
+   mod não declara mais.
+3. Importe da cópia: `import { modoPede } from './comum/permissao'`.
+
+Para mudar o código comum, edite `comum/`, nunca a cópia, rode o script e commite a fonte e as cópias juntas. O
+CI roda `node scripts/copiar-comum.mjs --conferir` e falha se alguma cópia estiver fora de dia. Se a mudança
+altera o comportamento de um mod, a versão dele sobe.
 
 ## Enviar
 
