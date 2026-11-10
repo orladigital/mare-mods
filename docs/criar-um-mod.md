@@ -80,12 +80,17 @@ Os outros pushes seguem normais.
 
 - **Atoms com nome literal:** `atom({ plugin: 'meu-mod', key: 'x' } as const, inicial)`. O validador lê o
   código antes de rodar e recusa uma constante no lugar do texto.
-- **Helpers que recebem `$` ficam no topo do arquivo**, fora do `register`.
+- **Helpers que recebem `$` ficam no topo do arquivo**, fora do `register`. Num outro arquivo, o helper precisa
+  ser uma `function` declarada (`export function desenhar($, …)`): para uma arrow function exportada, o
+  validador recusa o módulo.
 - **Hooks que barram prompt ou ferramenta levam `.catch(($, e, next) => next(e))`**, para um erro do mod não
   travar a sessão.
 - **Nos testes, o próprio teste faz o papel do Claude Code:** `mock.store(on)` e `mock.clock(on)` respondem ao
   `$.store` e ao `$.clock`; `on('ui.render', ...)` devolvendo `<Box />` é o que fica por baixo da faixa;
-  `on('ui.open', ...)` e `on('ui.close', ...)` abrem e fecham painéis.
+  `on('ui.open', ...)` e `on('ui.close', ...)` abrem e fecham painéis. O disco e os comandos também:
+  `on('fs.read', ...)`, `on('fs.write', ...)`, `on('fs.list', ...)` e `on('process.run', ...)` respondem com
+  `{ value }` ou recusam com `{ deny }`, e nenhum teste grava de verdade. Por isso um teste que precisa ler os
+  arquivos do repo é de Node (`scripts/*.test.mjs`), e não do `claude plugin test`.
 - **Terminal e app são superfícies diferentes:** `e.surface` diz qual. O app desenha `Svg` (com animação no
   próprio desenho, sem custo); o terminal só tem texto, e um emoji pode contar duas casas no layout e ocupar
   uma na tela.
