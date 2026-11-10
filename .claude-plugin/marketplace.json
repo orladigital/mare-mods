@@ -9,6 +9,11 @@
       "name": "barra-de-uso",
       "source": "./plugins/barra-de-uso",
       "description": "Faixa acima do prompt com o contexto como uma praia, a janela de 5h, a semana e o Explain dos pedidos de permissão"
+    },
+    {
+      "name": "farol",
+      "source": "./plugins/farol",
+      "description": "O estado de todas as sessões abertas na máquina: qual espera você, qual trabalha e qual está livre"
     }
   ]
 }

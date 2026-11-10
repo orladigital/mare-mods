@@ -7,6 +7,7 @@ interface do próprio Claude Code: uma faixa acima do prompt, um painel, um bot�
 | Mod | O que faz |
 |---|---|
 | [`barra-de-uso`](plugins/barra-de-uso/README.md) | Faixa acima do prompt com o contexto da sessão, a janela de 5h e a semana; no app, uma praia e um pôr do sol, e o botão 🐚 Explain para pedidos de permissão |
+| [`farol`](plugins/farol/README.md) | O estado de todas as sessões abertas na máquina, na faixa e num painel: qual espera você, qual trabalha e qual está livre |
 
 ## Instalar
 
