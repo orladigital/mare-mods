@@ -137,7 +137,7 @@ test('no app, a cena no topo e um cartão por sessão, pela prioridade, com o ba
   await ui.unmount()
 })
 
-test('enquanto a troca de sessão não chega, o clique no cartão não abre nem roda nada', async ($, on) => {
+test('sem os arquivos do app, o clique no cartão não abre nem roda nada', async ($, on) => {
   const m = preparar(on)
   gravarOutra(m, { id: 'outra', titulo: 'Outra sessão', estado: 'livre' })
   await $.session.start(INICIO)

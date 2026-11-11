@@ -12,8 +12,12 @@ export type Registro = {
   desde: number
   // A última vez que a sessão renovou o registro.
   vivoEm: number
+  // Quando a sessão terminou a última resposta fora da tela do app (gravado; o não visto parte dele).
+  respondeuEm?: number
   // Respondeu depois da última vez que você a abriu no app (só no app no macOS; calculado ao ler, não gravado).
   naoVisto?: boolean
+  // O id da sessão no app (local_…), para o clique trocar para ela (só no app no macOS; calculado ao ler).
+  appId?: string
 }
 
 // Os ajustes de cada pessoa, guardados no $.store.

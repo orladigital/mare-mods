@@ -3,7 +3,10 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { Ajustes, Estado, Registro } from '../types'
 import { NOME_NA_FAIXA, PADRAO, lerAjustes } from './ajustes'
+import { abrirNoApp, comOApp, idEmFoco, lerArquivosDoApp } from './app'
+import type { LeituraDoApp, NoApp } from './app'
 import { semLarguraAmbigua } from './comum/largura'
+import { contarNoLog, lerLogDePermissoes, modoPede, pedidosNoLog } from './comum/permissao'
 import { desenharCartoes } from './cartoes'
 import { ALTURA_CENA, cenaSvg, descricaoDaCena, situacaoDaCena } from './cena'
 import { SEM_TITULO, casaDe, detalheDe, lerRegistro, ordenar, pastaDoRegistro, tituloDe, visualDe } from './estado'
@@ -22,9 +25,32 @@ const PERGUNTA = 'AskUserQuestion'
 // O registro desta sessão; cada mudança é gravada em <casa>/.claude/farol/<id>.json. Sem a pasta da casa
 // (nem HOME nem USERPROFILE), `pastaDoFarol` fica vazia e o farol não grava nem lê nada.
 let eu: Registro | null = null
+let casa = ''
 let pastaDoFarol = ''
 // Perguntas abertas agora, da sessão e dos subagentes: a sessão volta a trabalhando só depois da última.
 let perguntas = 0
+
+// O que o app desktop no macOS sabe de cada sessão (pelo id no Claude Code), relido com as outras sessões. Esta
+// sessão está no app quando o app tem um arquivo dela. O app grava esse arquivo ao abrir a sessão: sem ele no
+// primeiro minuto, a sessão é do terminal (ou de outro sistema), e o farol para de ler os arquivos do app.
+const PROCURA_NO_APP_MS = 60_000
+const leituraDoApp: LeituraDoApp = new Map()
+let sessoesNoApp = new Map<string, NoApp>()
+let comecouEm = 0
+let achadaNoApp = false
+let foraDoApp = false
+
+const lerApp = async ($: EngineInterface) => {
+  if (!casa || !eu || foraDoApp) return
+  sessoesNoApp = await lerArquivosDoApp($, casa, leituraDoApp).catch(() => new Map<string, NoApp>())
+  if (sessoesNoApp.has(eu.id)) achadaNoApp = true
+  else if (!achadaNoApp && (await $.clock.now()) - comecouEm > PROCURA_NO_APP_MS) {
+    foraDoApp = true
+    sessoesNoApp = new Map()
+    leituraDoApp.clear()
+  }
+}
+const euNoApp = (): NoApp | undefined => (eu ? sessoesNoApp.get(eu.id) : undefined)
 
 const gravar = async ($: EngineInterface) => {
   if (!eu || !pastaDoFarol) return
@@ -32,7 +58,8 @@ const gravar = async ($: EngineInterface) => {
   await $.fs.write(`${pastaDoFarol}/${eu.id}.json`, JSON.stringify(eu))
 }
 
-// Relê o registro de todas as sessões (esta inclusive).
+// Relê o registro de todas as sessões (esta inclusive) e, no app, o que ele sabe delas: o nome na barra lateral,
+// o não visto e o id para a troca.
 const atualizar = async ($: EngineInterface) => {
   if (!pastaDoFarol) return
   const lista: Registro[] = []
@@ -41,8 +68,10 @@ const atualizar = async ($: EngineInterface) => {
     const r = lerRegistro(await $.fs.read(`${pastaDoFarol}/${f.name}`).catch(() => ''))
     if (r) lista.push(r)
   }
+  await lerApp($)
+  const vistas = euNoApp() ? comOApp(lista, sessoesNoApp) : lista
   const t = await $.clock.now()
-  await update($, sessoes, () => lista)
+  await update($, sessoes, () => vistas)
   await update($, agora, () => t)
 }
 
@@ -57,6 +86,94 @@ const mudar = async ($: EngineInterface, estado: Estado) => {
     // segue sem atualizar o painel
   }
 }
+
+// Os pedidos de permissão no app, da sessão e dos subagentes, pelo `tool_use_id` e com o subagente que pediu:
+// abertos desde o "perguntar" da checagem até a chamada terminar. Os que já estão na sua tela: pelo modo (Manual
+// e plano mostram na hora) ou pelo main.log, que registra cada pedido que o app mostra (no Auto, só os que o
+// classificador manda para você) e cada resposta sua. A sessão espera você enquanto houver pergunta ou pedido na
+// tela; depois, volta ao que era (trabalhando ou, com um subagente pedindo depois do fim da resposta, livre).
+const pedidos = new Map<string, string | undefined>()
+const pedidosNaTela = new Set<string>()
+// Quantos pedidos o modo pôs na tela desde que a vigia começou: o log só os dá por respondidos quando já
+// registrou ao menos esse tanto (senão, a resposta de um pedido anterior apagaria um que ainda nem apareceu).
+let postosPeloModo = 0
+let logComPedidoAberto = false
+// Os pedidos que já estavam no log quando a vigia começou (não contam); null enquanto o log é lido.
+let conhecidosNoLog: Set<string> | null = null
+let vigia: { cancel: () => void } | null = null
+let voltarPara: Estado = 'trabalhando'
+
+const pararVigia = () => {
+  vigia?.cancel()
+  vigia = null
+  logComPedidoAberto = false
+  conhecidosNoLog = null
+}
+
+const esperaVoce = () => perguntas > 0 || pedidosNaTela.size > 0 || logComPedidoAberto
+
+// Esperando ou não, depois de uma pergunta ou de um pedido de permissão.
+const reavaliar = async ($: EngineInterface) => {
+  if (!eu) return
+  if (esperaVoce()) {
+    if (eu.estado !== 'esperando') voltarPara = eu.estado
+    await mudar($, 'esperando')
+  } else if (eu.estado === 'esperando') await mudar($, voltarPara)
+}
+
+// O prompt ou o turno da sessão começando: trabalhando, salvo se ainda há pergunta ou pedido na tela.
+const comecar = async ($: EngineInterface) => {
+  voltarPara = 'trabalhando'
+  if (esperaVoce()) await reavaliar($)
+  else await mudar($, 'trabalhando')
+}
+
+// A vigia do log, a cada segundo enquanto houver pedido aberto: um pedido desta sessão sem resposta acende o
+// vermelho; respondidos todos, os que o modo pôs na tela também foram.
+const conferirLog = async ($: EngineInterface) => {
+  const appId = euNoApp()?.appId
+  if (!appId || pedidos.size === 0) return pararVigia()
+  if (!conhecidosNoLog) return
+  const { emitidos, abertos } = contarNoLog(await lerLogDePermissoes($, casa), appId, conhecidosNoLog)
+  logComPedidoAberto = abertos > 0
+  if (abertos === 0 && emitidos >= postosPeloModo) pedidosNaTela.clear()
+  await reavaliar($)
+}
+
+const pedidoAberto = async ($: EngineInterface, tool: string, id: string, agentId: string | undefined) => {
+  await lerApp($)
+  const meu = euNoApp()
+  if (!meu) return
+  // O pedido entra antes de ler o log: a chamada de outro laço que termina nesse meio-tempo não para a vigia.
+  pedidos.set(id, agentId)
+  if (meu.appId && !vigia) {
+    // A vigia nasce antes de ler o log: um segundo pedido ao mesmo tempo já a encontra e não cria outra.
+    vigia = $.clock.every(1_000, () => void conferirLog($).catch(() => undefined))
+    postosPeloModo = 0
+    conhecidosNoLog = pedidosNoLog(await lerLogDePermissoes($, casa))
+  }
+  // A pergunta tem o contador dela (`perguntas`).
+  if (tool !== PERGUNTA && modoPede(meu.modo, tool)) {
+    pedidosNaTela.add(id)
+    postosPeloModo += 1
+  }
+  await reavaliar($)
+}
+
+// Fecha os pedidos dados (os de uma chamada que terminou, ou os de um laço que acabou).
+const fecharPedidos = (ids: Iterable<string>): boolean => {
+  let fechou = false
+  for (const id of ids) {
+    fechou = pedidos.delete(id) || fechou
+    pedidosNaTela.delete(id)
+  }
+  if (pedidos.size === 0) pararVigia()
+  return fechou
+}
+
+// Os pedidos do laço que acabou: o principal (`agentId` vazio) ou o de um subagente.
+const pedidosDoLaco = (agentId: string | undefined): string[] =>
+  [...pedidos].filter(([, quem]) => quem === agentId).map(([id]) => id)
 
 // Sessão retomada: o título vem da primeira mensagem sua que já está na conversa.
 const tituloDaConversa = async ($: EngineInterface): Promise<string> => {
@@ -98,9 +215,12 @@ const fechar = async ($: EngineInterface) => {
   await $.ui.close({ id: PAINEL })
 }
 
-// O clique num cartão do painel no app. A troca de sessão precisa do id do app (os arquivos de sessão dele, no
-// macOS) e chega numa versão seguinte, com os extras do app; até lá, o clique não faz nada.
-const trocarDeSessao = (_r: Registro): void => undefined
+// O clique num cartão do painel no app: leva o app para aquela sessão. Só com o id dela no app (no macOS); o
+// cartão desta sessão e o de uma sessão do terminal não fazem nada.
+const trocarDeSessao = async ($: EngineInterface, r: Registro) => {
+  if (!r.appId || r.id === eu?.id) return
+  if (!(await abrirNoApp($, r.appId))) $.ui.toast('Não consegui abrir essa sessão no app.')
+}
 
 const mudarAjustes = async ($: EngineInterface, muda: (a: Ajustes) => Ajustes) => {
   const novo = muda((await read($, ajustes)) ?? PADRAO)
@@ -118,13 +238,17 @@ export const register: Register = on => {
       .register({ name: PAINEL, description: 'Abre o painel com o estado de todas as sessões abertas' })
       .catch(() => undefined)
 
-    const casa = casaDe(await $.env.get('HOME'), await $.env.get('USERPROFILE'))
+    casa = casaDe(await $.env.get('HOME'), await $.env.get('USERPROFILE')) ?? ''
     if (!casa) return result
     try {
       pastaDoFarol = `${casa}/.claude/farol`
       const id = await $.session.id()
       const t = await $.clock.now()
+      comecouEm = t
       eu = { id, pasta: pastaDoRegistro(e.cwd), titulo: await tituloDaConversa($), estado: 'livre', desde: t, vivoEm: t }
+      // Sessão reaberta: a hora da última resposta continua, para o não visto sobreviver a um reinício do app.
+      const anterior = lerRegistro(await $.fs.read(`${pastaDoFarol}/${id}.json`).catch(() => ''))
+      if (anterior?.respondeuEm !== undefined) eu = { ...eu, respondeuEm: anterior.respondeuEm }
       await update($, minhaId, () => id)
       await gravar($)
       await atualizar($)
@@ -140,35 +264,62 @@ export const register: Register = on => {
   on('prompt.submit', async ($, e, next) => {
     const t = tituloDe(e.text)
     if (eu && eu.titulo === SEM_TITULO && t) eu = { ...eu, titulo: t }
-    await mudar($, 'trabalhando')
+    await comecar($)
     return next(e)
   }).catch(($, e, next) => next(e))
 
   // O começo e o fim de um turno de subagente não mudam o estado da sessão: só os do laço principal.
   on('turn.start', async ($, e, next) => {
-    if (e.agentId === undefined) await mudar($, 'trabalhando')
+    if (e.agentId === undefined) await comecar($)
     return next(e)
   }).catch(($, e, next) => next(e))
 
-  // Uma pergunta da sessão ou de um subagente deixa a sessão esperando você até a resposta.
+  // Uma pergunta da sessão ou de um subagente deixa a sessão esperando você até a resposta. O fim de qualquer
+  // chamada fecha o pedido de permissão dela, se houve (respondido ou recusado).
   on('tool.call', async ($, e, next) => {
-    if (e.tool !== PERGUNTA) return next(e)
-    perguntas += 1
-    await mudar($, 'esperando')
+    const pergunta = e.tool === PERGUNTA
+    if (pergunta) {
+      perguntas += 1
+      await reavaliar($)
+    }
     try {
       return await next(e)
     } finally {
-      perguntas = Math.max(0, perguntas - 1)
-      if (perguntas === 0 && eu?.estado === 'esperando') await mudar($, 'trabalhando')
+      if (pergunta) perguntas = Math.max(0, perguntas - 1)
+      if (fecharPedidos([e.tool_use_id]) || pergunta) await reavaliar($)
     }
   }).catch(($, e, next) => next(e))
 
+  // No app, um "perguntar" da checagem, da sessão ou de um subagente, pode virar um pedido na sua tela. Fora do
+  // app não há como saber: o terminal não acende por pedido de permissão nesta versão.
+  on('tool.check', async ($, e, next) => {
+    const verdict = await next(e)
+    if (verdict.decision === 'ask' && e.tool_use_id && eu) {
+      await pedidoAberto($, e.tool, e.tool_use_id, e.agentId).catch(() => undefined)
+    }
+    return verdict
+  }).catch(($, e, next) => next(e))
+
+  // O fim do laço principal fecha os pedidos dele e deixa a sessão livre (ou esperando, se um subagente que segue
+  // rodando ainda pede você); o de um subagente fecha só os dele. A resposta que termina fora da tela do app fica
+  // para o não visto; na tela, você já viu.
   on('turn.complete', async ($, e, next) => {
     const result = await next(e)
-    if (e.agentId === undefined) {
-      perguntas = 0
-      await mudar($, 'livre')
+    if (e.agentId !== undefined) {
+      if (fecharPedidos(pedidosDoLaco(e.agentId))) await reavaliar($)
+      return result
     }
+    perguntas = 0
+    fecharPedidos(pedidosDoLaco(undefined))
+    if (eu) {
+      await lerApp($)
+      if (euNoApp()) {
+        const { respondeuEm: _, ...resto } = eu
+        eu = idEmFoco(sessoesNoApp) === eu.id ? resto : { ...resto, respondeuEm: await $.clock.now() }
+      }
+    }
+    voltarPara = 'livre'
+    await mudar($, esperaVoce() ? 'esperando' : 'livre')
     return result
   })
 
@@ -213,8 +364,10 @@ export const register: Register = on => {
     const { Box, Text, Button } = elementos
     const t = await read($, agora)
     const minha = await read($, minhaId)
-    const lista = ordenar(await read($, sessoes), t)
     const terminal = e.surface === 'terminal'
+    // No terminal não há não visto nesta versão: a sessão que estaria azul aparece livre.
+    const todas = await read($, sessoes)
+    const lista = ordenar(terminal ? todas.map(r => ({ ...r, naoVisto: false })) : todas, t)
     const a = (await read($, ajustes)) ?? PADRAO
 
     const sessao = (r: Registro) => {
@@ -241,7 +394,7 @@ export const register: Register = on => {
       desenhos = (
         <Box flexDirection="column" gap={1}>
           <Svg key="cena" source={cenaSvg(situacao, a.movimento, largura)} alt={descricaoDaCena(situacao)} height={ALTURA_CENA} isInteractive={a.movimento || undefined} />
-          {lista.length > 0 && desenharCartoes($, e, { lista, agora: t, minha, movimento: a.movimento, trocar: trocarDeSessao })}
+          {lista.length > 0 && desenharCartoes($, e, { lista, agora: t, minha, movimento: a.movimento, trocar: r => trocarDeSessao($, r) })}
         </Box>
       )
     }

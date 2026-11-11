@@ -73,7 +73,7 @@ export const pastaDoRegistro = (cwd: string): string => cwd.split(/[\\/]/).filte
 const ESTADOS: readonly Estado[] = ['esperando', 'trabalhando', 'livre']
 
 // O registro de outra sessão, lido do arquivo dela; um arquivo estragado ou de outro formato é ignorado. Só os
-// campos gravados valem: o não visto é calculado ao ler, pelo app, e não vem do arquivo.
+// campos gravados valem: o não visto e o id no app são calculados ao ler, pelo app, e não vêm do arquivo.
 export const lerRegistro = (texto: string): Registro | null => {
   try {
     const r = JSON.parse(texto) as Partial<Registro>
@@ -85,7 +85,8 @@ export const lerRegistro = (texto: string): Registro | null => {
       typeof r.vivoEm === 'number' &&
       ESTADOS.includes(r.estado as Estado)
     if (!valido) return null
-    return { id: r.id, pasta: r.pasta, titulo: r.titulo, estado: r.estado, desde: r.desde, vivoEm: r.vivoEm } as Registro
+    const lido = { id: r.id, pasta: r.pasta, titulo: r.titulo, estado: r.estado, desde: r.desde, vivoEm: r.vivoEm } as Registro
+    return typeof r.respondeuEm === 'number' ? { ...lido, respondeuEm: r.respondeuEm } : lido
   } catch {
     return null
   }

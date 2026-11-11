@@ -1,5 +1,20 @@
 # Changelog do farol
 
+## 0.3.0 (2026-11-11)
+
+Os extras do app desktop no macOS. Fora dele (terminal, Linux, Windows), nada muda.
+
+- **Não visto:** a sessão que respondeu fora da tela, depois da última vez que você a abriu no app, fica com o
+  cartão azul e acende a boia da cena e o feixe azul da torre na faixa. Abrir a sessão apaga.
+- **Pedido de permissão:** acende o vermelho, também o de um subagente. No Manual e no plano, na hora; no Auto,
+  quando o pedido aparece na sua tela, pelo log do app. Com vários pedidos abertos, a sessão volta a trabalhando
+  depois do último.
+- **Troca de sessão:** um clique no cartão de outra sessão leva o app para ela. Se o app não abrir, um aviso diz
+  isso.
+- **Título:** o nome da sessão na barra lateral do app, também depois de renomear; fora do app, a primeira
+  mensagem, como antes.
+- Se os arquivos do app faltarem ou mudarem de formato, o farol segue no núcleo, sem erro.
+
 ## 0.2.0 (2026-11-11)
 
 O painel no app desktop ganha desenho.

@@ -26,7 +26,15 @@ export const PAINEL = {
 
 export type Mundo = {
   arquivos: Map<string, string>
+  // A hora da última mudança de cada arquivo, como o `$.fs.list` a dá (0 se não está aqui).
+  mudancas: Map<string, number>
   comandos: string[][]
+  // As linhas do main.log do app que o `grep` devolve (vazio: o log não tem pedidos).
+  log: { texto: string }
+  // Os avisos mostrados pelo farol ($.ui.toast).
+  avisos: string[]
+  // As pastas listadas, na ordem.
+  listadas: string[]
   // Quantas vezes o farol listou a pasta dos registros (cada releitura lista uma vez).
   listagens: () => number
   // Os painéis abertos e fechados, na ordem ("farol", "fechou farol").
@@ -40,6 +48,10 @@ export type Opcoes = {
   // `rm` responde com este código (1 = falhou); `semRm` faz o comando nem começar, como no Windows.
   codigoDoRm?: number
   semRm?: boolean
+  // `open` responde com este código (1 = falhou).
+  codigoDoOpen?: number
+  // O `grep` nem começa (o log ilegível).
+  semGrep?: boolean
 }
 
 export const preparar = (on: On, o: Opcoes = {}): Mundo => {
@@ -72,9 +84,17 @@ export const preparar = (on: On, o: Opcoes = {}): Mundo => {
     return { value: undefined }
   })
 
-  // O disco e os comandos.
+  const avisos: string[] = []
+  on('ui.toast', (_, e) => {
+    avisos.push(e.text)
+    return { value: undefined }
+  })
+
+  // O disco e os comandos. A listagem de uma pasta dá o que está logo dentro dela: os arquivos e as subpastas.
   const arquivos = new Map<string, string>()
+  const mudancas = new Map<string, number>()
   const comandos: string[][] = []
+  const log = { texto: '' }
   let listagens = 0
   on('fs.write', (_, e) => {
     arquivos.set(e.path, e.text)
@@ -84,23 +104,51 @@ export const preparar = (on: On, o: Opcoes = {}): Mundo => {
     const texto = arquivos.get(e.path)
     return texto === undefined ? { deny: `ENOENT: ${e.path}` } : { value: texto }
   })
+  const listadas: string[] = []
   on('fs.list', (_, e) => {
-    listagens += 1
-    const dentro = [...arquivos.keys()].filter(p => p.startsWith(`${e.path}/`))
-    if (dentro.length === 0) return { deny: `ENOENT: ${e.path}` }
+    listadas.push(e.path)
+    if (e.path === PASTA) listagens += 1
+    const nomes = new Map<string, 'file' | 'dir'>()
+    for (const p of arquivos.keys()) {
+      if (!p.startsWith(`${e.path}/`)) continue
+      const resto = p.slice(e.path.length + 1).split('/')
+      nomes.set(resto[0] ?? '', resto.length > 1 ? 'dir' : 'file')
+    }
+    if (nomes.size === 0) return { deny: `ENOENT: ${e.path}` }
     return {
-      value: dentro.map(p => ({ name: p.slice(e.path.length + 1), kind: 'file' as const, size: 1, mtimeMs: 0, isLink: false })),
+      value: [...nomes].map(([name, kind]) => ({
+        name, kind, size: 1, mtimeMs: kind === 'file' ? (mudancas.get(`${e.path}/${name}`) ?? 0) : 0, isLink: false,
+      })),
     }
   })
   on('process.run', (_, e) => {
     comandos.push([...e.argv])
     if (e.argv[0] === 'rm' && o.semRm) return { deny: 'ENOENT: rm' }
-    const codigo = e.argv[0] === 'rm' ? (o.codigoDoRm ?? 0) : 0
+    if (e.argv[0] === 'grep' && o.semGrep) return { deny: 'EACCES: grep' }
+    const codigo = e.argv[0] === 'rm' ? (o.codigoDoRm ?? 0) : e.argv[0] === 'open' ? (o.codigoDoOpen ?? 0) : 0
     if (e.argv[0] === 'rm' && codigo === 0) for (const p of e.argv.slice(2)) arquivos.delete(p)
-    return { value: { exitCode: codigo, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
+    const stdout = e.argv[0] === 'grep' ? log.texto : ''
+    return { value: { exitCode: codigo, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
   })
 
-  return { arquivos, comandos, listagens: () => listagens, paineis, avancar: ms => relogio.advance(ms) }
+  return { arquivos, mudancas, comandos, log, avisos, listadas, listagens: () => listagens, paineis, avancar: ms => relogio.advance(ms) }
+}
+
+// Os arquivos de sessão do app desktop no macOS, na casa de exemplo.
+export const ARQUIVOS_DO_APP = `${CASA}/Library/Application Support/Claude/claude-code-sessions`
+
+// O arquivo de uma sessão no app, como o app grava: `cli` é o id da sessão no Claude Code; `local` o id no app.
+// Cada gravação muda a hora do arquivo, como no disco.
+export const gravarNoApp = (
+  m: Mundo,
+  s: { cli: string; local: string; nome?: string; focadoEm?: number; modo?: string },
+) => {
+  const caminho = `${ARQUIVOS_DO_APP}/conta-exemplo/ambiente-exemplo/${s.local}.json`
+  m.arquivos.set(
+    caminho,
+    JSON.stringify({ cliSessionId: s.cli, sessionId: s.local, title: s.nome, lastFocusedAt: s.focadoEm, permissionMode: s.modo ?? 'auto' }),
+  )
+  m.mudancas.set(caminho, (m.mudancas.get(caminho) ?? 0) + 1)
 }
 
 // O registro de uma sessão, como está no disco agora.
