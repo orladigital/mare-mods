@@ -3,7 +3,7 @@ import type { EngineInterface, Register, RenderSurface, SessionRateLimit } from 
 
 import type { Ajustes, Medida } from '../types'
 import { NOME_OLA, NOME_SEMANA, PADRAO, larguraDasBarras, lerAjustes, marAnimado } from './ajustes'
-import { FILTRO_LOG_PERMISSAO, modoPede, pedidosNoLog, situacaoNoLog } from './comum/permissao'
+import { lerLogDePermissoes, modoPede, pedidosNoLog, situacaoNoLog } from './comum/permissao'
 import { campoTexto, comandoRetomar, corDoRisco, descreverPedido, promptExplicacao, separarRisco } from './explicar'
 import { ALTURA_FINA, barraFinaSvg, barraTerminal, detalhar, janelas, limitesVigentes, pctTxt, rotuloTerminal } from './limites'
 import type { Janela } from './limites'
@@ -68,16 +68,10 @@ let conhecidos: Set<string> = new Set()
 let abertas = 0
 let vigia: { cancel: () => void } | null = null
 
-const lerLogPermissoes = async ($: EngineInterface): Promise<string> => {
-  const log = `${home}/Library/Logs/Claude/main.log`
-  const r = await $.process.run(['grep', '-h', '-E', FILTRO_LOG_PERMISSAO, log]).catch(() => ({ stdout: '' }))
-  return r.stdout.split('\n').slice(-400).join('\n')
-}
-
 const conferirLog = async ($: EngineInterface) => {
   const minha = await sessaoApp($)
   if (!minha) return
-  const situacao = situacaoNoLog(await lerLogPermissoes($), minha, conhecidos)
+  const situacao = situacaoNoLog(await lerLogDePermissoes($, home), minha, conhecidos)
   const aberto = await read($, pendente)
   if (situacao === 'aberto' && !aberto && ultimoPedido) {
     const pedido = ultimoPedido
@@ -198,7 +192,7 @@ export const register: Register = on => {
       if (modoPede(await modoAtual($), e.tool)) await update($, pendente, () => pedido)
       if (await sessaoApp($)) {
         if (!vigia) {
-          conhecidos = pedidosNoLog(await lerLogPermissoes($))
+          conhecidos = pedidosNoLog(await lerLogDePermissoes($, home))
           vigia = $.clock.every(1_000, () => void conferirLog($))
         }
         abertas += 1
