@@ -33,6 +33,8 @@ declare module 'claude-code' {
       agora: number
       minhaId: string
       ajustes: Ajustes | null
+      // O bloco de ajustes aberto no painel (abre recolhido).
+      ajustesAbertos: boolean
     }
   }
 }

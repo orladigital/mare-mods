@@ -85,6 +85,11 @@ describe('tempo, título e registro', () => {
     expect(tituloDe('<bash-input>ls</bash-input><bash-stdout>a\nb</bash-stdout>')).toBe('$ ls')
     expect(tituloDe('<command-name>/farol</command-name>')).toBe('')
     expect(tituloDe('/farol')).toBe('')
+    // O marcador de interrupção do Claude Code não é mensagem sua.
+    expect(tituloDe('[Request interrupted by user]')).toBe('')
+    expect(tituloDe('[Request interrupted by user for tool use]')).toBe('')
+    // Nem o aviso que abre uma sessão começada por outra.
+    expect(tituloDe('Background (from the session that started this one): a tarefa')).toBe('')
     expect(tituloDe('This session is being continued from a previous conversation')).toBe('')
     expect(tituloDe('x'.repeat(80))).toHaveLength(70)
   })

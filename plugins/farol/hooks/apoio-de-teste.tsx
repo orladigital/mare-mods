@@ -15,7 +15,7 @@ export const FIM_DA_SESSAO = { reason: 'prompt_input_exit', sessionId: ID, resum
 export const FAIXA = {
   plugin: 'farol',
   component: 'AbovePrompt',
-  props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 140, scroll: { offset: 0, bodyRows: 10 }, view: {} },
+  props: { hasSurvey: false, isCollapsed: false, isWorking: false, maxRows: 10, bodyColumns: 140, scroll: { offset: 0, bodyRows: 10 }, view: {} },
 } as const
 export const PAINEL = {
   plugin: 'farol',
