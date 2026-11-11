@@ -6,8 +6,11 @@ import type { Ajustes, Registro } from '../types'
 import { contagemNaFaixa } from './ajustes'
 import { esperandoAgora, estadoGeral } from './estado'
 
-export const LARGURA_TORRE = 26
-export const ALTURA_TORRE = 16
+// A área da torre na faixa, perto da dos outros botões. O desenho é feito em 26 × 16 e sai ampliado, com folga em
+// volta (o viewBox).
+export const LARGURA_TORRE = 34
+export const ALTURA_TORRE = 24
+const VIEWBOX = '-1.5 -2.4 29 20.5'
 
 // A luz do feixe: vermelha com alguma sessão esperando; azul só com não visto (no app no macOS).
 export type Luz = 'vermelha' | 'azul' | null
@@ -29,7 +32,7 @@ export const torreSvg = (luz: Luz): string => {
     : ''
   const lanterna = cor ? `<rect class="${cor}" x="11" y="2.5" width="4" height="3"/>` : '<rect class="t" opacity="0.55" x="11" y="2.5" width="4" height="3"/>'
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${LARGURA_TORRE} ${ALTURA_TORRE}" width="${LARGURA_TORRE}" height="${ALTURA_TORRE}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VIEWBOX}" width="${LARGURA_TORRE}" height="${ALTURA_TORRE}">`,
     '<style>.t{fill:#2B2B2B}.v{fill:#D6453B}.a{fill:#2F6FE0}',
     '@media (prefers-color-scheme: dark){.t{fill:#E6E3DE}.v{fill:#F2907F}.a{fill:#8FBDF5}}</style>',
     feixes,
@@ -51,8 +54,8 @@ export const rotuloTerminal = (n: number): string => (n > 0 ? `🚨 ${n}` : '�
 
 // O botão do app não aceita um SVG dentro (o desenho não sai) e é o único elemento com clique: por cima da
 // torre vai um botão sem moldura de espaços não separáveis, um pouco menor que ela (maior, o app mostra "…").
-const COBERTURA = ' '.repeat(7)
-const COBERTURA_COM_NUMERO = ' '.repeat(11)
+const COBERTURA = ' '.repeat(9)
+const COBERTURA_COM_NUMERO = ' '.repeat(13)
 
 export type DadosDaFaixa = { lista: readonly Registro[]; agora: number; ajustes: Ajustes; abrir: () => unknown }
 
@@ -75,10 +78,10 @@ export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt'>,
   const numero = contagemNaFaixa(d.ajustes, e.surface) && n > 0
   return (
     <Box flexDirection="row" gap={2} alignItems="center">
-      <Box position="relative" overflow="hidden" flexDirection="row" alignItems="center" gap={1} flexShrink={0}>
+      <Box position="relative" flexDirection="row" alignItems="center" gap={1} flexShrink={0}>
         <Svg key="torre" source={torreSvg(luz)} alt={descricaoDaTorre(luz, n)} width={LARGURA_TORRE} height={ALTURA_TORRE} />
         {numero && <Text bold>{String(n)}</Text>}
-        <Box position="absolute" top={0} left={0} right={0}>
+        <Box position="absolute" top={0} left={0} right={0} bottom={0} justifyContent="center">
           <Button key="abrir-farol" label={numero ? COBERTURA_COM_NUMERO : COBERTURA} plain onPress={() => void d.abrir()} />
         </Box>
       </Box>

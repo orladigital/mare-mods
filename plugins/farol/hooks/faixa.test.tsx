@@ -33,6 +33,8 @@ test('no app, a torre é um SVG e o feixe acende vermelho com uma sessão espera
   let ui = await $.ui.mount({ ...FAIXA, surface: 'desktop' })
   let torre = await ui.find({ type: 'Svg' })
   expect(torre?.props.alt).toBe('Farol: nenhuma sessão esperando você')
+  // Uma área próxima da dos outros botões da faixa (o ⚓ e o 📋 da barra de uso).
+  expect([torre?.props.width, torre?.props.height]).toEqual([34, 24])
   expect(String(torre?.props.source)).not.toContain('class="v"')
   expect(await ui.find({ key: 'abrir-farol' })).toBeDefined()
   await ui.unmount()

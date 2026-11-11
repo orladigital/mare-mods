@@ -52,11 +52,12 @@ export const ha = (ms: number): string => {
 }
 
 // Título legível a partir do texto de uma mensagem: tira blocos de saída e marcações, mostra comando de shell
-// como "$ …"; vazio quando é comando de barra, resumo de conversa retomada ou não sobra texto.
+// como "$ …"; vazio quando é comando de barra, resumo de conversa retomada, interrupção ou não sobra texto.
 export const tituloDe = (texto: string): string => {
   const inicio = texto.trim()
   if (/<command-name>/.test(texto) || inicio.startsWith('/')) return ''
   if (/^(This session is being continued|Caveat:)/.test(inicio)) return ''
+  if (inicio.startsWith('[Request interrupted by user') || inicio.startsWith('Background (from the session that started this one)')) return ''
   const limpo = texto
     .replace(/<(bash-stdout|bash-stderr|system-reminder|local-command-stdout|local-command-stderr)>[\s\S]*?<\/\1>/g, ' ')
     .replace(/<bash-input>([\s\S]*?)<\/bash-input>/g, '$ $1')
@@ -93,3 +94,11 @@ export const lerRegistro = (texto: string): Registro | null => {
 // A pasta da casa, que a API não dá: o HOME; vazio, o USERPROFILE (Windows); os dois vazios, nenhuma.
 export const casaDe = (home: string | undefined, perfil: string | undefined): string | undefined =>
   home?.trim() || perfil?.trim() || undefined
+
+// A segunda linha de cada sessão no painel: "pasta · tempo · estado", e "esta sessão" na que está aberta aqui. O
+// tempo da sem sinal conta desde a última renovação do registro; o das outras, desde que entraram no estado.
+export const detalheDe = (r: Registro, agora: number, minha: string): string => {
+  const v = visualDe(r, agora)
+  const tempo = ha(agora - (v === 'sem-sinal' ? r.vivoEm : r.desde))
+  return `${r.pasta} · ${tempo} · ${rotuloDe(v)}${r.id === minha ? ' · esta sessão' : ''}`
+}

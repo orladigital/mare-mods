@@ -23,6 +23,11 @@ Um clique abre o painel. O farol divide a faixa com os outros mods, à esquerda 
 Abre pelo clique na faixa ou pelo `/farol`. Cada sessão aparece em duas linhas: o título (a primeira mensagem
 da sessão) e `pasta · tempo · estado`. A sessão de onde você abriu leva `esta sessão`.
 
+No app desktop, o painel tem no topo a cena do farol, cuja lanterna diz o estado de todas as sessões juntas
+(vermelha, com os feixes girando, quando alguma espera você; âmbar com alguma trabalhando; verde com todas livres;
+apagada sem sessões), e cada sessão é um cartão na cor do estado, com um barco ao lado. No terminal, o painel é
+em texto.
+
 | Estado | Quando |
 |---|---|
 | Esperando | a sessão fez uma pergunta (`AskUserQuestion`), dela ou de um subagente, e aguarda a resposta |
@@ -35,13 +40,13 @@ Uma sessão sem sinal há mais de 12 horas sai do painel.
 
 ## Ajustes
 
-No próprio painel, abaixo das sessões:
+No próprio painel, pelo botão **Ajustes** no rodapé (eles abrem recolhidos):
 
 | Ajuste | Padrão | O que muda |
 |---|---|---|
 | Na faixa | mostrar | **esconder:** o farol sai da faixa; o `/farol` continua abrindo o painel |
 | Contagem na faixa | desligada | Só no app: o número de sessões esperando ao lado da torre. No terminal, o número sempre aparece |
-| Movimento | ligado | Só no app: a cena do painel se mexendo. Guardado desde já; a cena chega numa versão seguinte |
+| Movimento | ligado | Só no app: a cena e os barcos do painel se mexendo. Desligado, tudo fica parado |
 
 Os ajustes ficam guardados para você e valem nas sessões seguintes.
 

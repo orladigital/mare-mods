@@ -4,7 +4,9 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { Ajustes, Estado, Registro } from '../types'
 import { NOME_NA_FAIXA, PADRAO, lerAjustes } from './ajustes'
 import { semLarguraAmbigua } from './comum/largura'
-import { SEM_TITULO, casaDe, ha, lerRegistro, ordenar, pastaDoRegistro, rotuloDe, tituloDe, visualDe } from './estado'
+import { desenharCartoes } from './cartoes'
+import { ALTURA_CENA, cenaSvg, descricaoDaCena, situacaoDaCena } from './cena'
+import { SEM_TITULO, casaDe, detalheDe, lerRegistro, ordenar, pastaDoRegistro, tituloDe, visualDe } from './estado'
 import { desenharFaixa } from './faixa'
 
 const PAINEL = 'farol'
@@ -12,6 +14,7 @@ const sessoes = atom({ plugin: 'farol', key: 'sessoes' } as const, [])
 const agora = atom({ plugin: 'farol', key: 'agora' } as const, 0)
 const minhaId = atom({ plugin: 'farol', key: 'minhaId' } as const, '')
 const ajustes = atom({ plugin: 'farol', key: 'ajustes' } as const, null)
+const ajustesAbertos = atom({ plugin: 'farol', key: 'ajustesAbertos' } as const, false)
 
 // A pergunta ao usuário que para a sessão até a resposta.
 const PERGUNTA = 'AskUserQuestion'
@@ -90,9 +93,14 @@ const abrir = async ($: EngineInterface) => {
 
 const fechar = async ($: EngineInterface) => {
   painelAberto = false
+  await update($, ajustesAbertos, () => false)
   await ajustarReleitura($)
   await $.ui.close({ id: PAINEL })
 }
+
+// O clique num cartão do painel no app. A troca de sessão precisa do id do app (os arquivos de sessão dele, no
+// macOS) e chega numa versão seguinte, com os extras do app; até lá, o clique não faz nada.
+const trocarDeSessao = (_r: Registro): void => undefined
 
 const mudarAjustes = async ($: EngineInterface, muda: (a: Ajustes) => Ajustes) => {
   const novo = muda((await read($, ajustes)) ?? PADRAO)
@@ -181,6 +189,7 @@ export const register: Register = on => {
     const r = await next(e)
     if (e.id === PAINEL && painelAberto) {
       painelAberto = false
+      await update($, ajustesAbertos, () => false)
       await ajustarReleitura($)
     }
     return r
@@ -197,7 +206,8 @@ export const register: Register = on => {
     return desenharFaixa($, e, outros, dados)
   })
 
-  // O painel simples: uma linha de título e uma de "pasta · tempo · estado" por sessão, os ajustes e o Fechar.
+  // O painel: no app, a cena do farol no topo e um cartão com barco por sessão; no terminal, uma linha
+  // de título e uma de "pasta · tempo · estado" por sessão. Abaixo, os ajustes e o Fechar.
   on('ui.render', { component: 'Pane', requestId: PAINEL }, async ($, e) => {
     const elementos = $.ui.resolve(e)
     const { Box, Text, Button } = elementos
@@ -209,22 +219,37 @@ export const register: Register = on => {
 
     const sessao = (r: Registro) => {
       const v = visualDe(r, t)
-      const tempo = ha(t - (v === 'sem-sinal' ? r.vivoEm : r.desde))
       // No terminal, um símbolo de largura ambígua no título entorta o que vem ao lado.
       const titulo = terminal ? semLarguraAmbigua(r.titulo) : r.titulo
       return (
         <Box flexDirection="column">
           <Text bold dimColor={v === 'sem-sinal'} wrap="truncate-end">{titulo}</Text>
           <Text dimColor={v !== 'esperando'} color={v === 'esperando' ? 'error' : undefined} wrap="truncate-end">
-            {`${r.pasta} · ${tempo} · ${rotuloDe(v)}${r.id === minha ? ' · esta sessão' : ''}`}
+            {detalheDe(r, t, minha)}
           </Text>
+        </Box>
+      )
+    }
+
+    // No app, a cena e os cartões são desenhos (`Svg`); onde não há `Svg`, fica a lista em texto.
+    let desenhos: JSX.Element | null = null
+    if ('Svg' in elementos && !terminal) {
+      const { Svg } = elementos
+      const situacao = situacaoDaCena(lista, t)
+      // A largura do painel em pixels não vem na API: estimada pelas colunas (a cena se ajusta ao que vier).
+      const largura = e.props.bodyColumns * 8
+      desenhos = (
+        <Box flexDirection="column" gap={1}>
+          <Svg key="cena" source={cenaSvg(situacao, a.movimento, largura)} alt={descricaoDaCena(situacao)} height={ALTURA_CENA} isInteractive={a.movimento || undefined} />
+          {lista.length > 0 && desenharCartoes($, e, { lista, agora: t, minha, movimento: a.movimento, trocar: trocarDeSessao })}
         </Box>
       )
     }
 
     const semRegistro = !pastaDoFarol
     let blocoAjustes = null
-    if ('Select' in elementos) {
+    const abertos = await read($, ajustesAbertos)
+    if (abertos && 'Select' in elementos) {
       const { Select } = elementos
       const opcoes = (nomes: Record<string, string>) => Object.entries(nomes).map(([value, label]) => ({ value, label }))
       const linha = (titulo: string, explica: string, campo: JSX.Element) => (
@@ -263,7 +288,7 @@ export const register: Register = on => {
           {!terminal &&
             linha(
               'Movimento',
-              'A cena do painel se mexendo. Desligado, ela fica parada.',
+              'O painel se mexendo (a cena e os barcos). Desligado, tudo fica parado.',
               <Select
                 key="ajuste-movimento"
                 options={opcoes({ sim: 'ligado (padrão)', nao: 'desligado' })}
@@ -271,6 +296,7 @@ export const register: Register = on => {
                 onSelect={(v: string) => void mudarAjustes($, x => ({ ...x, movimento: v === 'sim' }))}
               />,
             )}
+          <Text dimColor>Os ajustes valem para todas as suas sessões.</Text>
         </Box>
       )
     }
@@ -278,13 +304,14 @@ export const register: Register = on => {
     return (
       <Box flexDirection="column" gap={1}>
         {semRegistro && <Text dimColor>Sem a pasta da casa (nem HOME nem USERPROFILE): o farol não registra as sessões aqui.</Text>}
+        {desenhos}
         {!semRegistro && lista.length === 0 && <Text dimColor>Nenhuma sessão com o farol ligado.</Text>}
-        {lista.length > 0 && <Box flexDirection="column" gap={1}>{lista.map(sessao)}</Box>}
-        {blocoAjustes}
+        {!desenhos && lista.length > 0 && <Box flexDirection="column" gap={1}>{lista.map(sessao)}</Box>}
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-          <Text dimColor>Os ajustes valem para todas as suas sessões.</Text>
+          <Button key="ajustes" label={abertos ? 'Esconder ajustes' : 'Ajustes'} dimColor onPress={() => update($, ajustesAbertos, x => !x)} />
           <Button key="fechar" label="Fechar" role="dismiss" onPress={() => fechar($)} />
         </Box>
+        {blocoAjustes}
       </Box>
     )
   })
