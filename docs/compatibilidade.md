@@ -16,7 +16,7 @@ A API de mods está em early access: pode mudar entre versões sem aviso.
 | Mod | App desktop (macOS) | App desktop (Windows) | Terminal (macOS) | Terminal (Windows) |
 |---|---|---|---|---|
 | `barra-de-uso` | tudo | sem o Explain; não testado | tudo, menos o Explain | não testado |
-| `farol` | tudo: o núcleo, a cena e os cartões do painel, o não visto, o vermelho do pedido de permissão e a troca de sessão | não testado; o registro de uma sessão fechada não se apaga (sai depois de 12 h) | o núcleo e o painel em linhas com fundo, sem o não visto e sem o vermelho do pedido de permissão | não testado; o registro de uma sessão fechada não se apaga (sai depois de 12 h) |
+| `farol` | tudo: o núcleo, a cena e os cartões do painel, o não visto, o vermelho do pedido de permissão e a troca de sessão | não testado; o registro de uma sessão fechada não se apaga (sai depois de 12 h) | o núcleo e o painel em cartões de texto, sem o não visto e sem o vermelho do pedido de permissão | não testado; o registro de uma sessão fechada não se apaga (sai depois de 12 h) |
 
 Testado no terminal com iTerm2 e o terminal do Cursor, os dois com cor de 24 bits (`COLORTERM=truecolor`).
 Num terminal sem cor de 24 bits, as cores das barras saem aproximadas.
