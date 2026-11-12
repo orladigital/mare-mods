@@ -68,7 +68,11 @@ export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt'>,
   if (e.surface === 'terminal' || !('Svg' in elementos)) {
     return (
       <Box flexDirection="row" gap={2} alignItems="flex-end">
-        <Button key="abrir-farol" label={rotuloTerminal(n)} onPress={() => void d.abrir()} />
+        {/* O alinhamento pela base da caixa não chega ao botão no terminal: sem o alignSelf, a torre fica uma linha
+            acima de quem desce com margem (a barra de uso). */}
+        <Box alignSelf="flex-end" flexShrink={0}>
+          <Button key="abrir-farol" label={rotuloTerminal(n)} onPress={() => void d.abrir()} />
+        </Box>
         {outros}
       </Box>
     )
