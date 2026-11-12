@@ -1,0 +1,7 @@
+# Achados do gitleaks conferidos e liberados, um por linha, pela impressão digital (commit:arquivo:regra:linha).
+# Cada um leva antes uma linha dizendo o que é e por que não é segredo.
+
+# Os nomes de dois botões nos testes do farol ("clique", "outra" e o número do botão), lidos pela regra genérica
+# como chave de API. Os testes passaram a montar esses nomes por função.
+353fabb60694fa6863c942c209f694689edca5f5:plugins/farol/hooks/extras-do-app.test.tsx:generic-api-key:198
+353fabb60694fa6863c942c209f694689edca5f5:plugins/farol/hooks/extras-do-app.test.tsx:generic-api-key:244

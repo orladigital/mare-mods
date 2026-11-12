@@ -7,6 +7,9 @@ import type { Mundo } from './apoio-de-teste'
 
 const FIM = { turnId: 't1', answer: 'pronto', durationMs: 1_000, isAborted: false, reason: 'answer' } as const
 const MIN = 60_000
+// O botão `parte` (1 a 3) do clique no cartão de uma sessão. Montado por função: um texto com número logo depois de
+// `key:` parece chave de API para o gitleaks do CI.
+const clique = (id: string, parte: number) => `clique-${id}-${parte}`
 
 const textos = async (ui: { findAll: (q: { type: 'Text' }) => Promise<{ text: string }[]> }) => (await ui.findAll({ type: 'Text' })).map(t => t.text)
 const barcos = async (ui: { findAll: (q: { type: 'Svg' }) => Promise<{ props: Record<string, unknown> }[]> }) =>
@@ -181,7 +184,7 @@ test('no app, o clique em qualquer parte do cartão de outra sessão leva o app 
   await $.session.start(INICIO)
 
   const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
-  for (const parte of ['1', '2', '3']) await ui.press({ key: `clique-outra-${parte}` })
+  for (const parte of [1, 2, 3]) await ui.press({ key: clique('outra', parte) })
   await ui.unmount()
   expect(m.comandos.filter(c => c[0] === 'open')).toEqual(Array(3).fill(['open', 'claude://code/continue?session=local_outra']))
   expect(m.avisos).toEqual([])
@@ -195,7 +198,7 @@ test('se o app não abrir a sessão, um aviso diz isso', async ($, on) => {
   await $.session.start(INICIO)
 
   const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
-  await ui.press({ key: 'clique-outra-2' })
+  await ui.press({ key: clique('outra', 2) })
   await ui.unmount()
   expect(m.avisos).toEqual(['Não consegui abrir essa sessão no app.'])
 })
@@ -207,8 +210,8 @@ test('o cartão desta sessão e o de uma sessão do terminal não trocam de sess
   await $.session.start(INICIO)
 
   const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
-  await ui.press({ key: `clique-${ID}-1` })
-  await ui.press({ key: 'clique-do-terminal-1' })
+  await ui.press({ key: clique(ID, 1) })
+  await ui.press({ key: clique('do-terminal', 1) })
   await ui.unmount()
   expect(m.comandos.filter(c => c[0] === 'open')).toEqual([])
 })
@@ -241,7 +244,7 @@ test('sem os arquivos do app, o farol fica no núcleo: sem azul, sem vermelho pe
   const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
   expect(await barcos(ui)).toEqual(['Barco: Trabalhando', 'Barco: Livre'])
   expect(await textos(ui)).toContain('primeira mensagem da outra')
-  await ui.press({ key: 'clique-outra-1' })
+  await ui.press({ key: clique('outra', 1) })
   await ui.unmount()
   expect(m.comandos.filter(c => c[0] === 'grep' || c[0] === 'open')).toEqual([])
 
