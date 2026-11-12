@@ -13,7 +13,16 @@ Os extras do app desktop no macOS. Fora dele (terminal, Linux, Windows), nada mu
   isso.
 - **Título:** o nome da sessão na barra lateral do app, também depois de renomear; fora do app, a primeira
   mensagem, como antes.
+- **As sessões pré-abertas do app** (spares) não aparecem mais no farol até o app usá-las, e a pasta de cada sessão
+  é a que o app mostra.
 - Se os arquivos do app faltarem ou mudarem de formato, o farol segue no núcleo, sem erro.
+- **A cena chama mais o olho:** com sessão esperando, a lanterna pisca em vermelho, com feixes largos girando a cada
+  2 s, halo, reflexo no mar e dois sinalizadores que avermelham o céu; com resposta não vista, a boia azul maior
+  pisca e, sem sessão esperando, a lanterna e os feixes ficam azuis; com sessão trabalhando, o halo âmbar pulsa
+  forte; com todas livres, a luz é branca. No tema escuro, uma borda clara separa a cena do painel.
+- **Os barcos** piscam mais longo e mais vezes (a cada 2,5 s).
+- **Na faixa,** a torre vermelha pisca (parada com o "Movimento" desligado), e o "…" que aparecia ao lado da
+  torre com a contagem ligada sumiu.
 
 ## 0.2.0 (2026-11-11)
 

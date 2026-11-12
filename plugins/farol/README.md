@@ -14,7 +14,7 @@ A instalação pelo app desktop, a atualização e a desinstalação estão no
 | | App desktop | Terminal |
 |---|---|---|
 | sem aviso | a torre do farol, na cor do texto | `🚦` |
-| alguma sessão esperando você | o feixe da torre acende em vermelho | `🚨 N` (N sessões esperando) |
+| alguma sessão esperando você | o feixe da torre acende em vermelho e pisca (parado com o "Movimento" desligado) | `🚨 N` (N sessões esperando) |
 | só resposta que você não viu (app no macOS) | o feixe acende em azul | `🚦` |
 
 Um clique abre o painel. O farol divide a faixa com os outros mods, à esquerda deles.
@@ -25,11 +25,16 @@ Abre pelo clique na faixa ou pelo `/farol`. Cada sessão aparece em duas linhas:
 `pasta · tempo · estado`. A sessão de onde você abriu leva `esta sessão`. O título é o nome da sessão na barra
 lateral do app (também depois de renomear), no app desktop do macOS; fora dele, a primeira mensagem da sessão.
 
-No app desktop, o painel tem no topo a cena do farol, cuja lanterna diz o estado de todas as sessões juntas
-(vermelha, com os feixes girando, quando alguma espera você; azul-luar, com a boia acesa, quando há resposta que
-você não viu; âmbar com alguma trabalhando; verde com todas livres; apagada sem sessões), e cada sessão é um
-cartão na cor do estado, com um barco ao lado. No macOS, um clique no cartão de outra sessão leva o app para ela.
-No terminal, o painel é em texto.
+No app desktop, o painel tem no topo a cena do farol, que diz o estado de todas as sessões juntas:
+- **alguma esperando você:** a lanterna pisca em vermelho, com feixes largos girando, o reflexo no mar e
+  sinalizadores que avermelham o céu;
+- **resposta que você não viu:** a boia azul pisca no mar e, sem sessão esperando, a lanterna e os feixes ficam
+  azuis;
+- **alguma trabalhando:** a lanterna e o halo em âmbar;
+- **todas livres:** a luz branca, bem fraca; **sem sessões:** apagada.
+
+Cada sessão é um cartão na cor do estado, com um barco ao lado. No macOS, um clique no cartão de outra sessão leva
+o app para ela. No tema escuro, a cena ganha uma borda clara. No terminal, o painel é em texto.
 
 | Estado | Quando |
 |---|---|

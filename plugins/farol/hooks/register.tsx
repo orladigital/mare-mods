@@ -3,7 +3,7 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { Ajustes, Estado, Registro } from '../types'
 import { NOME_NA_FAIXA, PADRAO, lerAjustes } from './ajustes'
-import { abrirNoApp, comOApp, idEmFoco, lerArquivosDoApp } from './app'
+import { abrirNoApp, comOApp, ehSpareDoApp, idEmFoco, lerArquivosDoApp } from './app'
 import type { LeituraDoApp, NoApp } from './app'
 import { semLarguraAmbigua } from './comum/largura'
 import { contarNoLog, lerLogDePermissoes, modoPede, pedidosNoLog } from './comum/permissao'
@@ -40,11 +40,20 @@ let comecouEm = 0
 let achadaNoApp = false
 let foraDoApp = false
 
+// Uma spare do app (pré-aberta, à espera de você abrir uma sessão nova) só grava o registro quando o app a usa, e
+// espera por isso sem o limite do primeiro minuto.
+let spareSemDono = false
+
 const lerApp = async ($: EngineInterface) => {
   if (!casa || !eu || foraDoApp) return
   sessoesNoApp = await lerArquivosDoApp($, casa, leituraDoApp).catch(() => new Map<string, NoApp>())
-  if (sessoesNoApp.has(eu.id)) achadaNoApp = true
-  else if (!achadaNoApp && (await $.clock.now()) - comecouEm > PROCURA_NO_APP_MS) {
+  const meu = sessoesNoApp.get(eu.id)
+  if (meu) {
+    achadaNoApp = true
+    spareSemDono = false
+    // A pasta que o app diz: a de uma spare é a da pré-abertura, não a sua.
+    if (meu.cwd) eu = { ...eu, pasta: pastaDoRegistro(meu.cwd) }
+  } else if (!achadaNoApp && !spareSemDono && (await $.clock.now()) - comecouEm > PROCURA_NO_APP_MS) {
     foraDoApp = true
     sessoesNoApp = new Map()
     leituraDoApp.clear()
@@ -54,6 +63,8 @@ const euNoApp = (): NoApp | undefined => (eu ? sessoesNoApp.get(eu.id) : undefin
 
 const gravar = async ($: EngineInterface) => {
   if (!eu || !pastaDoFarol) return
+  if (spareSemDono) await lerApp($)
+  if (spareSemDono) return
   eu = { ...eu, vivoEm: await $.clock.now() }
   await $.fs.write(`${pastaDoFarol}/${eu.id}.json`, JSON.stringify(eu))
 }
@@ -245,6 +256,7 @@ export const register: Register = on => {
       const id = await $.session.id()
       const t = await $.clock.now()
       comecouEm = t
+      spareSemDono = ehSpareDoApp(e.cwd)
       eu = { id, pasta: pastaDoRegistro(e.cwd), titulo: await tituloDaConversa($), estado: 'livre', desde: t, vivoEm: t }
       // Sessão reaberta: a hora da última resposta continua, para o não visto sobreviver a um reinício do app.
       const anterior = lerRegistro(await $.fs.read(`${pastaDoFarol}/${id}.json`).catch(() => ''))

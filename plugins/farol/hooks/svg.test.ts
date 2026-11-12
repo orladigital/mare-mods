@@ -18,6 +18,7 @@ describe('a torre da faixa é SVG bem formado', () => {
   test('apagada, com o feixe vermelho e com o azul: atributos separados, sem script, dentro do limite', async () => {
     for (const luz of LUZES) {
       bemFormado(torreSvg(luz))
+      bemFormado(torreSvg(luz, true))
     }
   })
 
@@ -32,7 +33,7 @@ describe('a torre da faixa é SVG bem formado', () => {
   })
 })
 
-const SITUACOES: Situacao[] = ['esperando', 'esperando-e-nao-visto', 'nao-visto', 'trabalhando', 'livres', 'vazia']
+const SITUACOES: Situacao[] = ['esperando', 'esperando-e-nao-visto', 'nao-visto', 'trabalhando-e-nao-visto', 'trabalhando', 'livres', 'vazia']
 const VISUAIS: Visual[] = ['esperando', 'nao-visto', 'trabalhando', 'livre', 'sem-sinal']
 
 // O app desenha o SVG parado como imagem, que recusa o malformado: o mesmo teste vale com o movimento desligado.
@@ -45,7 +46,7 @@ const bemFormado = (svg: string) => {
 }
 
 describe('a cena do painel é SVG bem formado', () => {
-  test('as seis situações, com e sem movimento, em painéis estreito e largo', async () => {
+  test('as sete situações, com e sem movimento, em painéis estreito e largo', async () => {
     for (const s of SITUACOES) for (const movimento of [true, false]) for (const largura of [200, 480, 2000]) bemFormado(cenaSvg(s, movimento, largura))
   })
 })

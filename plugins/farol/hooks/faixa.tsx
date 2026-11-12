@@ -25,19 +25,19 @@ export const luzDaFaixa = (lista: readonly Registro[], agora: number): Luz => {
 // A classe do SVG de cada luz; as cores de cada classe, nos dois temas, estão no <style> da torre.
 const CLASSE_DA_LUZ = { vermelha: 'v', azul: 'a' } as const
 
-export const torreSvg = (luz: Luz): string => {
+// O vermelho pisca (`pisca`, só no app e com o movimento ligado); o azul fica parado.
+export const torreSvg = (luz: Luz, pisca = false): string => {
   const cor = luz ? CLASSE_DA_LUZ[luz] : null
-  const feixes = cor
-    ? `<polygon class="${cor}" opacity="0.8" points="11,4 0,1 0,7"/><polygon class="${cor}" opacity="0.8" points="15,4 26,1 26,7"/>`
-    : ''
-  const lanterna = cor ? `<rect class="${cor}" x="11" y="2.5" width="4" height="3"/>` : '<rect class="t" opacity="0.55" x="11" y="2.5" width="4" height="3"/>'
+  const piscando = pisca && luz === 'vermelha' ? '<animate attributeName="opacity" values="1;0.25;1" dur="1.2s" repeatCount="indefinite"/>' : ''
+  const luzAcesa = cor
+    ? `<g class="${cor}">${piscando}<polygon opacity="0.8" points="11,4 0,1 0,7"/><polygon opacity="0.8" points="15,4 26,1 26,7"/><rect x="11" y="2.5" width="4" height="3"/></g>`
+    : '<rect class="t" opacity="0.55" x="11" y="2.5" width="4" height="3"/>'
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VIEWBOX}" width="${LARGURA_TORRE}" height="${ALTURA_TORRE}">`,
     '<style>.t{fill:#2B2B2B}.v{fill:#D6453B}.a{fill:#2F6FE0}',
     '@media (prefers-color-scheme: dark){.t{fill:#E6E3DE}.v{fill:#F2907F}.a{fill:#8FBDF5}}</style>',
-    feixes,
+    luzAcesa,
     '<polygon class="t" points="10.5,2.5 13,0.5 15.5,2.5"/>',
-    lanterna,
     '<rect class="t" x="9.5" y="5.5" width="7" height="1"/>',
     '<polygon class="t" points="10.5,6.5 15.5,6.5 17,15 9,15"/>',
     '<rect class="t" x="7" y="15" width="12" height="1"/>',
@@ -55,7 +55,7 @@ export const rotuloTerminal = (n: number): string => (n > 0 ? `🚨 ${n}` : '�
 // O botão do app não aceita um SVG dentro (o desenho não sai) e é o único elemento com clique: por cima da
 // torre vai um botão sem moldura de espaços não separáveis, um pouco menor que ela (maior, o app mostra "…").
 const COBERTURA = ' '.repeat(9)
-const COBERTURA_COM_NUMERO = ' '.repeat(13)
+const COBERTURA_COM_NUMERO = ' '.repeat(11)
 
 export type DadosDaFaixa = { lista: readonly Registro[]; agora: number; ajustes: Ajustes; abrir: () => unknown }
 
@@ -76,10 +76,12 @@ export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt'>,
   const { Svg } = elementos
   const luz = luzDaFaixa(d.lista, d.agora)
   const numero = contagemNaFaixa(d.ajustes, e.surface) && n > 0
+  // A torre vermelha pisca; animada, o app a desenha como página (isInteractive), e só enquanto pisca.
+  const pisca = luz === 'vermelha' && d.ajustes.movimento
   return (
     <Box flexDirection="row" gap={2} alignItems="center">
       <Box position="relative" flexDirection="row" alignItems="center" gap={1} flexShrink={0}>
-        <Svg key="torre" source={torreSvg(luz)} alt={descricaoDaTorre(luz, n)} width={LARGURA_TORRE} height={ALTURA_TORRE} />
+        <Svg key="torre" source={torreSvg(luz, pisca)} alt={descricaoDaTorre(luz, n)} width={LARGURA_TORRE} height={ALTURA_TORRE} isInteractive={pisca || undefined} />
         {numero && <Text bold>{String(n)}</Text>}
         <Box position="absolute" top={0} left={0} right={0} bottom={0} justifyContent="center">
           <Button key="abrir-farol" label={numero ? COBERTURA_COM_NUMERO : COBERTURA} plain onPress={() => void d.abrir()} />

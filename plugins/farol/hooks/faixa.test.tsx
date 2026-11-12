@@ -3,6 +3,7 @@ import { expect, test } from 'claude-code/testing'
 import type { Registro } from '../types'
 import { FAIXA, INICIO, gravarOutra, preparar } from './apoio-de-teste'
 import type { Mundo } from './apoio-de-teste'
+import { torreSvg } from './faixa'
 
 // Outras sessões abertas na máquina, uma por estado.
 const outras = (m: Mundo, estados: Registro['estado'][]) =>
@@ -89,4 +90,35 @@ test('com o ajuste "na faixa: esconder", o farol sai da faixa nas duas superfíc
     expect(await ui.find({ key: 'abrir-farol' })).toBeUndefined()
     await ui.unmount()
   }
+})
+
+test('no app, com sessão esperando e o movimento ligado, a torre pisca', async ($, on) => {
+  const m = preparar(on)
+  outras(m, ['esperando'])
+  await $.session.start(INICIO)
+
+  const ui = await $.ui.mount({ ...FAIXA, surface: 'desktop' })
+  const torre = await ui.find({ type: 'Svg' })
+  expect(torre?.props.isInteractive).toBe(true)
+  expect(String(torre?.props.source)).toMatch(/<g class="v"[^>]*>\s*<animate attributeName="opacity"/)
+  await ui.unmount()
+})
+
+test('no app, com o movimento desligado, a torre vermelha fica parada', async ($, on) => {
+  const m = preparar(on, { guardado: { ajustes: { movimento: false } } })
+  outras(m, ['esperando'])
+  await $.session.start(INICIO)
+
+  const ui = await $.ui.mount({ ...FAIXA, surface: 'desktop' })
+  const torre = await ui.find({ type: 'Svg' })
+  expect(torre?.props.isInteractive).toBeFalsy()
+  expect(String(torre?.props.source)).toContain('class="v"')
+  expect(String(torre?.props.source)).not.toContain('<animate')
+  await ui.unmount()
+})
+
+test('a torre azul (só não visto) não pisca', async () => {
+  expect(torreSvg('azul', true)).not.toContain('<animate')
+  expect(torreSvg('vermelha', true)).toContain('<animate')
+  expect(torreSvg('vermelha', false)).not.toContain('<animate')
 })

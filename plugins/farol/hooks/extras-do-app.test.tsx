@@ -26,7 +26,7 @@ test('no app, uma resposta numa sessão fora da tela deixa o cartão azul e acen
 
   let ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
   expect(await barcos(ui)).toEqual(['Barco: Não visto', 'Barco: Livre'])
-  expect(await cena(ui)).toBe('Farol com a boia acesa: há resposta que você não viu')
+  expect(await cena(ui)).toBe('Farol com a luz azul e a boia acesa: há resposta que você não viu')
   await ui.unmount()
 
   // Você abre a outra sessão no app: o foco dela passa a ser o mais recente, e a releitura (5 s) apaga o azul.
@@ -368,4 +368,36 @@ test('sem o arquivo desta sessão no app no primeiro minuto (terminal), o farol 
   const depois = leiturasDoApp()
   await m.avancar(30_000)
   expect(leiturasDoApp()).toBe(depois)
+})
+
+// Uma sessão que o app deixa pré-aberta, na pasta das spares, à espera de você abrir uma sessão nova.
+const INICIO_SPARE = { ...INICIO, cwd: '/Users/exemplo/Library/Application Support/Claude/claude-code-spare/spare-exemplo1' } as const
+
+test('uma sessão spare do app só entra no farol quando o app a usa, e com a pasta do app', async ($, on) => {
+  const m = preparar(on)
+  await $.session.start(INICIO_SPARE)
+  expect(registroDe(m)).toBeUndefined()
+
+  // Ninguém a usou por dois minutos: continua fora (e segue procurando, sem o limite de 1 min).
+  await m.avancar(120_000)
+  expect(registroDe(m)).toBeUndefined()
+
+  // Você abre uma sessão nova; o app usa esta spare, e o arquivo dela aparece.
+  gravarNoApp(m, { cli: ID, local: 'local_eu', nome: 'Sessão nova', focadoEm: AGORA + 120_000, cwd: '/Users/exemplo/projetos/meu-projeto' })
+  await m.avancar(30_000)
+  expect(registroDe(m)).toEqual(expect.objectContaining({ id: ID, pasta: 'meu-projeto' }))
+})
+
+test('no app, a pasta de cada sessão é a que o app diz', async ($, on) => {
+  const m = preparar(on)
+  gravarNoApp(m, { cli: ID, local: 'local_eu', focadoEm: AGORA - MIN, cwd: '/Users/exemplo/projetos/exemplo' })
+  gravarNoApp(m, { cli: 'outra', local: 'local_outra', focadoEm: AGORA - 10 * MIN, cwd: '/Users/exemplo/projetos/outro-projeto' })
+  gravarOutra(m, { id: 'outra', pasta: 'spare-exemplo2' })
+  await $.session.start(INICIO)
+
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const t = await textos(ui)
+  expect(t.some(x => x.startsWith('outro-projeto · '))).toBe(true)
+  expect(t.some(x => x.startsWith('spare-exemplo2'))).toBe(false)
+  await ui.unmount()
 })

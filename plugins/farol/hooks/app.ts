@@ -5,12 +5,17 @@
 import type { EngineInterface } from 'claude-code'
 
 import type { Registro } from '../types'
+import { pastaDoRegistro } from './estado'
 
 // A pasta dos arquivos de sessão do app, dentro da casa (só existe no macOS).
 const PASTA_DO_APP = 'Library/Application Support/Claude/claude-code-sessions'
 
-// O que o app sabe de uma sessão, lido do arquivo dela.
-export type NoApp = { titulo?: string; appId?: string; focadoEm?: number; ativoEm?: number; modo?: string }
+// O app deixa sessões pré-abertas (spares) numa pasta própria e usa uma delas quando você abre uma sessão nova; o
+// Claude Code segue achando que ela roda ali. A spare só entra no farol quando o app a usa.
+export const ehSpareDoApp = (cwd: string): boolean => /[\\/]Claude[\\/]claude-code-spare[\\/]/.test(cwd)
+
+// O que o app sabe de uma sessão, lido do arquivo dela; `cwd` é a pasta onde ela roda para o app.
+export type NoApp = { titulo?: string; appId?: string; focadoEm?: number; ativoEm?: number; modo?: string; cwd?: string }
 // Um arquivo de sessão do app: o id da sessão no Claude Code (`cliSessionId`) e o que o app sabe dela.
 export type ArquivoDoApp = { cli: string; info: NoApp }
 
@@ -31,6 +36,7 @@ export const lerNoApp = (conteudo: string): ArquivoDoApp | null => {
       focadoEm: numero(o.lastFocusedAt),
       ativoEm: numero(o.lastActivityAt),
       modo: texto(o.permissionMode),
+      cwd: texto(o.cwd),
     }
     for (const k of Object.keys(info) as (keyof NoApp)[]) if (info[k] === undefined) delete info[k]
     return { cli, info }
@@ -68,7 +74,8 @@ export const linkDaSessao = (appId: string | undefined): string | undefined =>
   appId && /^local_[A-Za-z0-9-]{1,64}$/.test(appId) ? `claude://code/continue?session=${appId}` : undefined
 
 // As sessões com o que o app sabe delas: o nome na barra lateral vira o título (a primeira mensagem fica de
-// reserva), e vêm o id no app e o não visto. Sessão que o app não conhece (do terminal) fica como está.
+// reserva), a pasta é a do app, e vêm o id no app e o não visto. Sessão que o app não conhece (do terminal) fica
+// como está.
 export const comOApp = (lista: readonly Registro[], app: ReadonlyMap<string, NoApp>): Registro[] => {
   const naTela = idEmFoco(app)
   return lista.map(r => {
@@ -77,6 +84,7 @@ export const comOApp = (lista: readonly Registro[], app: ReadonlyMap<string, NoA
     return {
       ...r,
       titulo: n.titulo?.trim() || r.titulo,
+      pasta: n.cwd ? pastaDoRegistro(n.cwd) : r.pasta,
       appId: n.appId,
       naoVisto: naoVistoDe(r.respondeuEm, n.focadoEm, r.id === naTela),
     }

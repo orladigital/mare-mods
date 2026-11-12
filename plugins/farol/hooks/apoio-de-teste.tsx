@@ -141,12 +141,12 @@ export const ARQUIVOS_DO_APP = `${CASA}/Library/Application Support/Claude/claud
 // Cada gravação muda a hora do arquivo, como no disco.
 export const gravarNoApp = (
   m: Mundo,
-  s: { cli: string; local: string; nome?: string; focadoEm?: number; modo?: string },
+  s: { cli: string; local: string; nome?: string; focadoEm?: number; modo?: string; cwd?: string },
 ) => {
   const caminho = `${ARQUIVOS_DO_APP}/conta-exemplo/ambiente-exemplo/${s.local}.json`
   m.arquivos.set(
     caminho,
-    JSON.stringify({ cliSessionId: s.cli, sessionId: s.local, title: s.nome, lastFocusedAt: s.focadoEm, permissionMode: s.modo ?? 'auto' }),
+    JSON.stringify({ cliSessionId: s.cli, sessionId: s.local, title: s.nome, lastFocusedAt: s.focadoEm, permissionMode: s.modo ?? 'auto', cwd: s.cwd }),
   )
   m.mudancas.set(caminho, (m.mudancas.get(caminho) ?? 0) + 1)
 }
