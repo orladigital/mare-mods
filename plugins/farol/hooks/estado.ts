@@ -51,16 +51,16 @@ export const ha = (ms: number): string => {
   return h < 24 ? `há ${h}h${String(m % 60).padStart(2, '0')}` : `há ${Math.floor(h / 24)}d`
 }
 
-// Título legível a partir do texto de uma mensagem: tira blocos de saída e marcações, mostra comando de shell
-// como "$ …"; vazio quando é comando de barra, resumo de conversa retomada, interrupção ou não sobra texto.
+// Título legível a partir do texto de uma mensagem: tira blocos de saída, avisos da IDE e marcações; vazio quando
+// é comando de barra ou de shell (não dizem do que a sessão trata), resumo de conversa retomada, interrupção ou não
+// sobra texto.
 export const tituloDe = (texto: string): string => {
   const inicio = texto.trim()
   if (/<command-name>/.test(texto) || inicio.startsWith('/')) return ''
   if (/^(This session is being continued|Caveat:)/.test(inicio)) return ''
   if (inicio.startsWith('[Request interrupted by user') || inicio.startsWith('Background (from the session that started this one)')) return ''
   const limpo = texto
-    .replace(/<(bash-stdout|bash-stderr|system-reminder|local-command-stdout|local-command-stderr)>[\s\S]*?<\/\1>/g, ' ')
-    .replace(/<bash-input>([\s\S]*?)<\/bash-input>/g, '$ $1')
+    .replace(/<(bash-input|bash-stdout|bash-stderr|system-reminder|local-command-stdout|local-command-stderr|ide_opened_file|ide_selection)>[\s\S]*?<\/\1>/g, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
