@@ -1,6 +1,6 @@
 {
   "name": "farol",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": { "name": "Guilherme R." },
   "description": "Mostra o estado de todas as sessões abertas do Claude Code na máquina: qual espera você, qual trabalha e qual está livre",
   "types": "./types/index.d.ts"

@@ -19,7 +19,7 @@ type Tons = {
   // O fundo com o mouse em cima do cartão: um tom a mais da mesma cor.
   realce: string
   casco: string
-  // O aviso pisca: a bandeira e o casco, este no tom `claro`, uma ou duas vezes a cada 5 s.
+  // O aviso pisca: a bandeira e o casco, este no tom `claro`, uma ou duas vezes a cada 2,5 s.
   aviso?: { claro: string; vezes: 1 | 2 }
   bandeira?: string
   mastro: string
@@ -37,10 +37,11 @@ const TONS: Record<Visual, Tons> = {
 
 export const tonsDoCartao = (v: Visual): Tons => TONS[v]
 
-// O ritmo do aviso, em 5 s: dois lampejos no esperando, um no não visto.
+// O ritmo do aviso, a cada 2,5 s: dois lampejos de ~0,4 s no esperando, um de ~0,6 s no não visto.
+const CICLO = '2.5s'
 const RITMO = {
-  2: { tempos: '0;0.04;0.08;0.12;0.16;1', vezes: (base: string, claro: string) => [base, claro, base, claro, base, base] },
-  1: { tempos: '0;0.05;0.1;1', vezes: (base: string, claro: string) => [base, claro, base, base] },
+  2: { tempos: '0;0.08;0.16;0.24;0.32;1', vezes: (base: string, claro: string) => [base, claro, base, claro, base, base] },
+  1: { tempos: '0;0.12;0.24;1', vezes: (base: string, claro: string) => [base, claro, base, base] },
 } as const
 
 // O barco de vela branca, com o casco na cor do estado; a bandeira e o casco piscam no ritmo do aviso.
@@ -48,11 +49,11 @@ export const barcoSvg = (v: Visual, movimento: boolean): string => {
   const t = TONS[v]
   const ritmo = movimento && t.aviso ? RITMO[t.aviso.vezes] : null
   const piscaBandeira = ritmo
-    ? `<animate attributeName="opacity" values="${ritmo.vezes('0.3', '1').join(';')}" keyTimes="${ritmo.tempos}" dur="5s" repeatCount="indefinite"/>`
+    ? `<animate attributeName="opacity" values="${ritmo.vezes('0.3', '1').join(';')}" keyTimes="${ritmo.tempos}" dur="${CICLO}" repeatCount="indefinite"/>`
     : ''
   const piscaCasco =
     ritmo && t.aviso
-      ? `<animate attributeName="fill" values="${ritmo.vezes(t.casco, t.aviso.claro).join(';')}" keyTimes="${ritmo.tempos}" dur="5s" repeatCount="indefinite"/>`
+      ? `<animate attributeName="fill" values="${ritmo.vezes(t.casco, t.aviso.claro).join(';')}" keyTimes="${ritmo.tempos}" dur="${CICLO}" repeatCount="indefinite"/>`
       : ''
   const bandeira = t.bandeira ? `<path id="bandeira" d="M66 6 L80 10 L66 14 Z" fill="${t.bandeira}">${piscaBandeira}</path>` : ''
   const esteira = t.esteira

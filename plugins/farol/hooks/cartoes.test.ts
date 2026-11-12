@@ -7,19 +7,21 @@ const parte = (svg: string, id: string) => svg.match(new RegExp(`<path id="${id}
 const lampejos = (svg: string, claro: string) => (parte(svg, 'casco')?.match(new RegExp(claro, 'g'))?.length ?? 0)
 
 describe('o barco de cada estado', () => {
-  test('esperando: bandeira vermelha e casco com dois lampejos claros a cada 5 s', async () => {
+  test('esperando: bandeira vermelha e casco com dois lampejos claros a cada 2,5 s', async () => {
     const svg = barcoSvg('esperando', true)
     expect(parte(svg, 'bandeira')).toContain('fill="#D6453B"')
     expect(parte(svg, 'casco')).toContain('fill="#D6453B"')
     expect(lampejos(svg, '#FF8A7A')).toBe(2)
-    expect(parte(svg, 'casco')).toContain('dur="5s"')
+    expect(parte(svg, 'casco')).toContain('dur="2.5s"')
   })
 
-  test('não visto: bandeira azul e casco com um lampejo claro a cada 5 s', async () => {
+  test('não visto: bandeira azul e casco com um lampejo claro de ~0,6 s a cada 2,5 s', async () => {
     const svg = barcoSvg('nao-visto', true)
     expect(parte(svg, 'bandeira')).toContain('fill="#2F6FE0"')
     expect(lampejos(svg, '#7FB0FF')).toBe(1)
-    expect(parte(svg, 'casco')).toContain('dur="5s"')
+    expect(parte(svg, 'casco')).toContain('dur="2.5s"')
+    // O lampejo vai de 0 a 24% do ciclo: 0,6 s.
+    expect(parte(svg, 'casco')).toContain('keyTimes="0;0.12;0.24;1"')
   })
 
   test('trabalhando: bandeira parada verde-água escuro e a esteira atrás do barco', async () => {

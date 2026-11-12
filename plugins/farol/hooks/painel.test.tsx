@@ -113,8 +113,8 @@ test('no app, a cena no topo e um cartão por sessão, pela prioridade, com o ba
   const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
   // O primeiro desenho do painel é a cena; os outros, os barcos.
   const cena = (await ui.findAll({ type: 'Svg' }))[0]
-  expect(cena?.props.alt).toBe('Farol com a luz vermelha: há sessão esperando você')
-  expect(String(cena?.props.source)).toContain('class="feixe"')
+  expect(cena?.props.alt).toBe('Farol com a luz vermelha piscando e sinalizadores no céu: há sessão esperando você')
+  expect(String(cena?.props.source)).toContain('id="feixes-vermelhos"')
 
   const barcos = (await ui.findAll({ type: 'Svg' })).filter(s => /^Barco:/.test(String(s.props.alt)))
   expect(barcos.map(b => b.props.alt)).toEqual([
@@ -137,7 +137,7 @@ test('no app, a cena no topo e um cartão por sessão, pela prioridade, com o ba
   await ui.unmount()
 })
 
-test('enquanto a troca de sessão não chega, o clique no cartão não abre nem roda nada', async ($, on) => {
+test('sem os arquivos do app, o clique no cartão não abre nem roda nada', async ($, on) => {
   const m = preparar(on)
   gravarOutra(m, { id: 'outra', titulo: 'Outra sessão', estado: 'livre' })
   await $.session.start(INICIO)
