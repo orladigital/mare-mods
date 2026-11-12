@@ -1,5 +1,16 @@
 # Changelog do farol
 
+## 0.4.0 (2026-11-12)
+
+O painel no terminal ganha cor. No app, nada muda.
+
+- Cada sessão é uma linha com fundo na cor do estado, no mesmo tom nos temas claro e escuro:
+  `!! Esperando você`, `>> Trabalhando`, `~  Livre` e `?  Sem sinal`, com o tempo, a pasta e o título. A sessão
+  esperando ganha uma borda grossa em volta.
+- O título vai no fim da linha, e o corte com o painel estreito cai nele, depois de os símbolos de largura
+  ambígua virarem texto.
+- O README explica por que o pedido de permissão não acende o farol no terminal.
+
 ## 0.3.0 (2026-11-11)
 
 Os extras do app desktop no macOS. Fora dele (terminal, Linux, Windows), nada muda.

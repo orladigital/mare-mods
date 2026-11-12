@@ -34,7 +34,13 @@ No app desktop, o painel tem no topo a cena do farol, que diz o estado de todas 
 - **todas livres:** a luz branca, bem fraca; **sem sessões:** apagada.
 
 Cada sessão é um cartão na cor do estado, com um barco ao lado. No macOS, um clique no cartão de outra sessão leva
-o app para ela. No tema escuro, a cena ganha uma borda clara. No terminal, o painel é em texto.
+o app para ela. No tema escuro, a cena ganha uma borda clara.
+
+No terminal, cada sessão é uma linha com fundo na cor do estado, no mesmo tom nos temas claro e escuro, sem
+animação: `!! Esperando você · há 2 min · pasta · título`, com uma borda grossa em volta; `>> Trabalhando`,
+`~  Livre` e `?  Sem sinal`. O título corta no fim da linha, e os símbolos que alguns terminais desenham mais
+largos (setas, ◆, ⚓…) viram texto (`->`, `*`, `~`) para a borda não entortar. No terminal não há não visto: a
+sessão que estaria azul aparece livre.
 
 | Estado | Quando |
 |---|---|
@@ -77,7 +83,11 @@ sessão pelo `open` do macOS.
   desktop**, que o app pode mudar sem aviso. Se eles faltarem ou mudarem de formato, o farol segue sem esses
   extras e sem erro: sem azul, só a pergunta (`AskUserQuestion`) acendendo o vermelho, e o título pela primeira
   mensagem.
-- **Pedido de permissão no terminal não acende o farol nesta versão:** só a pergunta (`AskUserQuestion`).
+- **Pedido de permissão no terminal não acende o farol nesta versão:** só a pergunta (`AskUserQuestion`). O
+  aviso de pedido de permissão não serve: numa conta Team ou Enterprise, o plugin da conta o leva aos hooks da
+  organização, e ele não chega aos mods. O único outro sinal que existe é perguntar ao prompt, de
+  tempos em tempos, se há um diálogo na tela, e cada pergunta faz os outros mods instalados rodarem. No app no macOS, o
+  farol lê o pedido pelo log do app.
 - **O não visto conta a sessão aberta por último no app como a que está na tela**, mesmo com o app atrás de outra
   janela: uma resposta dela nesse momento não fica azul.
 - **Windows:** não testado. A pasta da casa vem do `USERPROFILE` quando não há `HOME`, mas lá não há `rm`, e o

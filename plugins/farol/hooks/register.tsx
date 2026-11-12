@@ -5,12 +5,12 @@ import type { Ajustes, Estado, Registro } from '../types'
 import { NOME_NA_FAIXA, PADRAO, lerAjustes } from './ajustes'
 import { abrirNoApp, comOApp, ehSpareDoApp, idEmFoco, lerArquivosDoApp } from './app'
 import type { LeituraDoApp, NoApp } from './app'
-import { semLarguraAmbigua } from './comum/largura'
 import { contarNoLog, lerLogDePermissoes, modoPede, pedidosNoLog } from './comum/permissao'
 import { desenharCartoes } from './cartoes'
 import { ALTURA_CENA, cenaSvg, descricaoDaCena, situacaoDaCena } from './cena'
 import { SEM_TITULO, casaDe, detalheDe, lerRegistro, ordenar, pastaDoRegistro, tituloDe, visualDe } from './estado'
 import { desenharFaixa } from './faixa'
+import { desenharLinhas } from './terminal'
 
 const PAINEL = 'farol'
 const sessoes = atom({ plugin: 'farol', key: 'sessoes' } as const, [])
@@ -369,8 +369,9 @@ export const register: Register = on => {
     return desenharFaixa($, e, outros, dados)
   })
 
-  // O painel: no app, a cena do farol no topo e um cartão com barco por sessão; no terminal, uma linha
-  // de título e uma de "pasta · tempo · estado" por sessão. Abaixo, os ajustes e o Fechar.
+  // O painel: no app, a cena do farol no topo e um cartão com barco por sessão; no terminal, uma linha com fundo
+  // por sessão. Onde não há nenhum dos dois, uma linha de título e uma de "pasta · tempo · estado" por sessão.
+  // Abaixo, os ajustes e o Fechar.
   on('ui.render', { component: 'Pane', requestId: PAINEL }, async ($, e) => {
     const elementos = $.ui.resolve(e)
     const { Box, Text, Button } = elementos
@@ -384,11 +385,9 @@ export const register: Register = on => {
 
     const sessao = (r: Registro) => {
       const v = visualDe(r, t)
-      // No terminal, um símbolo de largura ambígua no título entorta o que vem ao lado.
-      const titulo = terminal ? semLarguraAmbigua(r.titulo) : r.titulo
       return (
         <Box flexDirection="column">
-          <Text bold dimColor={v === 'sem-sinal'} wrap="truncate-end">{titulo}</Text>
+          <Text bold dimColor={v === 'sem-sinal'} wrap="truncate-end">{r.titulo}</Text>
           <Text dimColor={v !== 'esperando'} color={v === 'esperando' ? 'error' : undefined} wrap="truncate-end">
             {detalheDe(r, t, minha)}
           </Text>
@@ -471,7 +470,8 @@ export const register: Register = on => {
         {semRegistro && <Text dimColor>Sem a pasta da casa (nem HOME nem USERPROFILE): o farol não registra as sessões aqui.</Text>}
         {desenhos}
         {!semRegistro && lista.length === 0 && <Text dimColor>Nenhuma sessão com o farol ligado.</Text>}
-        {!desenhos && lista.length > 0 && <Box flexDirection="column" gap={1}>{lista.map(sessao)}</Box>}
+        {terminal && lista.length > 0 && desenharLinhas($, e, { lista, agora: t, minha })}
+        {!desenhos && !terminal && lista.length > 0 && <Box flexDirection="column" gap={1}>{lista.map(sessao)}</Box>}
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
           <Button key="ajustes" label={abertos ? 'Esconder ajustes' : 'Ajustes'} dimColor onPress={() => update($, ajustesAbertos, x => !x)} />
           <Button key="fechar" label="Fechar" role="dismiss" onPress={() => fechar($)} />

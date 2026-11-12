@@ -96,10 +96,11 @@ export const lerRegistro = (texto: string): Registro | null => {
 export const casaDe = (home: string | undefined, perfil: string | undefined): string | undefined =>
   home?.trim() || perfil?.trim() || undefined
 
-// A segunda linha de cada sessão no painel: "pasta · tempo · estado", e "esta sessão" na que está aberta aqui. O
-// tempo da sem sinal conta desde a última renovação do registro; o das outras, desde que entraram no estado.
-export const detalheDe = (r: Registro, agora: number, minha: string): string => {
-  const v = visualDe(r, agora)
-  const tempo = ha(agora - (v === 'sem-sinal' ? r.vivoEm : r.desde))
-  return `${r.pasta} · ${tempo} · ${rotuloDe(v)}${r.id === minha ? ' · esta sessão' : ''}`
-}
+// O tempo de uma sessão no painel: o da sem sinal conta desde a última renovação do registro; o das outras, desde
+// que entraram no estado.
+export const tempoDe = (r: Registro, agora: number): string =>
+  ha(agora - (visualDe(r, agora) === 'sem-sinal' ? r.vivoEm : r.desde))
+
+// A segunda linha de cada sessão no painel: "pasta · tempo · estado", e "esta sessão" na que está aberta aqui.
+export const detalheDe = (r: Registro, agora: number, minha: string): string =>
+  `${r.pasta} · ${tempoDe(r, agora)} · ${rotuloDe(visualDe(r, agora))}${r.id === minha ? ' · esta sessão' : ''}`

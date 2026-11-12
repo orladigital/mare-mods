@@ -226,7 +226,7 @@ test('no painel do terminal não há não visto, mesmo com os arquivos do app', 
   const ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
   const t = await textos(ui)
   expect(t.some(x => x.includes('Não visto'))).toBe(false)
-  expect(t).toContain('exemplo · agora · Livre')
+  expect(t).toContain('~  Livre · agora · exemplo · outra')
   await ui.unmount()
 })
 
