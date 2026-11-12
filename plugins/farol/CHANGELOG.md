@@ -2,13 +2,19 @@
 
 ## 0.4.0 (2026-11-12)
 
-O painel no terminal ganha cor. No app, nada muda.
+O painel no terminal ganha cor.
 
-- Cada sessão é uma linha com fundo na cor do estado, no mesmo tom nos temas claro e escuro:
-  `!! Esperando você`, `>> Trabalhando`, `~  Livre` e `?  Sem sinal`, com o tempo, a pasta e o título. A sessão
-  esperando ganha uma borda grossa em volta.
-- O título vai no fim da linha, e o corte com o painel estreito cai nele, depois de os símbolos de largura
-  ambígua virarem texto.
+- No topo, um resumo com os estados que têm sessão (`1 Esperando`, `1 Trabalhando`, `3 Livres`).
+- Cada sessão é um cartão de duas linhas, no mesmo tom nos temas claro e escuro: o título em negrito em cima e
+  "pasta · tempo · estado" embaixo. O esperando tem fundo vermelho e borda grossa; o trabalhando, fundo verde-água;
+  o livre, só uma borda clara. Os cartões vão colados, cada um na sua borda.
+- As sessões sem sinal ficam juntas numa linha apagada, no fim.
+- O título corta no fim da linha, depois de os símbolos de largura ambígua virarem texto.
+- O título de uma sessão não é mais um comando de shell digitado ("$ cd …") nem o aviso da IDE sobre o arquivo
+  aberto: vale a primeira mensagem sua de verdade, no app e no terminal.
+- Na faixa do terminal, o `🚦` volta para a linha da barra de uso: ficava uma linha acima dela.
+- No app, a sessão cuja resposta termina com uma pergunta que depende de você (a caixa abaixo da resposta) fica
+  esperando até o próximo prompt; antes, ficava livre.
 - O README explica por que o pedido de permissão não acende o farol no terminal.
 
 ## 0.3.0 (2026-11-11)

@@ -10,7 +10,7 @@ import { desenharCartoes } from './cartoes'
 import { ALTURA_CENA, cenaSvg, descricaoDaCena, situacaoDaCena } from './cena'
 import { SEM_TITULO, casaDe, detalheDe, lerRegistro, ordenar, pastaDoRegistro, tituloDe, visualDe } from './estado'
 import { desenharFaixa } from './faixa'
-import { desenharLinhas } from './terminal'
+import { desenharPainelNoTerminal } from './terminal'
 
 const PAINEL = 'farol'
 const sessoes = atom({ plugin: 'farol', key: 'sessoes' } as const, [])
@@ -21,6 +21,10 @@ const ajustesAbertos = atom({ plugin: 'farol', key: 'ajustesAbertos' } as const,
 
 // A pergunta ao usuário que para a sessão até a resposta.
 const PERGUNTA = 'AskUserQuestion'
+// A caixa de fim de turno do app, abaixo da resposta; com `blocked`, a sessão parou porque depende de você, e fica
+// esperando até o próximo prompt.
+const FIM_DE_TURNO = 'mcp__ccd_turn__wrap_up'
+let paradaPorVoce = false
 
 // O registro desta sessão; cada mudança é gravada em <casa>/.claude/farol/<id>.json. Sem a pasta da casa
 // (nem HOME nem USERPROFILE), `pastaDoFarol` fica vazia e o farol não grava nem lê nada.
@@ -121,7 +125,7 @@ const pararVigia = () => {
   conhecidosNoLog = null
 }
 
-const esperaVoce = () => perguntas > 0 || pedidosNaTela.size > 0 || logComPedidoAberto
+const esperaVoce = () => perguntas > 0 || pedidosNaTela.size > 0 || logComPedidoAberto || paradaPorVoce
 
 // Esperando ou não, depois de uma pergunta ou de um pedido de permissão.
 const reavaliar = async ($: EngineInterface) => {
@@ -135,6 +139,7 @@ const reavaliar = async ($: EngineInterface) => {
 // O prompt ou o turno da sessão começando: trabalhando, salvo se ainda há pergunta ou pedido na tela.
 const comecar = async ($: EngineInterface) => {
   voltarPara = 'trabalhando'
+  paradaPorVoce = false
   if (esperaVoce()) await reavaliar($)
   else await mudar($, 'trabalhando')
 }
@@ -289,6 +294,9 @@ export const register: Register = on => {
   // Uma pergunta da sessão ou de um subagente deixa a sessão esperando você até a resposta. O fim de qualquer
   // chamada fecha o pedido de permissão dela, se houve (respondido ou recusado).
   on('tool.call', async ($, e, next) => {
+    // A caixa é do app, e os tipos da API não a listam: o nome e o `blocked` se leem soltos.
+    const caixa = e as { tool: string; blocked?: unknown }
+    if (caixa.tool === FIM_DE_TURNO && e.agentId === undefined && caixa.blocked === true) paradaPorVoce = true
     const pergunta = e.tool === PERGUNTA
     if (pergunta) {
       perguntas += 1
@@ -369,9 +377,9 @@ export const register: Register = on => {
     return desenharFaixa($, e, outros, dados)
   })
 
-  // O painel: no app, a cena do farol no topo e um cartão com barco por sessão; no terminal, uma linha com fundo
-  // por sessão. Onde não há nenhum dos dois, uma linha de título e uma de "pasta · tempo · estado" por sessão.
-  // Abaixo, os ajustes e o Fechar.
+  // O painel: no app, a cena do farol no topo e um cartão com barco por sessão; no terminal, um cartão de duas
+  // linhas com fundo por sessão. Onde não há nenhum dos dois, uma linha de título e uma de "pasta · tempo · estado"
+  // por sessão. Abaixo, os ajustes e o Fechar.
   on('ui.render', { component: 'Pane', requestId: PAINEL }, async ($, e) => {
     const elementos = $.ui.resolve(e)
     const { Box, Text, Button } = elementos
@@ -465,12 +473,13 @@ export const register: Register = on => {
       )
     }
 
+    // No terminal, uma linha em branco separa o painel das abas do app de painéis.
     return (
-      <Box flexDirection="column" gap={1}>
+      <Box flexDirection="column" gap={1} marginTop={terminal ? 1 : 0}>
         {semRegistro && <Text dimColor>Sem a pasta da casa (nem HOME nem USERPROFILE): o farol não registra as sessões aqui.</Text>}
         {desenhos}
         {!semRegistro && lista.length === 0 && <Text dimColor>Nenhuma sessão com o farol ligado.</Text>}
-        {terminal && lista.length > 0 && desenharLinhas($, e, { lista, agora: t, minha })}
+        {terminal && lista.length > 0 && desenharPainelNoTerminal($, e, { lista, agora: t, minha })}
         {!desenhos && !terminal && lista.length > 0 && <Box flexDirection="column" gap={1}>{lista.map(sessao)}</Box>}
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
           <Button key="ajustes" label={abertos ? 'Esconder ajustes' : 'Ajustes'} dimColor onPress={() => update($, ajustesAbertos, x => !x)} />

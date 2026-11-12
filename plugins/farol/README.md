@@ -36,15 +36,19 @@ No app desktop, o painel tem no topo a cena do farol, que diz o estado de todas 
 Cada sessão é um cartão na cor do estado, com um barco ao lado. No macOS, um clique no cartão de outra sessão leva
 o app para ela. No tema escuro, a cena ganha uma borda clara.
 
-No terminal, cada sessão é uma linha com fundo na cor do estado, no mesmo tom nos temas claro e escuro, sem
-animação: `!! Esperando você · há 2 min · pasta · título`, com uma borda grossa em volta; `>> Trabalhando`,
-`~  Livre` e `?  Sem sinal`. O título corta no fim da linha, e os símbolos que alguns terminais desenham mais
-largos (setas, ◆, ⚓…) viram texto (`->`, `*`, `~`) para a borda não entortar. No terminal não há não visto: a
+No terminal, sem animação e com os mesmos tons nos temas claro e escuro:
+- **no topo, um resumo** com os estados que têm sessão: `1 Esperando`, `1 Trabalhando`, `3 Livres`;
+- **um cartão de duas linhas por sessão:** o título em negrito em cima e `pasta · há 2 min · estado` embaixo. O
+  esperando tem fundo vermelho e uma borda grossa; o trabalhando, fundo verde-água; o livre, só uma borda clara;
+- **no fim, as sessões sem sinal** juntas numa linha apagada: `2 sessões sem sinal · há 4 min a 35 min · pasta`.
+
+O título corta no fim da linha, e os símbolos que alguns terminais desenham mais largos (setas, ◆, ⚓…) viram texto
+(`->`, `*`, `~`) para a borda não entortar. No terminal não há não visto: a
 sessão que estaria azul aparece livre.
 
 | Estado | Quando |
 |---|---|
-| Esperando | a sessão fez uma pergunta (`AskUserQuestion`) ou, no app no macOS, pediu uma permissão, dela ou de um subagente, e aguarda a resposta |
+| Esperando | a sessão fez uma pergunta (`AskUserQuestion`) ou, no app no macOS, pediu uma permissão, dela ou de um subagente, e aguarda a resposta; no app, também quando a resposta termina com uma pergunta que depende de você, até o próximo prompt |
 | Não visto | só no app no macOS: a sessão respondeu fora da tela, depois da última vez que você a abriu; abrir a sessão apaga |
 | Trabalhando | entre o prompt e o fim da resposta |
 | Livre | a resposta terminou |

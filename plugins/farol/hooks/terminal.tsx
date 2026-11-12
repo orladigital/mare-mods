@@ -1,52 +1,107 @@
-// As linhas do painel no terminal: uma por sessão, com fundo na cor do estado, no mesmo hex nos terminais claro e
-// escuro; o esperando vai dentro de uma borda grossa, com o mesmo fundo (três linhas). Sem desenho nem animação.
+// O painel no terminal: no topo, um resumo com os estados que têm sessão; abaixo, um cartão de duas linhas por
+// sessão, como no app (o título em negrito em cima e "projeto · tempo · estado" embaixo), cada um na sua borda; no
+// fim, as sessões sem sinal juntas numa linha apagada. O peso segue a urgência: fundo cheio só no esperando (com a
+// borda grossa) e no trabalhando; o livre leva só uma borda clara. Os tons são os mesmos nos
+// terminais claro e escuro. Sem desenho nem animação.
 import type { EngineInterface, RenderElement, RenderInput } from 'claude-code'
 
 import type { Registro } from '../types'
 import { semLarguraAmbigua } from './comum/largura'
-import { rotuloDe, tempoDe, visualDe } from './estado'
+import { ha, rotuloDe, tempoDe, visualDe } from './estado'
 import type { Visual } from './estado'
 
-type Linha = { marca: string; rotulo: string; fundo: string; texto: string; borda?: string }
+// O cartão: com `fundo`, cheio (o texto no tom `texto`); sem, só a `borda`, e o texto na cor do terminal.
+type Cartao = { rotulo: string; fundo?: string; texto?: string; borda: string; estiloDaBorda?: 'bold' | 'round' }
 
-const LIVRE: Linha = { marca: '~ ', rotulo: rotuloDe('livre'), fundo: '#4F6563', texto: '#E1EAE8' }
+const LIVRE: Cartao = { rotulo: rotuloDe('livre'), borda: '#9DB4BE', estiloDaBorda: 'round' }
 
 // O esperando diz "Esperando você" (no app, o cartão diz só "Esperando": a cor já chama). O não visto não chega
-// aqui (no terminal, a sessão que estaria azul aparece livre), mas o tipo pede: fica como o livre. O sem sinal,
-// num cinza de névoa, contrasta menos que o livre (4,2 contra 5,1), mas ainda se lê como os outros.
-const LINHAS: Record<Visual, Linha> = {
-  esperando: { marca: '!!', rotulo: 'Esperando você', fundo: '#C4564D', texto: '#FFF3EF', borda: '#EA8F85' },
-  trabalhando: { marca: '>>', rotulo: rotuloDe('trabalhando'), fundo: '#2E7A73', texto: '#E3F4F1' },
+// aqui (no terminal, a sessão que estaria azul aparece livre), mas o tipo pede: fica como o livre.
+const CARTOES: Record<Exclude<Visual, 'sem-sinal'>, Cartao> = {
+  esperando: { rotulo: 'Esperando você', fundo: '#C4564D', texto: '#FFF3EF', borda: '#EA8F85', estiloDaBorda: 'bold' },
+  trabalhando: { rotulo: rotuloDe('trabalhando'), fundo: '#2E7A73', texto: '#E3F4F1', borda: '#2E7A73', estiloDaBorda: 'round' },
   livre: LIVRE,
   'nao-visto': LIVRE,
-  'sem-sinal': { marca: '? ', rotulo: rotuloDe('sem-sinal'), fundo: '#6E7472', texto: '#F2F2EF' },
 }
 
-// "marca estado · tempo · pasta · título", e "esta sessão" antes do título na sessão aberta aqui. O título vai por
-// último e já trocado: o corte da linha no fim (`truncate-end`) cai nele, depois da troca.
-export const textoDaLinha = (r: Registro, agora: number, minha: string): string => {
-  const { marca, rotulo } = LINHAS[visualDe(r, agora)]
-  const esta = r.id === minha ? ' · esta sessão' : ''
-  return `${marca} ${rotulo} · ${tempoDe(r, agora)} · ${r.pasta}${esta} · ${semLarguraAmbigua(r.titulo)}`
+// O resumo do topo: fundo claro, texto escuro e borda na cor do estado; o sem sinal fica de fora (é a linha do fim).
+type Resumo = { estado: 'esperando' | 'trabalhando' | 'livre'; nome: (n: number) => string; fundo: string; texto: string; borda: string }
+const RESUMO: readonly Resumo[] = [
+  { estado: 'esperando', nome: () => 'Esperando', fundo: '#F6D3CE', texto: '#8A2A22', borda: '#C4564D' },
+  { estado: 'trabalhando', nome: () => 'Trabalhando', fundo: '#CFEAE6', texto: '#1F5C56', borda: '#2E7A73' },
+  { estado: 'livre', nome: n => (n === 1 ? 'Livre' : 'Livres'), fundo: '#DCE5E4', texto: '#3E5A66', borda: '#4F6563' },
+]
+
+// No resumo, o não visto conta como livre (no terminal não há não visto).
+const noResumo = (v: Visual): Resumo['estado'] | null => (v === 'sem-sinal' ? null : v === 'nao-visto' ? 'livre' : v)
+
+// A segunda linha do cartão: "projeto · tempo · estado", e "esta sessão" na que está aberta aqui.
+export const detalheNoTerminal = (r: Registro, agora: number, minha: string): string => {
+  const v = visualDe(r, agora)
+  const rotulo = v === 'sem-sinal' ? rotuloDe(v) : CARTOES[v].rotulo
+  return `${r.pasta} · ${tempoDe(r, agora)} · ${rotulo}${r.id === minha ? ' · esta sessão' : ''}`
 }
 
-export type DadosDasLinhas = { lista: readonly Registro[]; agora: number; minha: string }
+// As sem sinal numa linha: quantas, desde quando (da mais recente à mais antiga) e de que projetos.
+export const linhaSemSinal = (lista: readonly Registro[], agora: number): string => {
+  const parados = lista.map(r => agora - r.vivoEm)
+  const recente = ha(Math.min(...parados))
+  const antiga = ha(Math.max(...parados))
+  const tempo = recente === antiga ? recente : `${recente} a ${antiga.replace(/^há /, '')}`
+  const projetos = [...new Set(lista.map(r => r.pasta))].join(', ')
+  return `${lista.length} ${lista.length === 1 ? 'sessão' : 'sessões'} sem sinal · ${tempo} · ${projetos}`
+}
 
-export function desenharLinhas($: EngineInterface, e: RenderInput<'Pane'>, d: DadosDasLinhas): RenderElement {
+export type DadosDoPainelNoTerminal = { lista: readonly Registro[]; agora: number; minha: string }
+
+// O título passa pela troca dos símbolos de largura ambígua antes do corte no fim da linha (`truncate-end`): cortado
+// antes, a seta trocada por dois caracteres o faria passar da linha e entortar a borda.
+export function desenharPainelNoTerminal($: EngineInterface, e: RenderInput<'Pane'>, d: DadosDoPainelNoTerminal): RenderElement {
   const { Box, Text } = $.ui.resolve(e)
+  const comSinal = d.lista.filter(r => visualDe(r, d.agora) !== 'sem-sinal')
+  const semSinal = d.lista.filter(r => visualDe(r, d.agora) === 'sem-sinal')
+  const quantos = (estado: Resumo['estado']) => comSinal.filter(r => noResumo(visualDe(r, d.agora)) === estado).length
+
+  const resumo = RESUMO.filter(x => quantos(x.estado) > 0).map(x => (
+    <Box key={`resumo-${x.estado}`} borderStyle="round" borderColor={x.borda} backgroundColor={x.fundo} paddingX={1} flexShrink={0}>
+      <Text color={x.texto} bold>{`${quantos(x.estado)} ${x.nome(quantos(x.estado))}`}</Text>
+    </Box>
+  ))
+
+  const cartao = (r: Registro) => {
+    const v = visualDe(r, d.agora)
+    const c = CARTOES[v === 'sem-sinal' ? 'livre' : v]
+    const borda = c.estiloDaBorda ? { borderStyle: c.estiloDaBorda, borderColor: c.borda } : {}
+    return (
+      <Box key={`cartao-${r.id}`} flexDirection="column" backgroundColor={c.fundo} paddingX={1} {...borda}>
+        <Text color={c.texto} bold wrap="truncate-end">
+          {semLarguraAmbigua(r.titulo)}
+        </Text>
+        <Text color={c.texto} dimColor={!c.fundo} wrap="truncate-end">
+          {detalheNoTerminal(r, d.agora, d.minha)}
+        </Text>
+      </Box>
+    )
+  }
+
+  // Os cartões vão colados: a borda de cada um já os separa.
   return (
-    <Box flexDirection="column">
-      {d.lista.map(r => {
-        const l = LINHAS[visualDe(r, d.agora)]
-        const borda = l.borda ? { borderStyle: 'bold', borderColor: l.borda } : {}
-        return (
-          <Box key={`linha-${r.id}`} backgroundColor={l.fundo} paddingX={1} {...borda}>
-            <Text color={l.texto} bold={l.borda !== undefined} wrap="truncate-end">
-              {textoDaLinha(r, d.agora, d.minha)}
-            </Text>
-          </Box>
-        )
-      })}
+    <Box key="painel-terminal" flexDirection="column" gap={1}>
+      {resumo.length > 0 && (
+        <Box flexDirection="row" flexWrap="wrap" gap={1}>
+          {resumo}
+        </Box>
+      )}
+      {comSinal.length > 0 && (
+        <Box key="cartoes" flexDirection="column">
+          {comSinal.map(cartao)}
+        </Box>
+      )}
+      {semSinal.length > 0 && (
+        <Text dimColor wrap="truncate-end">
+          {linhaSemSinal(semSinal, d.agora)}
+        </Text>
+      )}
     </Box>
   )
 }
