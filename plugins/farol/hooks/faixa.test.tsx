@@ -55,8 +55,15 @@ test('no app, a contagem só aparece com o ajuste ligado', async ($, on) => {
   await $.session.start(INICIO)
 
   const ui = await $.ui.mount({ ...FAIXA, surface: 'desktop' })
-  expect(await ui.find({ type: 'Text', text: '3' })).toBeDefined()
+  // O número é um botão próprio, com ele mesmo de rótulo: o botão invisível da torre cobre só a torre, com um
+  // rótulo que cabe nela (um rótulo maior faz o app mostrar "…").
+  const numero = await ui.find({ key: 'abrir-farol-numero' })
+  expect(numero?.type).toBe('Button')
+  expect(numero?.props.label).toBe('3')
+  expect(String((await ui.find({ key: 'abrir-farol' }))?.props.label)).toMatch(/^ {9}$/)
+  await ui.press({ key: 'abrir-farol-numero' })
   await ui.unmount()
+  expect(m.paineis).toEqual(['farol'])
 })
 
 test('no app, sem o ajuste, a torre fica sem número', async ($, on) => {
@@ -65,7 +72,7 @@ test('no app, sem o ajuste, a torre fica sem número', async ($, on) => {
   await $.session.start(INICIO)
 
   const ui = await $.ui.mount({ ...FAIXA, surface: 'desktop' })
-  expect(await ui.find({ type: 'Text', text: '3' })).toBeUndefined()
+  expect(await ui.find({ key: 'abrir-farol-numero' })).toBeUndefined()
   await ui.unmount()
 })
 

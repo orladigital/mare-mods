@@ -53,9 +53,9 @@ export const descricaoDaTorre = (luz: Luz, n: number): string =>
 export const rotuloTerminal = (n: number): string => (n > 0 ? `🚨 ${n}` : '🚦')
 
 // O botão do app não aceita um SVG dentro (o desenho não sai) e é o único elemento com clique: por cima da
-// torre vai um botão sem moldura de espaços não separáveis, um pouco menor que ela (maior, o app mostra "…").
+// torre vai um botão sem moldura de espaços não separáveis, um pouco menor que ela (maior, o app mostra "…"). O
+// número da contagem é um botão próprio, com ele mesmo de rótulo, e não alarga o rótulo da torre.
 const COBERTURA = ' '.repeat(9)
-const COBERTURA_COM_NUMERO = ' '.repeat(11)
 
 export type DadosDaFaixa = { lista: readonly Registro[]; agora: number; ajustes: Ajustes; abrir: () => unknown }
 
@@ -63,7 +63,7 @@ export type DadosDaFaixa = { lista: readonly Registro[]; agora: number; ajustes:
 // base no terminal, para quem deixa uma linha de espaço em cima descer junto.
 export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt'>, outros: RenderElement, d: DadosDaFaixa): RenderElement {
   const elementos = $.ui.resolve(e)
-  const { Box, Text, Button } = elementos
+  const { Box, Button } = elementos
   const n = esperandoAgora(d.lista, d.agora)
   if (e.surface === 'terminal' || !('Svg' in elementos)) {
     return (
@@ -80,12 +80,14 @@ export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt'>,
   const pisca = luz === 'vermelha' && d.ajustes.movimento
   return (
     <Box flexDirection="row" gap={2} alignItems="center">
-      <Box position="relative" flexDirection="row" alignItems="center" gap={1} flexShrink={0}>
-        <Svg key="torre" source={torreSvg(luz, pisca)} alt={descricaoDaTorre(luz, n)} width={LARGURA_TORRE} height={ALTURA_TORRE} isInteractive={pisca || undefined} />
-        {numero && <Text bold>{String(n)}</Text>}
-        <Box position="absolute" top={0} left={0} right={0} bottom={0} justifyContent="center">
-          <Button key="abrir-farol" label={numero ? COBERTURA_COM_NUMERO : COBERTURA} plain onPress={() => void d.abrir()} />
+      <Box flexDirection="row" alignItems="center" gap={1} flexShrink={0}>
+        <Box position="relative" flexShrink={0}>
+          <Svg key="torre" source={torreSvg(luz, pisca)} alt={descricaoDaTorre(luz, n)} width={LARGURA_TORRE} height={ALTURA_TORRE} isInteractive={pisca || undefined} />
+          <Box position="absolute" top={0} left={0} right={0} bottom={0} justifyContent="center">
+            <Button key="abrir-farol" label={COBERTURA} plain onPress={() => void d.abrir()} />
+          </Box>
         </Box>
+        {numero && <Button key="abrir-farol-numero" label={String(n)} plain onPress={() => void d.abrir()} />}
       </Box>
       {outros}
     </Box>
