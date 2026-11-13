@@ -80,9 +80,18 @@ describe('tempo, título e registro', () => {
     expect(ha(26 * 3600_000)).toBe('há 1d')
   })
 
-  test('o título sai da mensagem: sem marcações, comando de shell como "$ …", comando de barra não vira título', async () => {
+  test('o título sai da mensagem: sem marcações; comando de shell e comando de barra não viram título', async () => {
     expect(tituloDe('  corrige\n o   teste ')).toBe('corrige o teste')
-    expect(tituloDe('<bash-input>ls</bash-input><bash-stdout>a\nb</bash-stdout>')).toBe('$ ls')
+    // Um comando de shell digitado (!cd …) não diz do que a sessão trata: o título fica para a mensagem seguinte.
+    expect(tituloDe('<bash-input>cd /Users/exemplo/projetos</bash-input><bash-stdout></bash-stdout>')).toBe('')
+    // O aviso da IDE sobre o arquivo aberto não é mensagem sua; o que você escreveu junto é.
+    expect(tituloDe('<ide_opened_file>The user opened the file /Users/exemplo/a.ts in the IDE.</ide_opened_file>')).toBe('')
+    expect(tituloDe('<ide_opened_file>The user opened the file /Users/exemplo/a.ts in the IDE.</ide_opened_file> revisa este arquivo')).toBe('revisa este arquivo')
+    expect(tituloDe('<ide_selection>The user selected the lines 1 to 3</ide_selection>explica isto')).toBe('explica isto')
+    // Os avisos que o app põe na conversa (uma sessão lateral que terminou, um subagente, o CI de um PR) também não.
+    expect(tituloDe('<system-reminder>x</system-reminder>\n<side-sessions-event>None of the sessions you started is working now.</side-sessions-event>')).toBe('')
+    expect(tituloDe('<task-notification><task-id>a1</task-id><status>completed</status></task-notification>')).toBe('')
+    expect(tituloDe('<ci-monitor-event>CI falhou no PR</ci-monitor-event>')).toBe('')
     expect(tituloDe('<command-name>/farol</command-name>')).toBe('')
     expect(tituloDe('/farol')).toBe('')
     // O marcador de interrupção do Claude Code não é mensagem sua.

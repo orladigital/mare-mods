@@ -14,7 +14,7 @@ A instalação pelo app desktop, a atualização e a desinstalação estão no
 | | App desktop | Terminal |
 |---|---|---|
 | sem aviso | a torre do farol, na cor do texto | `🚦` |
-| alguma sessão esperando você | o feixe da torre acende em vermelho e pisca (parado com o "Movimento" desligado) | `🚨 N` (N sessões esperando) |
+| alguma sessão esperando você | o feixe da torre acende em vermelho e pisca (parado com o "Movimento" desligado) | `🚨 N` (N sessões esperando), o número em negrito na cor de erro do tema |
 | só resposta que você não viu (app no macOS) | o feixe acende em azul | `🚦` |
 
 Um clique abre o painel. O farol divide a faixa com os outros mods, à esquerda deles.
@@ -34,11 +34,23 @@ No app desktop, o painel tem no topo a cena do farol, que diz o estado de todas 
 - **todas livres:** a luz branca, bem fraca; **sem sessões:** apagada.
 
 Cada sessão é um cartão na cor do estado, com um barco ao lado. No macOS, um clique no cartão de outra sessão leva
-o app para ela. No tema escuro, a cena ganha uma borda clara. No terminal, o painel é em texto.
+o app para ela. No tema escuro, a cena ganha uma borda clara.
+
+No terminal, sem animação e com os mesmos tons nos temas claro e escuro:
+- **no topo, um resumo** com os estados que têm sessão: `1 Esperando`, `1 Trabalhando`, `3 Livres`;
+- **um cartão de duas linhas por sessão:** o título em negrito em cima e `pasta · há 2 min · estado` embaixo. O
+  esperando tem fundo vermelho e uma borda grossa; o trabalhando, fundo verde-água; o livre, só uma borda clara.
+  O cartão da sessão de onde você abriu tem borda dupla (esperando, fica a grossa), o fundo um pouco diferente
+  (o do estado bem mais claro, com o texto escuro; no livre, um fundo bem leve) e `esta sessão` em negrito;
+- **no fim, as sessões sem sinal** juntas numa linha apagada: `2 sessões sem sinal · há 4 min a 35 min · pasta`.
+
+O título corta no fim da linha, e os símbolos que alguns terminais desenham mais largos (setas, ◆, ⚓…) viram texto
+(`->`, `*`, `~`) para a borda não entortar. No terminal não há não visto: a
+sessão que estaria azul aparece livre.
 
 | Estado | Quando |
 |---|---|
-| Esperando | a sessão fez uma pergunta (`AskUserQuestion`) ou, no app no macOS, pediu uma permissão, dela ou de um subagente, e aguarda a resposta |
+| Esperando | a sessão fez uma pergunta (`AskUserQuestion`) ou, no app no macOS, pediu uma permissão, dela ou de um subagente, e aguarda a resposta; no app, também quando a resposta termina com uma pergunta que depende de você, até o próximo prompt |
 | Não visto | só no app no macOS: a sessão respondeu fora da tela, depois da última vez que você a abriu; abrir a sessão apaga |
 | Trabalhando | entre o prompt e o fim da resposta |
 | Livre | a resposta terminou |
@@ -77,7 +89,11 @@ sessão pelo `open` do macOS.
   desktop**, que o app pode mudar sem aviso. Se eles faltarem ou mudarem de formato, o farol segue sem esses
   extras e sem erro: sem azul, só a pergunta (`AskUserQuestion`) acendendo o vermelho, e o título pela primeira
   mensagem.
-- **Pedido de permissão no terminal não acende o farol nesta versão:** só a pergunta (`AskUserQuestion`).
+- **Pedido de permissão no terminal não acende o farol nesta versão:** só a pergunta (`AskUserQuestion`). O
+  aviso de pedido de permissão não serve: numa conta Team ou Enterprise, o plugin da conta o leva aos hooks da
+  organização, e ele não chega aos mods. O único outro sinal que existe é perguntar ao prompt, de
+  tempos em tempos, se há um diálogo na tela, e cada pergunta faz os outros mods instalados rodarem. No app no macOS, o
+  farol lê o pedido pelo log do app.
 - **O não visto conta a sessão aberta por último no app como a que está na tela**, mesmo com o app atrás de outra
   janela: uma resposta dela nesse momento não fica azul.
 - **Windows:** não testado. A pasta da casa vem do `USERPROFILE` quando não há `HOME`, mas lá não há `rm`, e o

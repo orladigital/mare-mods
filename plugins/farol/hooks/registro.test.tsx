@@ -144,3 +144,33 @@ for (const [caso, opcoes] of [
     expect(m.arquivos.has(`${PASTA}/${ID}.json`)).toBe(true)
   })
 }
+
+// A caixa de fim de turno do app (a pergunta com botões abaixo da resposta). `blocked`: a sessão parou porque
+// depende de você.
+const FIM_DE_TURNO = (blocked: boolean) =>
+  ({ tool: 'mcp__ccd_turn__wrap_up', tool_use_id: `fim-${blocked}`, recap: 'resumo', ask: 'Que dia é hoje?', blocked }) as never
+
+test('a caixa de fim de turno que depende de você deixa a sessão esperando até o próximo prompt', async ($, on) => {
+  const m = preparar(on)
+  on('tool.call', () => ({ result: 'mostrada' }) as never)
+  await $.session.start(INICIO)
+  await $.prompt.submit({ text: 'oi' } as never)
+  await $.tool.call(FIM_DE_TURNO(true))
+  await $.turn.complete(FIM)
+  expect(registroDe(m)?.estado).toBe('esperando')
+
+  await $.prompt.submit({ text: 'A' } as never)
+  expect(registroDe(m)?.estado).toBe('trabalhando')
+  await $.turn.complete(FIM)
+  expect(registroDe(m)?.estado).toBe('livre')
+})
+
+test('a caixa de fim de turno que só sugere um próximo passo deixa a sessão livre', async ($, on) => {
+  const m = preparar(on)
+  on('tool.call', () => ({ result: 'mostrada' }) as never)
+  await $.session.start(INICIO)
+  await $.prompt.submit({ text: 'oi' } as never)
+  await $.tool.call(FIM_DE_TURNO(false))
+  await $.turn.complete(FIM)
+  expect(registroDe(m)?.estado).toBe('livre')
+})

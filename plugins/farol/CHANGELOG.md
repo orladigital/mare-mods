@@ -1,5 +1,28 @@
 # Changelog do farol
 
+## 0.4.0 (2026-11-12)
+
+O painel no terminal ganha cor.
+
+- No topo, um resumo com os estados que têm sessão (`1 Esperando`, `1 Trabalhando`, `3 Livres`).
+- Cada sessão é um cartão de duas linhas, no mesmo tom nos temas claro e escuro: o título em negrito em cima e
+  "pasta · tempo · estado" embaixo. O esperando tem fundo vermelho e borda grossa; o trabalhando, fundo verde-água;
+  o livre, só uma borda clara, com o texto na cor do tema do Claude Code (legível também no tema claro). Os
+  cartões vão colados, cada um na sua borda. O cartão da sessão de onde você abriu o painel tem borda dupla
+  (esperando, fica a grossa), o fundo um pouco diferente (o do estado bem mais claro, com o texto escuro; no livre,
+  um fundo bem leve, com um tom para o tema escuro do Claude Code e outro para o claro) e "esta sessão" em negrito.
+- As sessões sem sinal ficam juntas numa linha apagada, no fim.
+- O título corta no fim da linha, depois de os símbolos de largura ambígua virarem texto.
+- O título de uma sessão não é mais um comando de shell digitado ("$ cd …"), o aviso da IDE sobre o arquivo
+  aberto nem um aviso do app (uma sessão lateral que terminou, um subagente, o CI de um PR): vale a primeira
+  mensagem sua de verdade, no app e no terminal.
+- Na faixa, o farol fica na mesma linha dos outros mods, à esquerda deles, também no Claude Code 2.1.323 ou mais
+  novo, que passou a dar uma linha a cada mod. No terminal, o `🚦` volta para a linha da barra de uso: ficava uma
+  linha acima dela. Lá, o `🚦` e o `🚨 N` saem sem os colchetes do botão, e o número do `🚨 N` sai em negrito na cor de erro do tema.
+- No app, a sessão cuja resposta termina com uma pergunta que depende de você (a caixa abaixo da resposta) fica
+  esperando até o próximo prompt; antes, ficava livre.
+- O README explica por que o pedido de permissão não acende o farol no terminal.
+
 ## 0.3.0 (2026-11-11)
 
 Os extras do app desktop no macOS. Fora dele (terminal, Linux, Windows), nada muda.

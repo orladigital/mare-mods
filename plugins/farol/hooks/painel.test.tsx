@@ -12,18 +12,17 @@ test('o painel lista as sessões pela prioridade, com "pasta · tempo · estado"
   gravarOutra(m, { id: 'outra-esperando', titulo: 'Escolher o tom', estado: 'esperando', desde: AGORA - 2 * 60_000 })
   await $.session.start(INICIO)
 
-  for (const surface of SUPERFICIES) {
-    const ui = await $.ui.mount({ ...PAINEL, surface })
-    const t = await textos(ui)
-    expect(t.filter(x => / · /.test(x))).toEqual([
-      'exemplo · há 2 min · Esperando',
-      'exemplo · agora · Livre · esta sessão',
-      'exemplo · há 7 min · Livre',
-    ])
-    expect(t).toContain('Escolher o tom')
-    expect(t).toContain('Revisar o PR')
-    await ui.unmount()
-  }
+  // No terminal, as linhas têm outro formato (terminal.test.tsx).
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const t = await textos(ui)
+  expect(t.filter(x => / · /.test(x))).toEqual([
+    'exemplo · há 2 min · Esperando',
+    'exemplo · agora · Livre · esta sessão',
+    'exemplo · há 7 min · Livre',
+  ])
+  expect(t).toContain('Escolher o tom')
+  expect(t).toContain('Revisar o PR')
+  await ui.unmount()
 })
 
 test('a sessão sem sinal mostra há quanto tempo parou de renovar o registro', async ($, on) => {
@@ -31,7 +30,7 @@ test('a sessão sem sinal mostra há quanto tempo parou de renovar o registro', 
   gravarOutra(m, { id: 'calada', estado: 'trabalhando', desde: AGORA - 60 * 60_000, vivoEm: AGORA - 5 * 60_000 })
   await $.session.start(INICIO)
 
-  const ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
   expect(await textos(ui)).toContain('exemplo · há 5 min · Sem sinal')
   await ui.unmount()
 })

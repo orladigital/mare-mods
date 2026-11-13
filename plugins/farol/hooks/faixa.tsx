@@ -1,5 +1,5 @@
 // O botão do farol na faixa acima do prompt: no app, a torre em SVG, com o feixe aceso quando uma sessão pede
-// você; no terminal, 🚦 sem aviso e 🚨 N com N sessões esperando. Um clique abre o painel.
+// você; no terminal, 🚦 sem aviso e 🚨 N com N sessões esperando, sem os colchetes. Um clique abre o painel.
 import type { EngineInterface, RenderElement, RenderInput } from 'claude-code'
 
 import type { Ajustes, Registro } from '../types'
@@ -61,14 +61,22 @@ export type DadosDaFaixa = { lista: readonly Registro[]; agora: number; ajustes:
 
 // O pedaço do farol na faixa, à esquerda do que os outros mods desenharam (`outros`). Os itens se alinham pela
 // base no terminal, para quem deixa uma linha de espaço em cima descer junto.
-export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt'>, outros: RenderElement, d: DadosDaFaixa): RenderElement {
+export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt' | 'AbovePromptList'>, outros: RenderElement, d: DadosDaFaixa): RenderElement {
   const elementos = $.ui.resolve(e)
-  const { Box, Button } = elementos
+  const { Box, Button, Text } = elementos
   const n = esperandoAgora(d.lista, d.agora)
   if (e.surface === 'terminal' || !('Svg' in elementos)) {
     return (
       <Box flexDirection="row" gap={2} alignItems="flex-end">
-        <Button key="abrir-farol" label={rotuloTerminal(n)} onPress={() => void d.abrir()} />
+        {/* O alinhamento pela base da caixa não chega ao botão no terminal: sem o alignSelf, a torre fica uma linha
+            acima de quem desce com margem (a barra de uso). */}
+        <Box alignSelf="flex-end" flexShrink={0}>
+          {/* Com sessão esperando, o número sai em negrito na cor de erro do tema, para chamar o olho sem animação
+              (proibida no terminal); o `label` segue dando o nome do botão. */}
+          <Button key="abrir-farol" label={rotuloTerminal(n)} plain onPress={() => void d.abrir()}>
+            {n > 0 ? ['🚨 ', <Text bold color="error">{String(n)}</Text>] : undefined}
+          </Button>
+        </Box>
         {outros}
       </Box>
     )
