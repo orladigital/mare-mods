@@ -10,16 +10,30 @@ import { semLarguraAmbigua } from './comum/largura'
 import { ha, rotuloDe, tempoDe, visualDe } from './estado'
 import type { Visual } from './estado'
 
-// O cartão: com `fundo`, cheio (o texto no tom `texto`); sem, só a `borda`, e o texto na cor do terminal.
-type Cartao = { rotulo: string; fundo?: string; texto?: string; borda: string; estiloDaBorda?: 'bold' | 'round' }
+// O cartão: com `fundo`, cheio (o texto no tom `texto`); sem, só a `borda`, e o texto na cor do terminal. `desta`:
+// o fundo e o texto do cartão da sessão aberta aqui: o fundo do estado bem mais claro, com o texto escuro.
+type Cartao = {
+  rotulo: string
+  fundo?: string
+  texto?: string
+  borda: string
+  estiloDaBorda?: 'bold' | 'round'
+  desta?: { fundo: string; texto: string }
+}
 
 const LIVRE: Cartao = { rotulo: rotuloDe('livre'), borda: '#9DB4BE', estiloDaBorda: 'round' }
 
 // O esperando diz "Esperando você" (no app, o cartão diz só "Esperando": a cor já chama). O não visto não chega
 // aqui (no terminal, a sessão que estaria azul aparece livre), mas o tipo pede: fica como o livre.
 const CARTOES: Record<Exclude<Visual, 'sem-sinal'>, Cartao> = {
-  esperando: { rotulo: 'Esperando você', fundo: '#C4564D', texto: '#FFF3EF', borda: '#EA8F85', estiloDaBorda: 'bold' },
-  trabalhando: { rotulo: rotuloDe('trabalhando'), fundo: '#2E7A73', texto: '#E3F4F1', borda: '#2E7A73', estiloDaBorda: 'round' },
+  esperando: {
+    rotulo: 'Esperando você', fundo: '#C4564D', texto: '#FFF3EF', borda: '#EA8F85', estiloDaBorda: 'bold',
+    desta: { fundo: '#D9726A', texto: '#3A0F0B' },
+  },
+  trabalhando: {
+    rotulo: rotuloDe('trabalhando'), fundo: '#2E7A73', texto: '#E3F4F1', borda: '#2E7A73', estiloDaBorda: 'round',
+    desta: { fundo: '#4FA79E', texto: '#0B2E2A' },
+  },
   livre: LIVRE,
   'nao-visto': LIVRE,
 }
@@ -35,12 +49,18 @@ const RESUMO: readonly Resumo[] = [
 // No resumo, o não visto conta como livre (no terminal não há não visto).
 const noResumo = (v: Visual): Resumo['estado'] | null => (v === 'sem-sinal' ? null : v === 'nao-visto' ? 'livre' : v)
 
-// A segunda linha do cartão: "projeto · tempo · estado", e "esta sessão" na que está aberta aqui.
-export const detalheNoTerminal = (r: Registro, agora: number, minha: string): string => {
+// A segunda linha do cartão: "projeto · tempo · estado". Na sessão aberta aqui, vem depois `ESTA_SESSAO`, em
+// negrito.
+export const detalheNoTerminal = (r: Registro, agora: number): string => {
   const v = visualDe(r, agora)
   const rotulo = v === 'sem-sinal' ? rotuloDe(v) : CARTOES[v].rotulo
-  return `${r.pasta} · ${tempoDe(r, agora)} · ${rotulo}${r.id === minha ? ' · esta sessão' : ''}`
+  return `${r.pasta} · ${tempoDe(r, agora)} · ${rotulo}`
 }
+const ESTA_SESSAO = ' · esta sessão'
+
+// O fundo bem leve do cartão desta sessão, quando o estado não tem fundo próprio (o livre): um tom pouco acima do
+// fundo do terminal, que depende do tema (o terminal não tem cor de tema para isso; o tema vem do Claude Code).
+const FUNDO_DESTA = { escuro: '#2F3A42', claro: '#EFF4F6' } as const
 
 // As sem sinal numa linha: quantas, desde quando (da mais recente à mais antiga) e de que projetos.
 export const linhaSemSinal = (lista: readonly Registro[], agora: number): string => {
@@ -52,7 +72,8 @@ export const linhaSemSinal = (lista: readonly Registro[], agora: number): string
   return `${lista.length} ${lista.length === 1 ? 'sessão' : 'sessões'} sem sinal · ${tempo} · ${projetos}`
 }
 
-export type DadosDoPainelNoTerminal = { lista: readonly Registro[]; agora: number; minha: string }
+// `temaClaro`: o tema do Claude Code é um dos claros (o fundo desta sessão muda com ele).
+export type DadosDoPainelNoTerminal = { lista: readonly Registro[]; agora: number; minha: string; temaClaro: boolean }
 
 // O título passa pela troca dos símbolos de largura ambígua antes do corte no fim da linha (`truncate-end`): cortado
 // antes, a seta trocada por dois caracteres o faria passar da linha e entortar a borda.
@@ -71,15 +92,29 @@ export function desenharPainelNoTerminal($: EngineInterface, e: RenderInput<'Pan
   const cartao = (r: Registro) => {
     const v = visualDe(r, d.agora)
     const c = CARTOES[v === 'sem-sinal' ? 'livre' : v]
-    const borda = c.estiloDaBorda ? { borderStyle: c.estiloDaBorda, borderColor: c.borda } : {}
+    // A sessão aberta aqui tem a borda dupla e um fundo um pouco diferente, para achá-la de relance: o do estado num
+    // tom mais claro ou, no livre, um bem leve; esperando, fica a borda grossa do aviso.
+    const minha = r.id === d.minha
+    const estilo = minha && v !== 'esperando' ? 'double' : c.estiloDaBorda
+    const borda = estilo ? { borderStyle: estilo, borderColor: c.borda } : {}
+    const fundo = !minha ? c.fundo : c.desta?.fundo ?? c.fundo ?? FUNDO_DESTA[d.temaClaro ? 'claro' : 'escuro']
+    const texto = minha && c.desta ? c.desta.texto : c.texto
+    const detalhe = detalheNoTerminal(r, d.agora)
     return (
-      <Box key={`cartao-${r.id}`} flexDirection="column" backgroundColor={c.fundo} paddingX={1} {...borda}>
-        <Text color={c.texto} bold wrap="truncate-end">
+      <Box key={`cartao-${r.id}`} flexDirection="column" backgroundColor={fundo} paddingX={1} {...borda}>
+        <Text color={texto} bold wrap="truncate-end">
           {semLarguraAmbigua(r.titulo)}
         </Text>
-        <Text color={c.texto} dimColor={!c.fundo} wrap="truncate-end">
-          {detalheNoTerminal(r, d.agora, d.minha)}
-        </Text>
+        {minha ? (
+          <Text color={texto} wrap="truncate-end">
+            <Text dimColor={!c.fundo}>{detalhe}</Text>
+            <Text bold>{ESTA_SESSAO}</Text>
+          </Text>
+        ) : (
+          <Text color={c.texto} dimColor={!c.fundo} wrap="truncate-end">
+            {detalhe}
+          </Text>
+        )}
       </Box>
     )
   }

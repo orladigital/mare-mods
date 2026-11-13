@@ -22,6 +22,8 @@ test('no terminal, a faixa mostra 🚦 sem aviso e 🚨 N com sessões esperando
   await m.avancar(5_000)
   ui = await $.ui.mount({ ...FAIXA, surface: 'terminal' })
   expect((await ui.find({ key: 'abrir-farol' }))?.text).toBe('🚨 2')
+  // Sem os colchetes: o foco e o mouse ainda invertem o botão.
+  expect((await ui.find({ key: 'abrir-farol' }))?.props.plain).toBe(true)
   expect(await ui.find({ type: 'Svg' })).toBeUndefined()
   await ui.unmount()
 })
@@ -128,4 +130,53 @@ test('a torre azul (só não visto) não pisca', async () => {
   expect(torreSvg('azul', true)).not.toContain('<animate')
   expect(torreSvg('vermelha', true)).toContain('<animate')
   expect(torreSvg('vermelha', false)).not.toContain('<animate')
+})
+
+// A partir do Claude Code 2.1.323, cada mod desenha a própria linha da faixa e o Claude Code as empilha
+// (`AbovePromptList`). Aqui, a linha do farol e a de outro mod (como a barra de uso), em dado puro.
+type No = { type?: string; props?: Record<string, unknown>; children?: unknown[] }
+const OUTRO: No = { type: 'Text', props: {}, children: ['barra de outro mod'] }
+const LINHAS = (rows: { plugin: string; tree: No }[], surface: 'terminal' | 'desktop') => ({
+  plugin: 'farol',
+  surface,
+  component: 'AbovePromptList',
+  props: { ...FAIXA.props, rows },
+}) as never
+
+const contem = (no: unknown, achou: (n: No) => boolean): boolean => {
+  const n = no as No
+  return achou(n) || (n.children ?? []).some(f => typeof f === 'object' && f !== null && contem(f, achou))
+}
+const ehFarol = (n: No) => n.props?.key === 'abrir-farol'
+const ehOutro = (n: No) => n === OUTRO || (n.type === 'Text' && (n.children ?? []).includes('barra de outro mod'))
+
+for (const surface of ['terminal', 'desktop'] as const) {
+  test(`no ${surface === 'terminal' ? 'terminal' : 'app'}, o farol fica na mesma linha dos outros mods, à esquerda`, async ($, on) => {
+    preparar(on)
+    await $.session.start(INICIO)
+    const linhaDoFarol = await $.ui.mount({ ...FAIXA, surface })
+    const farol = (await linhaDoFarol.drawn()) as No
+    await linhaDoFarol.unmount()
+
+    const ui = await $.ui.mount(LINHAS([{ plugin: 'farol', tree: farol }, { plugin: 'barra-de-uso', tree: OUTRO }], surface))
+    const arvore = (await ui.drawn()) as No
+    // Uma linha: o farol num filho, o outro mod num filho depois dele.
+    expect(arvore.props?.flexDirection).toBe('row')
+    const filhos = arvore.children ?? []
+    const iFarol = filhos.findIndex(f => contem(f, ehFarol))
+    const iOutro = filhos.findIndex(f => contem(f, ehOutro))
+    expect(iFarol).toBeGreaterThanOrEqual(0)
+    expect(iOutro).toBeGreaterThan(iFarol)
+    expect(await ui.findAll({ key: 'abrir-farol' })).toHaveLength(1)
+    await ui.unmount()
+  })
+}
+
+test('com o farol escondido da faixa, ficam só as linhas dos outros mods', async ($, on) => {
+  preparar(on, { guardado: { ajustes: { naFaixa: 'esconder' } } })
+  await $.session.start(INICIO)
+  const ui = await $.ui.mount(LINHAS([{ plugin: 'barra-de-uso', tree: OUTRO }], 'terminal'))
+  expect(await ui.findAll({ key: 'abrir-farol' })).toHaveLength(0)
+  expect(JSON.stringify(await ui.drawn())).toContain('barra de outro mod')
+  await ui.unmount()
 })

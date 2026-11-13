@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { AGORA, INICIO, PAINEL, gravarOutra, preparar } from './apoio-de-teste'
+import { AGORA, ID, INICIO, PAINEL, gravarOutra, preparar } from './apoio-de-teste'
 
 const MIN = 60_000
 
@@ -36,6 +36,8 @@ test('no terminal: o resumo por estado no topo, um cartão por sessão e as sem 
     'exemplo · há 5 min · Trabalhando',
     '(sem mensagem ainda)',
     'exemplo · agora · Livre · esta sessão',
+    'exemplo · agora · Livre',
+    ' · esta sessão',
     'Revisar o PR',
     'exemplo · há 1h10 · Livre',
     '2 sessões sem sinal · há 4 min a 35 min · exemplo, outra',
@@ -68,7 +70,7 @@ test('no terminal: fundo cheio só no esperando (com a borda grossa) e no trabal
   expect(cartoes.map(b => [b.key, b.backgroundColor ?? null, b.borderStyle ?? null, b.borderColor ?? null])).toEqual([
     ['cartao-esperando', '#C4564D', 'bold', '#EA8F85'],
     ['cartao-trabalhando', '#2E7A73', 'round', '#2E7A73'],
-    ['cartao-sessao-exemplo-1', null, 'round', '#9DB4BE'],
+    ['cartao-sessao-exemplo-1', '#2F3A42', 'double', '#9DB4BE'],
     ['cartao-livre', null, 'round', '#9DB4BE'],
   ])
   expect((await texto(ui, 'Escolher o tom'))?.props.color).toBe('#FFF3EF')
@@ -117,4 +119,67 @@ test('no terminal, o título troca os símbolos de largura ambígua e corta no f
   expect(titulo?.props.wrap).toBe('truncate-end')
   expect((await texto(ui, 'exemplo · agora · Esperando você'))?.props.wrap).toBe('truncate-end')
   await ui.unmount()
+})
+
+test('no terminal, o cartão desta sessão tem borda dupla e "esta sessão" em negrito, sem o apagado do resto', async ($, on) => {
+  const m = preparar(on)
+  gravarOutra(m, { id: 'outra' })
+  await $.session.start(INICIO)
+
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
+  const minha = (await caixas(ui)).find(b => b.key === `cartao-${ID}`)
+  expect([minha?.borderStyle, minha?.borderColor]).toEqual(['double', '#9DB4BE'])
+  // Um fundo bem leve, só nele: sem o tema do Claude Code, o do escuro.
+  expect(minha?.backgroundColor).toBe('#2F3A42')
+  const outra = (await caixas(ui)).find(b => b.key === 'cartao-outra')
+  expect([outra?.borderStyle, outra?.backgroundColor ?? null]).toEqual(['round', null])
+  const esta = await texto(ui, ' · esta sessão')
+  expect(esta?.props.bold).toBe(true)
+  expect(esta?.props.dimColor).toBeFalsy()
+  expect((await texto(ui, 'exemplo · agora · Livre'))?.props.dimColor).toBe(true)
+  await ui.unmount()
+})
+
+test('no terminal, com esta sessão esperando, o cartão fica com a borda grossa do aviso', async ($, on) => {
+  const m = preparar(on)
+  await $.session.start(INICIO)
+  // O registro desta sessão relido como esperando, na releitura seguinte.
+  gravarOutra(m, { id: ID, estado: 'esperando' })
+  await m.avancar(5_000)
+
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
+  const minha = (await caixas(ui)).find(b => b.key === `cartao-${ID}`)
+  expect([minha?.borderStyle, minha?.borderColor]).toEqual(['bold', '#EA8F85'])
+  expect((await texto(ui, ' · esta sessão'))?.props.bold).toBe(true)
+  await ui.unmount()
+})
+
+test('no terminal, com o tema claro do Claude Code, o fundo desta sessão é o tom claro', async ($, on) => {
+  const m = preparar(on)
+  on('config.list', () => ({ value: [{ key: 'theme', value: 'light' }] }) as never)
+  gravarOutra(m, { id: 'outra' })
+  await $.session.start(INICIO)
+
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
+  expect((await caixas(ui)).find(b => b.key === `cartao-${ID}`)?.backgroundColor).toBe('#EFF4F6')
+  await ui.unmount()
+})
+
+test('no terminal, esta sessão trabalhando ou esperando fica num tom bem mais claro do fundo do estado, com o texto escuro', async ($, on) => {
+  const m = preparar(on)
+  gravarOutra(m, { id: 'outra', estado: 'trabalhando' })
+  await $.session.start(INICIO)
+
+  for (const [estado, fundo, cor, doEstado] of [
+    ['trabalhando', '#4FA79E', '#0B2E2A', '#2E7A73'],
+    ['esperando', '#D9726A', '#3A0F0B', '#C4564D'],
+  ] as const) {
+    gravarOutra(m, { id: ID, estado })
+    await m.avancar(5_000)
+    const ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
+    expect((await caixas(ui)).find(b => b.key === `cartao-${ID}`)?.backgroundColor).toBe(fundo)
+    expect((await ui.findAll({ type: 'Text' })).find(t => t.text === ID)?.props.color).toBe(cor)
+    if (estado === 'trabalhando') expect((await caixas(ui)).find(b => b.key === 'cartao-outra')?.backgroundColor).toBe(doEstado)
+    await ui.unmount()
+  }
 })

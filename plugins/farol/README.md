@@ -39,7 +39,9 @@ o app para ela. No tema escuro, a cena ganha uma borda clara.
 No terminal, sem animação e com os mesmos tons nos temas claro e escuro:
 - **no topo, um resumo** com os estados que têm sessão: `1 Esperando`, `1 Trabalhando`, `3 Livres`;
 - **um cartão de duas linhas por sessão:** o título em negrito em cima e `pasta · há 2 min · estado` embaixo. O
-  esperando tem fundo vermelho e uma borda grossa; o trabalhando, fundo verde-água; o livre, só uma borda clara;
+  esperando tem fundo vermelho e uma borda grossa; o trabalhando, fundo verde-água; o livre, só uma borda clara.
+  O cartão da sessão de onde você abriu tem borda dupla (esperando, fica a grossa), o fundo um pouco diferente
+  (o do estado bem mais claro, com o texto escuro; no livre, um fundo bem leve) e `esta sessão` em negrito;
 - **no fim, as sessões sem sinal** juntas numa linha apagada: `2 sessões sem sinal · há 4 min a 35 min · pasta`.
 
 O título corta no fim da linha, e os símbolos que alguns terminais desenham mais largos (setas, ◆, ⚓…) viram texto

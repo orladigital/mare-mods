@@ -13,6 +13,8 @@ import { desenharFaixa } from './faixa'
 import { desenharPainelNoTerminal } from './terminal'
 
 const PAINEL = 'farol'
+// O nome do mod, como o Claude Code o dá a cada linha da faixa.
+const PLUGIN = 'farol'
 const sessoes = atom({ plugin: 'farol', key: 'sessoes' } as const, [])
 const agora = atom({ plugin: 'farol', key: 'agora' } as const, 0)
 const minhaId = atom({ plugin: 'farol', key: 'minhaId' } as const, '')
@@ -231,6 +233,13 @@ const fechar = async ($: EngineInterface) => {
   await $.ui.close({ id: PAINEL })
 }
 
+// O tema do Claude Code no terminal é um dos claros (`light`, `light-daltonized`…), pela linha `theme` do /config;
+// sem ela, o escuro.
+const temaClaro = async ($: EngineInterface): Promise<boolean> => {
+  const linha = (await $.config.list().catch(() => [])).find(r => r.key === 'theme')
+  return typeof linha?.value === 'string' && linha.value.startsWith('light')
+}
+
 // O clique num cartão do painel no app: leva o app para aquela sessão. Só com o id dela no app (no macOS); o
 // cartão desta sessão e o de uma sessão do terminal não fazem nada.
 const trocarDeSessao = async ($: EngineInterface, r: Registro) => {
@@ -377,6 +386,21 @@ export const register: Register = on => {
     return desenharFaixa($, e, outros, dados)
   })
 
+  // A partir do Claude Code 2.1.323, cada mod desenha a própria linha da faixa e o Claude Code as empilha; o farol
+  // ficaria numa linha só dele, acima dos outros. Aqui ele tira a linha dele do que o Claude Code empilha e desenha
+  // o farol à esquerda do resultado, na mesma linha (sem copiar as linhas dos outros). Até a 2.1.322 este evento
+  // não existe, e vale o `outros` do AbovePrompt.
+  on('ui.render', { component: 'AbovePromptList' }, async ($, e, next) => {
+    if (e.props.hasSurvey) return next(e)
+    const outras = e.props.rows.filter(r => r.plugin !== PLUGIN)
+    if (outras.length === e.props.rows.length || outras.length === 0) return next(e)
+    const a = (await read($, ajustes)) ?? PADRAO
+    if (a.naFaixa === 'esconder') return next(e)
+    const resto = await next({ ...e, props: { ...e.props, rows: outras } })
+    const dados = { lista: await read($, sessoes), agora: await read($, agora), ajustes: a, abrir: () => abrir($) }
+    return desenharFaixa($, e, resto, dados)
+  })
+
   // O painel: no app, a cena do farol no topo e um cartão com barco por sessão; no terminal, um cartão de duas
   // linhas com fundo por sessão. Onde não há nenhum dos dois, uma linha de título e uma de "pasta · tempo · estado"
   // por sessão. Abaixo, os ajustes e o Fechar.
@@ -479,7 +503,7 @@ export const register: Register = on => {
         {semRegistro && <Text dimColor>Sem a pasta da casa (nem HOME nem USERPROFILE): o farol não registra as sessões aqui.</Text>}
         {desenhos}
         {!semRegistro && lista.length === 0 && <Text dimColor>Nenhuma sessão com o farol ligado.</Text>}
-        {terminal && lista.length > 0 && desenharPainelNoTerminal($, e, { lista, agora: t, minha })}
+        {terminal && lista.length > 0 && desenharPainelNoTerminal($, e, { lista, agora: t, minha, temaClaro: await temaClaro($) })}
         {!desenhos && !terminal && lista.length > 0 && <Box flexDirection="column" gap={1}>{lista.map(sessao)}</Box>}
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
           <Button key="ajustes" label={abertos ? 'Esconder ajustes' : 'Ajustes'} dimColor onPress={() => update($, ajustesAbertos, x => !x)} />

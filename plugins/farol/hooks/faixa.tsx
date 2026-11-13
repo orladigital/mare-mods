@@ -1,5 +1,5 @@
 // O botão do farol na faixa acima do prompt: no app, a torre em SVG, com o feixe aceso quando uma sessão pede
-// você; no terminal, 🚦 sem aviso e 🚨 N com N sessões esperando. Um clique abre o painel.
+// você; no terminal, 🚦 sem aviso e 🚨 N com N sessões esperando, sem os colchetes. Um clique abre o painel.
 import type { EngineInterface, RenderElement, RenderInput } from 'claude-code'
 
 import type { Ajustes, Registro } from '../types'
@@ -61,7 +61,7 @@ export type DadosDaFaixa = { lista: readonly Registro[]; agora: number; ajustes:
 
 // O pedaço do farol na faixa, à esquerda do que os outros mods desenharam (`outros`). Os itens se alinham pela
 // base no terminal, para quem deixa uma linha de espaço em cima descer junto.
-export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt'>, outros: RenderElement, d: DadosDaFaixa): RenderElement {
+export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt' | 'AbovePromptList'>, outros: RenderElement, d: DadosDaFaixa): RenderElement {
   const elementos = $.ui.resolve(e)
   const { Box, Button } = elementos
   const n = esperandoAgora(d.lista, d.agora)
@@ -71,7 +71,7 @@ export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt'>,
         {/* O alinhamento pela base da caixa não chega ao botão no terminal: sem o alignSelf, a torre fica uma linha
             acima de quem desce com margem (a barra de uso). */}
         <Box alignSelf="flex-end" flexShrink={0}>
-          <Button key="abrir-farol" label={rotuloTerminal(n)} onPress={() => void d.abrir()} />
+          <Button key="abrir-farol" label={rotuloTerminal(n)} plain onPress={() => void d.abrir()} />
         </Box>
         {outros}
       </Box>
