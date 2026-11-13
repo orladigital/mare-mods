@@ -1,4 +1,5 @@
 import { expect, test } from 'claude-code/testing'
+import type { Engine } from 'claude-code/testing'
 
 import type { Registro } from '../types'
 import { FAIXA, INICIO, gravarOutra, preparar } from './apoio-de-teste'
@@ -146,6 +147,18 @@ const LINHAS = (rows: { plugin: string; tree: No }[], surface: 'terminal' | 'des
   props: { ...FAIXA.props, rows },
 }) as never
 
+// Monta a lista das linhas da faixa. Antes da 2.1.323 (a versão mínima do CI é anterior), o componente não existe e o
+// farol segue no arranjo antigo, que os outros testes da faixa cobrem: aqui não há o que conferir, e o teste para
+// sem conferir nada. Qualquer outro erro derruba o teste.
+const montarLinhas = async ($: Engine, alvo: ReturnType<typeof LINHAS>) => {
+  try {
+    return await $.ui.mount(alvo)
+  } catch (erro) {
+    if (!/is not a component/.test(String(erro))) throw erro
+    return null
+  }
+}
+
 const contem = (no: unknown, achou: (n: No) => boolean): boolean => {
   const n = no as No
   return achou(n) || (n.children ?? []).some(f => typeof f === 'object' && f !== null && contem(f, achou))
@@ -161,7 +174,8 @@ for (const surface of ['terminal', 'desktop'] as const) {
     const farol = (await linhaDoFarol.drawn()) as No
     await linhaDoFarol.unmount()
 
-    const ui = await $.ui.mount(LINHAS([{ plugin: 'farol', tree: farol }, { plugin: 'barra-de-uso', tree: OUTRO }], surface))
+    const ui = await montarLinhas($, LINHAS([{ plugin: 'farol', tree: farol }, { plugin: 'barra-de-uso', tree: OUTRO }], surface))
+    if (!ui) return
     const arvore = (await ui.drawn()) as No
     // Uma linha: o farol num filho, o outro mod num filho depois dele.
     expect(arvore.props?.flexDirection).toBe('row')
@@ -178,7 +192,8 @@ for (const surface of ['terminal', 'desktop'] as const) {
 test('com o farol escondido da faixa, ficam só as linhas dos outros mods', async ($, on) => {
   preparar(on, { guardado: { ajustes: { naFaixa: 'esconder' } } })
   await $.session.start(INICIO)
-  const ui = await $.ui.mount(LINHAS([{ plugin: 'barra-de-uso', tree: OUTRO }], 'terminal'))
+  const ui = await montarLinhas($, LINHAS([{ plugin: 'barra-de-uso', tree: OUTRO }], 'terminal'))
+  if (!ui) return
   expect(await ui.findAll({ key: 'abrir-farol' })).toHaveLength(0)
   expect(JSON.stringify(await ui.drawn())).toContain('barra de outro mod')
   await ui.unmount()
