@@ -7,10 +7,10 @@ O painel no terminal ganha cor.
 - No topo, um resumo com os estados que têm sessão (`1 Esperando`, `1 Trabalhando`, `3 Livres`).
 - Cada sessão é um cartão de duas linhas, no mesmo tom nos temas claro e escuro: o título em negrito em cima e
   "pasta · tempo · estado" embaixo. O esperando tem fundo vermelho e borda grossa; o trabalhando, fundo verde-água;
-  o livre, só uma borda clara. Os cartões vão colados, cada um na sua borda. O cartão da sessão de onde você
-  abriu o painel tem borda dupla (esperando, fica a grossa), o fundo um pouco diferente (o do estado bem mais
-  claro, com o texto escuro; no livre, um fundo bem leve, com um tom para o tema escuro do Claude Code e outro para o claro) e "esta
-  sessão" em negrito.
+  o livre, só uma borda clara, com o texto na cor do tema do Claude Code (legível também no tema claro). Os
+  cartões vão colados, cada um na sua borda. O cartão da sessão de onde você abriu o painel tem borda dupla
+  (esperando, fica a grossa), o fundo um pouco diferente (o do estado bem mais claro, com o texto escuro; no livre,
+  um fundo bem leve, com um tom para o tema escuro do Claude Code e outro para o claro) e "esta sessão" em negrito.
 - As sessões sem sinal ficam juntas numa linha apagada, no fim.
 - O título corta no fim da linha, depois de os símbolos de largura ambígua virarem texto.
 - O título de uma sessão não é mais um comando de shell digitado ("$ cd …"), o aviso da IDE sobre o arquivo

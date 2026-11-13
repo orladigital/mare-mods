@@ -76,6 +76,10 @@ test('no terminal: fundo cheio só no esperando (com a borda grossa) e no trabal
   expect((await texto(ui, 'Escolher o tom'))?.props.color).toBe('#FFF3EF')
   expect((await texto(ui, 'exemplo · há 5 min · Trabalhando'))?.props.color).toBe('#E3F4F1')
   expect((await texto(ui, 'exemplo · há 1h10 · Livre'))?.props.dimColor).toBe(true)
+  // Sem fundo, o texto do livre vai na cor de texto do tema do Claude Code, que acompanha o fundo do painel (e não a
+  // do terminal, que pode ser de outro tema).
+  expect((await texto(ui, 'Revisar o PR'))?.props.color).toBe('text')
+  expect((await texto(ui, 'exemplo · há 1h10 · Livre'))?.props.color).toBe('text')
   await ui.unmount()
 })
 
@@ -92,6 +96,9 @@ test('no terminal, cada estado do resumo tem fundo claro e borda na cor dele', a
     ['resumo-livre', '#DCE5E4', 'round', '#4F6563'],
   ])
   expect((await texto(ui, '1 Esperando'))?.props.color).toBe('#8A2A22')
+  // Com o painel estreito, as etiquetas quebram de linha sem espaço entre as linhas.
+  const linhaDoResumo = (await caixas(ui)).find(b => b.flexWrap === 'wrap')
+  expect([linhaDoResumo?.columnGap, linhaDoResumo?.rowGap ?? 0, linhaDoResumo?.gap]).toEqual([1, 0, undefined])
   await ui.unmount()
 })
 

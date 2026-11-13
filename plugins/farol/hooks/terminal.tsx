@@ -10,7 +10,7 @@ import { semLarguraAmbigua } from './comum/largura'
 import { ha, rotuloDe, tempoDe, visualDe } from './estado'
 import type { Visual } from './estado'
 
-// O cartão: com `fundo`, cheio (o texto no tom `texto`); sem, só a `borda`, e o texto na cor do terminal. `desta`:
+// O cartão: com `fundo`, cheio; sem, só a `borda`. O texto vai no tom `texto` (um hex, ou uma cor do tema). `desta`:
 // o fundo e o texto do cartão da sessão aberta aqui: o fundo do estado bem mais claro, com o texto escuro.
 type Cartao = {
   rotulo: string
@@ -21,7 +21,9 @@ type Cartao = {
   desta?: { fundo: string; texto: string }
 }
 
-const LIVRE: Cartao = { rotulo: rotuloDe('livre'), borda: '#9DB4BE', estiloDaBorda: 'round' }
+// O livre não tem fundo: o texto vai na cor de texto do tema do Claude Code (`text`), que acompanha o fundo do painel;
+// a cor padrão seria a do terminal, que pode ser de outro tema (o texto claro some no painel claro).
+const LIVRE: Cartao = { rotulo: rotuloDe('livre'), texto: 'text', borda: '#9DB4BE', estiloDaBorda: 'round' }
 
 // O esperando diz "Esperando você" (no app, o cartão diz só "Esperando": a cor já chama). O não visto não chega
 // aqui (no terminal, a sessão que estaria azul aparece livre), mas o tipo pede: fica como o livre.
@@ -123,7 +125,7 @@ export function desenharPainelNoTerminal($: EngineInterface, e: RenderInput<'Pan
   return (
     <Box key="painel-terminal" flexDirection="column" gap={1}>
       {resumo.length > 0 && (
-        <Box flexDirection="row" flexWrap="wrap" gap={1}>
+        <Box flexDirection="row" flexWrap="wrap" columnGap={1} rowGap={0}>
           {resumo}
         </Box>
       )}
