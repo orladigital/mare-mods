@@ -4,7 +4,7 @@ import type { On } from 'claude-code'
 const FAIXA = {
   plugin: 'barra-de-uso',
   component: 'AbovePrompt',
-  props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 140, scroll: { offset: 0, bodyRows: 10 }, view: {} },
+  props: { hasSurvey: false, isCollapsed: false, isWorking: false, maxRows: 10, bodyColumns: 140, scroll: { offset: 0, bodyRows: 10 }, view: {} },
 } as const
 const SUPERFICIES = ['terminal', 'desktop'] as const
 
@@ -249,7 +249,29 @@ test('no terminal, a faixa ganha uma linha de espaço acima; no app, não', asyn
   nadaPorBaixo(on)
   for (const [surface, margem] of [['terminal', 1], ['desktop', 0]] as const) {
     const ui = await $.ui.mount({ ...FAIXA, surface })
-    expect((await ui.find({ type: 'Box' }))?.props.marginTop).toBe(margem)
+    // A partir do Claude Code 2.1.323, a primeira caixa é a do Claude Code, que empilha uma linha por mod: vale a
+    // primeira com a margem.
+    const comMargem = (await ui.findAll({ type: 'Box' })).find(b => b.props.marginTop !== undefined)
+    expect(comMargem?.props.marginTop).toBe(margem)
+    await ui.unmount()
+  }
+})
+
+test('no terminal, o 📋 e o ≡ saem sem os colchetes; no app, o botão do app, como antes', async ($, on) => {
+  mock.store(on)
+  mock.clock(on)
+  nadaPorBaixo(on)
+  const painel = await $.ui.mount({ ...AJUSTES, surface: 'desktop' })
+  await painel.select({ key: 'ajuste-copiar', value: 'sim' })
+  await painel.unmount()
+
+  for (const surface of SUPERFICIES) {
+    const ui = await $.ui.mount({ ...FAIXA, surface })
+    for (const key of ['copiar-cmd', 'menu']) {
+      const botao = await ui.find({ key })
+      expect(botao?.type).toBe('Button')
+      expect(botao?.props.plain).toBe(surface === 'terminal' ? true : undefined)
+    }
     await ui.unmount()
   }
 })

@@ -270,12 +270,14 @@ export const register: Register = on => {
     const temExplain = e.surface !== 'terminal'
     const pedido = temExplain && a.explain ? await read($, pendente) : null
     const carregando = (await read($, explicacao))?.estado === 'carregando'
+    const semMoldura = e.surface === 'terminal' ? true : undefined
     const botoes = (
       <Box flexDirection="row" gap={1}>
         {pedido && <Button key="explicar" label={carregando ? '🐚 …' : '🐚 Explain'} variant="primary" onPress={() => explicar($)} />}
-        {a.copiar && <Button key="copiar-cmd" label="📋" dimColor onPress={press => copiarComando($, press.surface)} />}
+        {/* No terminal, sem os colchetes (`plain`): o foco e o mouse ainda invertem o ícone. */}
+        {a.copiar && <Button key="copiar-cmd" label="📋" dimColor plain={semMoldura} onPress={press => copiarComando($, press.surface)} />}
         {/* No terminal, o ⚓ ocupa uma casa na tela mas conta como duas no layout, e o botão sai torto: lá vai o ≡. */}
-        <Button key="menu" label={e.surface === 'terminal' ? '≡' : '⚓'} dimColor onPress={() => alternarAjustes($)} />
+        <Button key="menu" label={e.surface === 'terminal' ? '≡' : '⚓'} dimColor plain={semMoldura} onPress={() => alternarAjustes($)} />
       </Box>
     )
 

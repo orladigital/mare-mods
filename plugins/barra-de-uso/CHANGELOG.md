@@ -1,5 +1,10 @@
 # Changelog do barra-de-uso
 
+## 0.1.2 (2026-11-12)
+
+- No terminal, o 📋 e o ≡ da faixa saem sem os colchetes do botão; o foco e o mouse ainda os invertem. No app,
+  nada muda.
+
 ## 0.1.1 (2026-11-03)
 
 - Corrige a praia do app, que não aparecia: o desenho saía com dois atributos colados e o app recusava
