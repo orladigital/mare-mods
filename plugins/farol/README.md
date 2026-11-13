@@ -14,7 +14,7 @@ A instalação pelo app desktop, a atualização e a desinstalação estão no
 | | App desktop | Terminal |
 |---|---|---|
 | sem aviso | a torre do farol, na cor do texto | `🚦` |
-| alguma sessão esperando você | o feixe da torre acende em vermelho e pisca (parado com o "Movimento" desligado) | `🚨 N` (N sessões esperando) |
+| alguma sessão esperando você | o feixe da torre acende em vermelho e pisca (parado com o "Movimento" desligado) | `🚨 N` (N sessões esperando), o número em negrito na cor de erro do tema |
 | só resposta que você não viu (app no macOS) | o feixe acende em azul | `🚦` |
 
 Um clique abre o painel. O farol divide a faixa com os outros mods, à esquerda deles.

@@ -18,7 +18,7 @@ O painel no terminal ganha cor.
   mensagem sua de verdade, no app e no terminal.
 - Na faixa, o farol fica na mesma linha dos outros mods, à esquerda deles, também no Claude Code 2.1.323 ou mais
   novo, que passou a dar uma linha a cada mod. No terminal, o `🚦` volta para a linha da barra de uso: ficava uma
-  linha acima dela. Lá, o `🚦` e o `🚨 N` saem sem os colchetes do botão.
+  linha acima dela. Lá, o `🚦` e o `🚨 N` saem sem os colchetes do botão, e o número do `🚨 N` sai em negrito na cor de erro do tema.
 - No app, a sessão cuja resposta termina com uma pergunta que depende de você (a caixa abaixo da resposta) fica
   esperando até o próximo prompt; antes, ficava livre.
 - O README explica por que o pedido de permissão não acende o farol no terminal.

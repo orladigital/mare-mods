@@ -24,6 +24,9 @@ test('no terminal, a faixa mostra 🚦 sem aviso e 🚨 N com sessões esperando
   expect((await ui.find({ key: 'abrir-farol' }))?.text).toBe('🚨 2')
   // Sem os colchetes: o foco e o mouse ainda invertem o botão.
   expect((await ui.find({ key: 'abrir-farol' }))?.props.plain).toBe(true)
+  // O número em negrito na cor de erro do tema, sem animação; o clique vale no botão inteiro.
+  const numero = await ui.find({ type: 'Text', text: '2' })
+  expect([numero?.props.bold, numero?.props.color]).toEqual([true, 'error'])
   expect(await ui.find({ type: 'Svg' })).toBeUndefined()
   await ui.unmount()
 })
