@@ -57,6 +57,21 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: Barra o settings.local.json do Claude Code
+        # O Claude Code grava nele, em texto puro, cada comando aprovado com "não perguntar de novo", com a senha
+        # ou a chave que estava no comando, e o gitleaks não reconhece uma senha no meio de um argumento. Procura
+        # no histórico inteiro: um commit do PR que põe o arquivo e outro que o tira ainda o publicam.
+        run: |
+          set -uo pipefail
+          if ! achados=$(git log --format='commit %h' --name-only HEAD -- ':(glob)**/.claude/settings.local.json'); then
+            echo "::error::não consegui ler o histórico"
+            exit 1
+          fi
+          if [ -n "${achados}" ]; then
+            echo "${achados}"
+            echo "::error::.claude/settings.local.json no histórico: troque as chaves que estavam nele e tire o arquivo do histórico"
+            exit 1
+          fi
       - name: Procura segredos (gitleaks)
         run: docker run --rm -v "${PWD}:/repo" zricethezav/gitleaks:v8.18.4 detect --source /repo --redact --verbose
       - name: Procura dados pessoais
