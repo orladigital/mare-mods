@@ -30,6 +30,8 @@ O que todo mod cumpre para entrar no `mare-mods`. O template de PR traz esta lis
   uma versão antiga é lido sem quebrar.
 - Nenhum dado pessoal nem segredo: nada de caminho de usuário real (use `/Users/exemplo`), id real de sessão,
   nome de projeto, chave ou token. O CI procura.
+- O `.claude/settings.local.json` do Claude Code não entra no Git: ele guarda os comandos que você aprovou, às
+  vezes com uma senha ou chave no meio. O `.gitignore` já o ignora, e o CI barra o PR que o tiver no histórico.
 - O mod não importa arquivos de outro mod: cada um leva o que precisa. Código comum entre mods vem de
   `comum/`, pela cópia gerada (`docs/criar-um-mod.md`, "Código comum").
 
