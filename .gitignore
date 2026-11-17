@@ -2,3 +2,6 @@
 node_modules/
 # Tipos que o Claude Code escreve ao carregar cada mod
 plugins/*/.claude-plugin/types/
+# O Claude Code grava no settings.local.json, em texto puro, cada comando aprovado com "não perguntar de novo",
+# com a senha ou a chave que estava nele, e só o ignora no exclude global da máquina, que nem todo mundo tem.
+**/.claude/settings.local.json
