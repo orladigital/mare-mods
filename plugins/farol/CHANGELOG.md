@@ -1,5 +1,19 @@
 # Changelog do farol
 
+## 0.5.0 (2026-11-13)
+
+O farol ganha som.
+
+- **Esperando por você:** dois tons que sobem, duas vezes, quando a sessão passa a esperar você (uma pergunta ou,
+  no app, um pedido de permissão, também de um subagente). Toca também na sessão que está na sua tela.
+- **Resposta não vista:** uma gota que sobe, quando a sessão termina uma resposta fora da tela do app desktop.
+- Cada sessão toca só o próprio som, uma vez por aviso, e o mesmo som não se repete na mesma sessão antes de 10
+  segundos. A resposta fora da tela que termina esperando você toca só o "esperando por você". No terminal, só a
+  pergunta toca, e só no macOS; num terminal no Linux ou no Windows, nada toca.
+- Nos ajustes, o cartão **Som** liga e desliga cada um (os dois começam ligados; o "Resposta não vista" só aparece
+  no app). Desligar vale na hora para todas as sessões abertas. O "Movimento" não mexe nos sons.
+- O README explica como desligar a notificação do app se ela soar junto com a "resposta não vista".
+
 ## 0.4.0 (2026-11-12)
 
 O painel no terminal ganha cor.

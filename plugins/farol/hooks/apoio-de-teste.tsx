@@ -39,6 +39,10 @@ export type Mundo = {
   listagens: () => number
   // Os painéis abertos e fechados, na ordem ("farol", "fechou farol").
   paineis: string[]
+  // Os sons tocados ($.audio.play), pelo arquivo, com o ganho: "sons/esperando.wav x1".
+  sons: string[]
+  // O que está guardado no $.store (os ajustes).
+  guardado: Record<string, unknown>
   avancar: (ms: number) => Promise<void>
 }
 
@@ -52,11 +56,19 @@ export type Opcoes = {
   codigoDoOpen?: number
   // O `grep` nem começa (o log ilegível).
   semGrep?: boolean
+  // O som não toca: o `$.audio.play` recusa, como sem tocador.
+  falhaNoSom?: boolean
 }
 
 export const preparar = (on: On, o: Opcoes = {}): Mundo => {
   const relogio = mock.clock(on, { now: AGORA })
-  mock.store(on, o.guardado ?? {})
+  // O $.store em memória, aberto ao teste: mudar `guardado` é o que outra sessão faria pelo painel dela.
+  const guardado: Record<string, unknown> = { ...(o.guardado ?? {}) }
+  on('store.get', (_$, e) => ({ value: guardado[e.key] }))
+  on('store.set', (_$, e) => {
+    guardado[e.key] = e.value
+    return { value: undefined }
+  })
   mock.env(on, o.variaveis ?? { HOME: CASA })
 
   // A sessão: o id, a conversa (vazia, como numa sessão nova) e as respostas do Claude Code a cada evento.
@@ -81,6 +93,13 @@ export const preparar = (on: On, o: Opcoes = {}): Mundo => {
   })
   on('ui.close', (_, e) => {
     paineis.push(`fechou ${e.id}`)
+    return { value: undefined }
+  })
+
+  const sons: string[] = []
+  on('audio.play', (_, e) => {
+    if (o.falhaNoSom) return { deny: 'sem tocador de som' }
+    sons.push(`${e.clip.asset} x${e.gain ?? 1}`)
     return { value: undefined }
   })
 
@@ -131,7 +150,7 @@ export const preparar = (on: On, o: Opcoes = {}): Mundo => {
     return { value: { exitCode: codigo, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
   })
 
-  return { arquivos, mudancas, comandos, log, avisos, listadas, listagens: () => listagens, paineis, avancar: ms => relogio.advance(ms) }
+  return { arquivos, mudancas, comandos, log, avisos, listadas, listagens: () => listagens, paineis, sons, guardado, avancar: ms => relogio.advance(ms) }
 }
 
 // Os arquivos de sessão do app desktop no macOS, na casa de exemplo.

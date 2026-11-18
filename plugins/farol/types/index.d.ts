@@ -28,6 +28,10 @@ export type Ajustes = {
   contagem: boolean
   // A cena do painel se mexendo (só no app).
   movimento: boolean
+  // O som quando esta sessão passa a esperar você.
+  somEsperando: boolean
+  // O som quando esta sessão responde fora da tela do app (só no app).
+  somNaoVisto: boolean
 }
 
 declare module 'claude-code' {

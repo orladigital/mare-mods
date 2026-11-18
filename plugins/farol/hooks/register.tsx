@@ -3,6 +3,7 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { Ajustes, Estado, Registro } from '../types'
 import { NOME_NA_FAIXA, PADRAO, lerAjustes } from './ajustes'
+import type { AjusteLigado } from './ajustes'
 import { abrirNoApp, comOApp, ehSpareDoApp, idEmFoco, lerArquivosDoApp } from './app'
 import type { LeituraDoApp, NoApp } from './app'
 import { contarNoLog, lerLogDePermissoes, modoPede, pedidosNoLog } from './comum/permissao'
@@ -10,6 +11,7 @@ import { desenharCartoes } from './cartoes'
 import { ALTURA_CENA, cenaSvg, descricaoDaCena, situacaoDaCena } from './cena'
 import { SEM_TITULO, casaDe, detalheDe, lerRegistro, ordenar, pastaDoRegistro, tituloDe, visualDe } from './estado'
 import { desenharFaixa } from './faixa'
+import { tocar } from './sons'
 import { desenharPainelNoTerminal } from './terminal'
 
 const PAINEL = 'farol'
@@ -97,6 +99,8 @@ const mudar = async ($: EngineInterface, estado: Estado) => {
   if (!eu || eu.estado === estado) return
   try {
     eu = { ...eu, estado, desde: await $.clock.now() }
+    // A virada para esperando toca o som, também na sessão que está na sua tela; só esta sessão toca a dela.
+    if (estado === 'esperando') await tocar($, 'esperando')
     await gravar($)
     await atualizar($)
   } catch {
@@ -247,6 +251,9 @@ const trocarDeSessao = async ($: EngineInterface, r: Registro) => {
   if (!(await abrirNoApp($, r.appId))) $.ui.toast('Não consegui abrir essa sessão no app.')
 }
 
+// As opções de um ajuste que nasce ligado (o movimento e os sons).
+const LIGADO = { sim: 'ligado (padrão)', nao: 'desligado' }
+
 const mudarAjustes = async ($: EngineInterface, muda: (a: Ajustes) => Ajustes) => {
   const novo = muda((await read($, ajustes)) ?? PADRAO)
   await update($, ajustes, () => novo)
@@ -344,7 +351,10 @@ export const register: Register = on => {
       await lerApp($)
       if (euNoApp()) {
         const { respondeuEm: _, ...resto } = eu
-        eu = idEmFoco(sessoesNoApp) === eu.id ? resto : { ...resto, respondeuEm: await $.clock.now() }
+        const naTela = idEmFoco(sessoesNoApp) === eu.id
+        eu = naTela ? resto : { ...resto, respondeuEm: await $.clock.now() }
+        // A resposta que termina esperando você toca só o esperando (logo abaixo): os dois juntos se confundem.
+        if (!naTela && !esperaVoce()) await tocar($, 'nao-visto')
       }
     }
     voltarPara = 'livre'
@@ -457,6 +467,22 @@ export const register: Register = on => {
           <Box flexShrink={0}>{campo}</Box>
         </Box>
       )
+      // A escolha de um ajuste que liga e desliga: "ligado" e "desligado", com o padrão marcado em `nomes`.
+      const seletorLigado = (key: string, campo: AjusteLigado, nomes: Record<'sim' | 'nao', string> = LIGADO) => (
+        <Select
+          key={key}
+          options={opcoes(nomes)}
+          value={a[campo] ? 'sim' : 'nao'}
+          onSelect={(v: string) => void mudarAjustes($, x => ({ ...x, [campo]: v === 'sim' }))}
+        />
+      )
+      // Uma linha do cartão "Som": o som à esquerda e a escolha à direita.
+      const linhaDoSom = (rotulo: string, campo: JSX.Element) => (
+        <Box flexDirection="row" justifyContent="space-between" alignItems="center" gap={2}>
+          <Text>{rotulo}</Text>
+          <Box flexShrink={0}>{campo}</Box>
+        </Box>
+      )
       blocoAjustes = (
         <Box flexDirection="column" gap={1}>
           <Text dimColor bold>Ajustes</Text>
@@ -474,24 +500,24 @@ export const register: Register = on => {
             linha(
               'Contagem na faixa',
               'O número de sessões esperando ao lado da torre.',
-              <Select
-                key="ajuste-contagem"
-                options={opcoes({ nao: 'desligada (padrão)', sim: 'ligada' })}
-                value={a.contagem ? 'sim' : 'nao'}
-                onSelect={(v: string) => void mudarAjustes($, x => ({ ...x, contagem: v === 'sim' }))}
-              />,
+              seletorLigado('ajuste-contagem', 'contagem', { nao: 'desligada (padrão)', sim: 'ligada' }),
             )}
           {!terminal &&
             linha(
               'Movimento',
               'O painel se mexendo (a cena e os barcos). Desligado, tudo fica parado.',
-              <Select
-                key="ajuste-movimento"
-                options={opcoes({ sim: 'ligado (padrão)', nao: 'desligado' })}
-                value={a.movimento ? 'sim' : 'nao'}
-                onSelect={(v: string) => void mudarAjustes($, x => ({ ...x, movimento: v === 'sim' }))}
-              />,
+              seletorLigado('ajuste-movimento', 'movimento'),
             )}
+          <Box flexDirection="column" borderStyle="round" borderColor="subtle" paddingX={1}>
+            <Text bold>Som</Text>
+            <Text dimColor>
+              {terminal
+                ? 'Cada sessão toca um som quando faz uma pergunta e passa a esperar você (no macOS).'
+                : 'Cada sessão toca um som quando passa a esperar você e quando responde fora da tela.'}
+            </Text>
+            {linhaDoSom('Esperando por você', seletorLigado('ajuste-som-esperando', 'somEsperando'))}
+            {!terminal && linhaDoSom('Resposta não vista', seletorLigado('ajuste-som-nao-visto', 'somNaoVisto'))}
+          </Box>
           <Text dimColor>Os ajustes valem para todas as suas sessões.</Text>
         </Box>
       )

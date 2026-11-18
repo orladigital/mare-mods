@@ -1,18 +1,26 @@
 // Os ajustes de cada pessoa, guardados no $.store (valem para todas as sessões).
 import type { Ajustes, NaFaixa } from '../types'
 
-// Quem instala começa com o farol na faixa, sem o número na torre do app e com a cena se mexendo.
-export const PADRAO: Ajustes = { naFaixa: 'mostrar', contagem: false, movimento: true }
+// Quem instala começa com o farol na faixa, sem o número na torre do app, com a cena se mexendo e com os dois sons
+// ligados.
+export const PADRAO: Ajustes = { naFaixa: 'mostrar', contagem: false, movimento: true, somEsperando: true, somNaoVisto: true }
 
 const NA_FAIXA: readonly NaFaixa[] = ['mostrar', 'esconder']
+
+// Os ajustes de ligar e desligar (as chaves de `Ajustes` com valor booleano).
+export type AjusteLigado = { [K in keyof Ajustes]: Ajustes[K] extends boolean ? K : never }[keyof Ajustes]
 
 // O que veio guardado, completado com o padrão (um ajuste novo numa versão futura nasce no padrão).
 export const lerAjustes = (guardado: unknown): Ajustes => {
   const g = guardado !== null && typeof guardado === 'object' ? (guardado as Partial<Record<keyof Ajustes, unknown>>) : {}
+  const ligado = (campo: AjusteLigado) =>
+    typeof g[campo] === 'boolean' ? (g[campo] as boolean) : PADRAO[campo]
   return {
     naFaixa: NA_FAIXA.includes(g.naFaixa as NaFaixa) ? (g.naFaixa as NaFaixa) : PADRAO.naFaixa,
-    contagem: typeof g.contagem === 'boolean' ? g.contagem : PADRAO.contagem,
-    movimento: typeof g.movimento === 'boolean' ? g.movimento : PADRAO.movimento,
+    contagem: ligado('contagem'),
+    movimento: ligado('movimento'),
+    somEsperando: ligado('somEsperando'),
+    somNaoVisto: ligado('somNaoVisto'),
   }
 }
 
