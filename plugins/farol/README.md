@@ -68,8 +68,32 @@ No próprio painel, pelo botão **Ajustes** no rodapé (eles abrem recolhidos):
 | Na faixa | mostrar | **esconder:** o farol sai da faixa; o `/farol` continua abrindo o painel |
 | Contagem na faixa | desligada | Só no app: o número de sessões esperando ao lado da torre. No terminal, o número sempre aparece |
 | Movimento | ligado | Só no app: a cena e os barcos do painel se mexendo. Desligado, tudo fica parado |
+| Som: Esperando por você | ligado | O som quando a sessão passa a esperar você |
+| Som: Resposta não vista | ligado | Só no app: o som quando a sessão responde fora da tela |
 
 Os ajustes ficam guardados para você e valem nas sessões seguintes.
+
+## Som
+
+| Som | Quando toca | Como soa |
+|---|---|---|
+| Esperando por você | a sessão passa a esperar você: uma pergunta ou, no app, um pedido de permissão (também de um subagente) | dois tons que sobem, duas vezes |
+| Resposta não vista | só no app desktop: a sessão termina uma resposta fora da tela | uma gota que sobe |
+
+- **Cada sessão toca só o próprio som.** Com várias sessões abertas, cada aviso toca uma vez, na sessão que
+  avisa. O "esperando por você" toca também na sessão que está na sua tela.
+- **Uma vez por aviso:** o som não se repete enquanto a sessão espera, e o mesmo som não toca de novo na mesma
+  sessão antes de 10 segundos.
+- **Onde toca:** no app desktop e no terminal do macOS. No terminal, só a pergunta (`AskUserQuestion`) toca, porque
+  lá o pedido de permissão não acende o farol (ver [Limites](#limites)). Num terminal no Linux ou no Windows, nada
+  toca, sem erro.
+- **Para desligar:** em **Ajustes**, no cartão **Som**, cada som tem o seu ajuste. O "Movimento" não mexe nos sons.
+- **A notificação do app:** o app desktop pode tocar a notificação dele quando uma resposta termina. Se ela soar
+  junto com a "resposta não vista", desligue uma das duas: a do farol aqui, ou a do app nos ajustes de notificação
+  do app.
+
+Os sons são sintetizados pelo `sons/gerar.mjs`, sem licença de terceiros (`node plugins/farol/sons/gerar.mjs`
+regrava os dois arquivos).
 
 ## Como funciona
 

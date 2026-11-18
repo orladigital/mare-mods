@@ -4,6 +4,9 @@ import { AGORA, FAIXA, INICIO, PAINEL, gravarOutra, preparar } from './apoio-de-
 
 const SUPERFICIES = ['terminal', 'desktop'] as const
 
+// O seletor de cada som nos ajustes, montado por função: o nome literal depois de `key:` parece chave ao gitleaks.
+const somDoAjuste = (som: string) => `ajuste-som-${som}`
+
 const textos = async (ui: { findAll: (q: { type: 'Text' }) => Promise<{ text: string }[]> }) => (await ui.findAll({ type: 'Text' })).map(t => t.text)
 
 test('o painel lista as sessões pela prioridade, com "pasta · tempo · estado", e marca esta sessão', async ($, on) => {
@@ -58,13 +61,16 @@ test('sem a pasta da casa, o painel diz por que não há registro', async ($, on
   await ui.unmount()
 })
 
-test('no app, os três ajustes; no terminal, só "na faixa" (lá não há contagem opcional nem movimento)', async ($, on) => {
+test('no app, os ajustes da faixa, do movimento e os dois do som; no terminal, "na faixa" e o som do esperando', async ($, on) => {
   preparar(on)
   await $.session.start(INICIO)
 
   const app = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
   await app.press({ key: 'ajustes' })
-  for (const key of ['ajuste-na-faixa', 'ajuste-contagem', 'ajuste-movimento']) expect(await app.find({ key })).toBeDefined()
+  for (const key of ['ajuste-na-faixa', 'ajuste-contagem', 'ajuste-movimento', somDoAjuste('esperando'), somDoAjuste('nao-visto')]) {
+    expect(await app.find({ key })).toBeDefined()
+  }
+  expect(await textos(app)).toContain('Som')
   await app.press({ key: 'fechar' })
   await app.unmount()
 
@@ -73,6 +79,8 @@ test('no app, os três ajustes; no terminal, só "na faixa" (lá não há contag
   expect(await terminal.find({ key: 'ajuste-na-faixa' })).toBeDefined()
   expect(await terminal.find({ key: 'ajuste-contagem' })).toBeUndefined()
   expect(await terminal.find({ key: 'ajuste-movimento' })).toBeUndefined()
+  expect(await terminal.find({ key: somDoAjuste('esperando') })).toBeDefined()
+  expect(await terminal.find({ key: somDoAjuste('nao-visto') })).toBeUndefined()
   await terminal.unmount()
 })
 
@@ -209,4 +217,26 @@ test('ao fechar o painel, os ajustes voltam a abrir recolhidos', async ($, on) =
   ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
   expect(await ui.find({ key: 'ajuste-na-faixa' })).toBeUndefined()
   await ui.unmount()
+})
+
+test('o cartão "Som" desliga cada som: a escolha vale ao abrir de novo e cala a próxima virada', async ($, on) => {
+  const m = preparar(on)
+  on('tool.call', () => ({ deny: 'respondida no teste' }))
+  await $.session.start(INICIO)
+
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  await ui.press({ key: 'ajustes' })
+  await ui.select({ key: somDoAjuste('esperando'), value: 'nao' })
+  await ui.select({ key: somDoAjuste('nao-visto'), value: 'nao' })
+  await ui.unmount()
+
+  // Aberto de novo (os ajustes seguem abertos: o painel não foi fechado), os dois aparecem desligados.
+  const outra = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  expect((await outra.find({ key: somDoAjuste('esperando') }))?.props.value).toBe('nao')
+  expect((await outra.find({ key: somDoAjuste('nao-visto') }))?.props.value).toBe('nao')
+  await outra.unmount()
+
+  await $.prompt.submit({ text: 'oi' } as never)
+  await $.tool.call({ tool: 'AskUserQuestion', tool_use_id: 'pergunta-1', input: { questions: [] } } as never)
+  expect(m.sons).toEqual([])
 })
