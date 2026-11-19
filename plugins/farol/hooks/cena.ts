@@ -4,10 +4,12 @@
 import type { Registro } from '../types'
 import { visualDe } from './estado'
 
-// As sete situações da cena, da mais urgente à mais calma.
+// As situações da cena, da mais urgente à mais calma.
 export type Situacao =
   | 'esperando'
   | 'esperando-e-nao-visto'
+  | 'pergunta'
+  | 'pergunta-e-nao-visto'
   | 'nao-visto'
   | 'trabalhando-e-nao-visto'
   | 'trabalhando'
@@ -21,6 +23,7 @@ export const situacaoDaCena = (lista: readonly Registro[], agora: number): Situa
   const naoVisto = visuais.has('nao-visto')
   const trabalhando = visuais.has('trabalhando')
   if (esperando) return naoVisto ? 'esperando-e-nao-visto' : 'esperando'
+  if (visuais.has('pergunta')) return naoVisto ? 'pergunta-e-nao-visto' : 'pergunta'
   if (naoVisto) return trabalhando ? 'trabalhando-e-nao-visto' : 'nao-visto'
   if (trabalhando) return 'trabalhando'
   return visuais.has('livre') ? 'livres' : 'vazia'
@@ -45,6 +48,7 @@ const COR = {
   vermelho: '#FF5A4A',
   azul: '#6FA8FF',
   ambar: '#F2C35B',
+  coral: '#E0835A',
   branca: '#FFF4D6',
   trelica: '#9FB3C8',
   estouro: '#FFE1DC',
@@ -56,6 +60,8 @@ type Lanterna = { cor: string; pisca?: string; respira?: { dur: string; ate: num
 const LANTERNA: Record<Situacao, Lanterna> = {
   esperando: { cor: COR.vermelho, pisca: '0.9s' },
   'esperando-e-nao-visto': { cor: COR.vermelho, pisca: '0.9s' },
+  pergunta: { cor: COR.coral },
+  'pergunta-e-nao-visto': { cor: COR.coral },
   'nao-visto': { cor: COR.azul },
   'trabalhando-e-nao-visto': { cor: COR.ambar, respira: { dur: '6s', ate: 0.55 } },
   trabalhando: { cor: COR.ambar, respira: { dur: '6s', ate: 0.55 } },
@@ -65,10 +71,12 @@ const LANTERNA: Record<Situacao, Lanterna> = {
 
 // Os efeitos de cada situação. O vermelho: feixes, halo, reflexo e os sinalizadores; o azul: feixes (com o halo e o
 // reflexo só quando a lanterna também é azul) e a boia; o âmbar: o halo.
-type Efeitos = { vermelho?: boolean; feixesAzuis?: boolean; azulNaLanterna?: boolean; boia?: boolean; haloAmbar?: boolean }
+type Efeitos = { vermelho?: boolean; feixesAzuis?: boolean; azulNaLanterna?: boolean; boia?: boolean; haloAmbar?: boolean; haloCoral?: boolean }
 const EFEITOS: Record<Situacao, Efeitos> = {
   esperando: { vermelho: true },
   'esperando-e-nao-visto': { vermelho: true, boia: true },
+  pergunta: { haloCoral: true },
+  'pergunta-e-nao-visto': { haloCoral: true, boia: true },
   'nao-visto': { feixesAzuis: true, azulNaLanterna: true, boia: true },
   'trabalhando-e-nao-visto': { feixesAzuis: true, haloAmbar: true, boia: true },
   trabalhando: { haloAmbar: true },
@@ -169,9 +177,11 @@ const reflexo = (cx: number, mov: boolean, gradiente: string, dur: string) =>
   anima(mov, `attributeName="opacity" values="1;0.3;1" dur="${dur}"`) +
   '</rect>'
 
-// Um sinalizador de socorro: sobe do mar, estoura e avermelha o céu. `atraso` desloca o ciclo de 3 s.
-const sinal = (x: number, topo: number, w: number, atraso: number, mov: boolean) => {
-  const t = `dur="3s" begin="${atraso}s"`
+// Um sinalizador de socorro: sobe do mar, estoura e avermelha o céu. `atraso` desloca o ciclo (3 s; na Alta, 1,6 s,
+// com o estouro maior).
+const sinal = (x: number, topo: number, w: number, atraso: number, mov: boolean, forte = false) => {
+  const t = `dur="${forte ? '1.6s' : '3s'}" begin="${atraso}s"`
+  const estouro = forte ? '18;24' : '12;16'
   return (
     '<g class="sinal">' +
     `<rect width="${w}" height="${HORIZONTE}" fill="url(#ceu-vermelho)" opacity="0">${anima(mov, `attributeName="opacity" values="0;0;0.9;0" keyTimes="0;0.4;0.5;1" ${t}`)}</rect>` +
@@ -180,7 +190,7 @@ const sinal = (x: number, topo: number, w: number, atraso: number, mov: boolean)
     anima(mov, `attributeName="opacity" values="0.8;0.8;0;0" keyTimes="0;0.45;0.6;1" ${t}`) +
     '</line>' +
     `<circle cx="${x}" cy="${topo}" r="0" fill="url(#halo-vermelho-cor)">` +
-    anima(mov, `attributeName="r" values="0;0;12;16" keyTimes="0;0.45;0.55;1" ${t}`) +
+    anima(mov, `attributeName="r" values="0;0;${estouro}" keyTimes="0;0.45;0.55;1" ${t}`) +
     anima(mov, `attributeName="opacity" values="1;1;1;0" keyTimes="0;0.45;0.6;1" ${t}`) +
     '</circle>' +
     `<circle cx="${x}" cy="${topo}" r="0" fill="${COR.estouro}">${anima(mov, `attributeName="r" values="0;0;2.2;0" keyTimes="0;0.45;0.55;0.8" ${t}`)}</circle>` +
@@ -188,9 +198,14 @@ const sinal = (x: number, topo: number, w: number, atraso: number, mov: boolean)
   )
 }
 
-// Dois sinalizadores alternando: o céu pisca vermelho a cada 1,5 s.
-const sinalizadores = (w: number, mov: boolean) =>
-  `<g id="sinalizadores">${sinal(Math.round(w * 0.24), 10, w, 0, mov)}${sinal(Math.round(w * 0.44), 14, w, 1.5, mov)}</g>`
+// Os sinalizadores alternando: no padrão, dois, e o céu pisca vermelho a cada 1,5 s.
+// Na Alta, quatro, em ciclos de 1,6 s deslocados de 0,4 s: um estouro a cada 0,4 s.
+const sinalizadores = (w: number, mov: boolean, forte: boolean) => {
+  const lista: readonly [number, number, number][] = forte
+    ? [[0.12, 12, 0], [0.24, 10, 0.4], [0.44, 14, 0.8], [0.56, 9, 1.2]]
+    : [[0.24, 10, 0], [0.44, 14, 1.5]]
+  return `<g id="sinalizadores">${lista.map(([fx, topo, atraso]) => sinal(Math.round(w * fx), topo, w, atraso, mov, forte)).join('')}</g>`
+}
 
 // A boia de treliça no mar, maior, com cone no alto, a luz azul com um lampejo duplo forte e o reflexo; balança
 // devagar e faz ondas em volta.
@@ -241,6 +256,7 @@ const definicoes = (w: number) => {
     haloGradiente('halo-vermelho-cor', COR.vermelho, 0.85) +
     haloGradiente('halo-azul-cor', COR.azul, 0.85) +
     haloGradiente('halo-ambar-cor', COR.ambar, 0.9) +
+    haloGradiente('halo-coral-cor', COR.coral, 0.9) +
     reflexoGradiente('reflexo-vermelho', COR.vermelho, 0.75) +
     reflexoGradiente('reflexo-azul', COR.azul, 0.6) +
     `<radialGradient id="ceu-vermelho" cx="0.5" cy="1" r="0.9"><stop offset="0" stop-color="${COR.vermelho}" stop-opacity="0.5"/><stop offset="1" stop-color="${COR.vermelho}" stop-opacity="0"/></radialGradient>` +
@@ -254,8 +270,9 @@ const definicoes = (w: number) => {
 const ESTILO = '<style>.borda{fill:none;stroke:#FFFFFF;stroke-opacity:0}@media (prefers-color-scheme: dark){.borda{stroke-opacity:0.28}}</style>'
 
 // A cena inteira. `largura` é a largura estimada do painel em pixels: o desenho se ajusta a ela, e o app ainda
-// o estica ou corta um pouco para caber.
-export const cenaSvg = (s: Situacao, movimento: boolean, largura = 400): string => {
+// o estica ou corta um pouco para caber. Na intensidade Alta, o feixe vermelho gira mais rápido (1,2 s) e os
+// sinalizadores estouram maiores e mais vezes.
+export const cenaSvg = (s: Situacao, movimento: boolean, largura = 400, alta = false): string => {
   const w = Math.round(Math.max(240, Math.min(1000, largura)))
   const cx = Math.round(w * 0.72)
   const e = EFEITOS[s]
@@ -266,14 +283,16 @@ export const cenaSvg = (s: Situacao, movimento: boolean, largura = 400): string 
     definicoes(w),
     '<g clip-path="url(#moldura)">',
     ceuEMar(w, m),
-    e.vermelho ? feixes(cx, w, m, 'V', 'feixes-vermelhos', '2s') : '',
+    e.vermelho ? feixes(cx, w, m, 'V', 'feixes-vermelhos', alta ? '1.2s' : '2s') : '',
     e.feixesAzuis ? feixes(cx, w, m, 'A', 'feixes-azuis', '5s') : '',
     e.vermelho ? halo(cx, m, 'halo-vermelho', 'halo-vermelho-cor', '1.2s', 20) : '',
     e.vermelho ? reflexo(cx, m, 'reflexo-vermelho', '1.2s') : '',
-    e.vermelho ? sinalizadores(w, m) : '',
+    e.vermelho ? sinalizadores(w, m, alta) : '',
     e.azulNaLanterna ? halo(cx, m, 'halo-azul', 'halo-azul-cor', '1.8s', 17) : '',
     e.azulNaLanterna ? reflexo(cx, m, 'reflexo-azul', '1.8s') : '',
     e.haloAmbar ? halo(cx, m, 'halo-ambar', 'halo-ambar-cor', '2s', 18) : '',
+    // A Pergunta é um sinal mais fraco: o halo coral fica parado, também com o movimento ligado.
+    e.haloCoral ? halo(cx, false, 'halo-coral', 'halo-coral-cor', '2s', 18) : '',
     torre(cx, s, m),
     e.boia ? boia(Math.round(w * 0.4), m) : '',
     '</g>',
@@ -285,6 +304,8 @@ export const cenaSvg = (s: Situacao, movimento: boolean, largura = 400): string 
 const DESCRICAO: Record<Situacao, string> = {
   esperando: 'Farol com a luz vermelha piscando e sinalizadores no céu: há sessão esperando você',
   'esperando-e-nao-visto': 'Farol com a luz vermelha, sinalizadores e a boia azul acesa: há sessão esperando você e resposta que você não viu',
+  pergunta: 'Farol com a luz coral: há sessão com uma pergunta para você',
+  'pergunta-e-nao-visto': 'Farol com a luz coral e a boia azul acesa: há sessão com uma pergunta e resposta que você não viu',
   'nao-visto': 'Farol com a luz azul e a boia acesa: há resposta que você não viu',
   'trabalhando-e-nao-visto': 'Farol com a luz âmbar, os feixes azuis e a boia acesa: há sessão trabalhando e resposta que você não viu',
   trabalhando: 'Farol com a luz âmbar: há sessão trabalhando',

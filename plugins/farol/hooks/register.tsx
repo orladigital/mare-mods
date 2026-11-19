@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { Ajustes, Estado, Registro } from '../types'
-import { NOME_NA_FAIXA, PADRAO, lerAjustes } from './ajustes'
+import { NOME_INTENSIDADE, NOME_NA_FAIXA, NOME_VOLUME, PADRAO, lerAjustes } from './ajustes'
 import type { AjusteLigado } from './ajustes'
 import { abrirNoApp, comOApp, ehSpareDoApp, idEmFoco, lerArquivosDoApp } from './app'
 import type { LeituraDoApp, NoApp } from './app'
@@ -22,13 +22,17 @@ const agora = atom({ plugin: 'farol', key: 'agora' } as const, 0)
 const minhaId = atom({ plugin: 'farol', key: 'minhaId' } as const, '')
 const ajustes = atom({ plugin: 'farol', key: 'ajustes' } as const, null)
 const ajustesAbertos = atom({ plugin: 'farol', key: 'ajustesAbertos' } as const, false)
+// A fase do relógio do painel do app (aceso ou apagado).
+const aceso = atom({ plugin: 'farol', key: 'aceso' } as const, true)
 
 // A pergunta ao usuário que para a sessão até a resposta.
 const PERGUNTA = 'AskUserQuestion'
 // A caixa de fim de turno do app, abaixo da resposta; com `blocked`, a sessão parou porque depende de você, e fica
-// esperando até o próximo prompt.
+// esperando até o próximo prompt; com uma pergunta (`ask`) e sem `blocked`, fica em Pergunta, um sinal mais fraco e
+// sem som, até o próximo prompt.
 const FIM_DE_TURNO = 'mcp__ccd_turn__wrap_up'
 let paradaPorVoce = false
+let perguntouNoFim = false
 
 // O registro desta sessão; cada mudança é gravada em <casa>/.claude/farol/<id>.json. Sem a pasta da casa
 // (nem HOME nem USERPROFILE), `pastaDoFarol` fica vazia e o farol não grava nem lê nada.
@@ -39,32 +43,24 @@ let pastaDoFarol = ''
 let perguntas = 0
 
 // O que o app desktop no macOS sabe de cada sessão (pelo id no Claude Code), relido com as outras sessões. Esta
-// sessão está no app quando o app tem um arquivo dela. O app grava esse arquivo ao abrir a sessão: sem ele no
-// primeiro minuto, a sessão é do terminal (ou de outro sistema), e o farol para de ler os arquivos do app.
-const PROCURA_NO_APP_MS = 60_000
+// sessão está no app quando o app tem um arquivo dela. A leitura não para: uma sessão que o app pré-abriu (numa
+// pasta que muda de versão para versão) só ganha o arquivo quando você a usa, minutos depois; e o terminal, no
+// macOS, também mostra as sessões do app pelo nome da barra lateral. Fora do macOS a pasta não existe, e a leitura
+// vem vazia; dentro, o cache pela hora da mudança só abre os arquivos que mudaram.
 const leituraDoApp: LeituraDoApp = new Map()
 let sessoesNoApp = new Map<string, NoApp>()
-let comecouEm = 0
-let achadaNoApp = false
-let foraDoApp = false
 
-// Uma spare do app (pré-aberta, à espera de você abrir uma sessão nova) só grava o registro quando o app a usa, e
-// espera por isso sem o limite do primeiro minuto.
+// Uma spare do app (pré-aberta, à espera de você abrir uma sessão nova) só grava o registro quando o app a usa.
 let spareSemDono = false
 
 const lerApp = async ($: EngineInterface) => {
-  if (!casa || !eu || foraDoApp) return
+  if (!casa || !eu) return
   sessoesNoApp = await lerArquivosDoApp($, casa, leituraDoApp).catch(() => new Map<string, NoApp>())
   const meu = sessoesNoApp.get(eu.id)
   if (meu) {
-    achadaNoApp = true
     spareSemDono = false
     // A pasta que o app diz: a de uma spare é a da pré-abertura, não a sua.
     if (meu.cwd) eu = { ...eu, pasta: pastaDoRegistro(meu.cwd) }
-  } else if (!achadaNoApp && !spareSemDono && (await $.clock.now()) - comecouEm > PROCURA_NO_APP_MS) {
-    foraDoApp = true
-    sessoesNoApp = new Map()
-    leituraDoApp.clear()
   }
 }
 const euNoApp = (): NoApp | undefined => (eu ? sessoesNoApp.get(eu.id) : undefined)
@@ -77,8 +73,8 @@ const gravar = async ($: EngineInterface) => {
   await $.fs.write(`${pastaDoFarol}/${eu.id}.json`, JSON.stringify(eu))
 }
 
-// Relê o registro de todas as sessões (esta inclusive) e, no app, o que ele sabe delas: o nome na barra lateral,
-// o não visto e o id para a troca.
+// Relê o registro de todas as sessões (esta inclusive) e o que o app sabe delas: o nome na barra lateral (também no
+// terminal, no macOS), o não visto (o painel do terminal o ignora) e o id para a troca.
 const atualizar = async ($: EngineInterface) => {
   if (!pastaDoFarol) return
   const lista: Registro[] = []
@@ -88,10 +84,36 @@ const atualizar = async ($: EngineInterface) => {
     if (r) lista.push(r)
   }
   await lerApp($)
-  const vistas = euNoApp() ? comOApp(lista, sessoesNoApp) : lista
+  const vistas = comOApp(lista, sessoesNoApp)
   const t = await $.clock.now()
   await update($, sessoes, () => vistas)
   await update($, agora, () => t)
+  await ajustarPisca($)
+}
+
+// O lembrete da Alta: enquanto esta sessão espera você, o som do esperando se repete a cada 2 min, no máximo 3 vezes.
+// O relógio só nasce na virada para esperando com a intensidade alta e para no primeiro toque em que ela já não é
+// alta (trocada no painel de qualquer sessão); a Pergunta não tem som.
+const LEMBRETE_MS = 2 * 60_000
+const LEMBRETES = 3
+let lembrete: { cancel: () => void } | null = null
+const pararLembrete = () => {
+  lembrete?.cancel()
+  lembrete = null
+}
+const comecarLembrete = async ($: EngineInterface) => {
+  pararLembrete()
+  if (lerAjustes(await $.store.get('ajustes')).intensidade !== 'alta') return
+  let vezes = 0
+  lembrete = $.clock.every(LEMBRETE_MS, () => {
+    void (async () => {
+      if (eu?.estado !== 'esperando') return pararLembrete()
+      if (lerAjustes(await $.store.get('ajustes')).intensidade !== 'alta') return pararLembrete()
+      vezes += 1
+      if (vezes >= LEMBRETES) pararLembrete()
+      await tocar($, 'esperando')
+    })().catch(() => undefined)
+  })
 }
 
 // Nunca lança: o farol não pode atrapalhar prompt, ferramenta nem resposta.
@@ -100,7 +122,10 @@ const mudar = async ($: EngineInterface, estado: Estado) => {
   try {
     eu = { ...eu, estado, desde: await $.clock.now() }
     // A virada para esperando toca o som, também na sessão que está na sua tela; só esta sessão toca a dela.
-    if (estado === 'esperando') await tocar($, 'esperando')
+    if (estado === 'esperando') {
+      await tocar($, 'esperando')
+      await comecarLembrete($)
+    } else pararLembrete()
     await gravar($)
     await atualizar($)
   } catch {
@@ -146,6 +171,7 @@ const reavaliar = async ($: EngineInterface) => {
 const comecar = async ($: EngineInterface) => {
   voltarPara = 'trabalhando'
   paradaPorVoce = false
+  perguntouNoFim = false
   if (esperaVoce()) await reavaliar($)
   else await mudar($, 'trabalhando')
 }
@@ -162,10 +188,60 @@ const conferirLog = async ($: EngineInterface) => {
   await reavaliar($)
 }
 
+// A transcrição desta sessão, onde o Claude Code grava o modo de cada prompt (`"permissionMode":"default"`):
+// <casa>/.claude/projects/<a pasta da sessão, com cada caractere que não é letra nem número trocado por "-">/<id>.jsonl.
+// É o modo que o terminal tem: a API não o dá, e o terminal não tem o arquivo do app. Uma troca de modo no meio da
+// resposta (Shift+Tab) só aparece no próximo prompt. O caminho montado é o primeiro palpite; o Claude Code pode
+// abreviar o nome de uma pasta muito longa, e então a transcrição se procura pelo id nas pastas de projects (uma vez).
+let transcricao = ''
+let transcricaoAchada = false
+const transcricaoDe = (casa: string, cwd: string, id: string) => `${casa}/.claude/projects/${cwd.replace(/[^A-Za-z0-9]/g, '-')}/${id}.jsonl`
+
+const temArquivo = async ($: EngineInterface, caminho: string) => {
+  const i = caminho.lastIndexOf('/')
+  const nome = caminho.slice(i + 1)
+  return (await $.fs.list(caminho.slice(0, i)).catch(() => [])).some(f => f.kind === 'file' && f.name === nome)
+}
+
+const acharTranscricao = async ($: EngineInterface): Promise<string> => {
+  if (transcricaoAchada || !transcricao || (await temArquivo($, transcricao))) {
+    transcricaoAchada = transcricaoAchada || transcricao !== ''
+    return transcricao
+  }
+  const projetos = transcricao.slice(0, transcricao.lastIndexOf('/', transcricao.lastIndexOf('/') - 1))
+  const nome = transcricao.slice(transcricao.lastIndexOf('/') + 1)
+  for (const p of await $.fs.list(projetos).catch(() => [])) {
+    if (p.kind === 'dir' && (await temArquivo($, `${projetos}/${p.name}/${nome}`))) {
+      transcricao = `${projetos}/${p.name}/${nome}`
+      transcricaoAchada = true
+      break
+    }
+  }
+  return transcricao
+}
+
+// O último modo gravado na transcrição; sem a transcrição ou sem o `grep`, nenhum (e o pedido não acende).
+const modoDaTranscricao = async ($: EngineInterface): Promise<string | undefined> => {
+  const caminho = await acharTranscricao($)
+  if (!caminho) return undefined
+  const r = await $.process.run(['grep', '-o', '"permissionMode":"[A-Za-z]*"', caminho]).catch(() => ({ stdout: '' }))
+  const ultimo = r.stdout.trim().split('\n').at(-1) ?? ''
+  return /"permissionMode":"([A-Za-z]+)"/.exec(ultimo)?.[1]
+}
+
+// No terminal, o pedido está na tela quando o modo pede (Manual e plano; no Auto quem decide é o classificador) e
+// fica até a chamada terminar.
+const pedidoNoTerminal = async ($: EngineInterface, tool: string, id: string, agentId: string | undefined) => {
+  if (tool === PERGUNTA || !modoPede(await modoDaTranscricao($), tool)) return
+  pedidos.set(id, agentId)
+  pedidosNaTela.add(id)
+  await reavaliar($)
+}
+
 const pedidoAberto = async ($: EngineInterface, tool: string, id: string, agentId: string | undefined) => {
   await lerApp($)
   const meu = euNoApp()
-  if (!meu) return
+  if (!meu) return pedidoNoTerminal($, tool, id, agentId)
   // O pedido entra antes de ler o log: a chamada de outro laço que termina nesse meio-tempo não para a vigia.
   pedidos.set(id, agentId)
   if (meu.appId && !vigia) {
@@ -211,6 +287,8 @@ const tituloDaConversa = async ($: EngineInterface): Promise<string> => {
 // A releitura das outras sessões só roda enquanto alguém vê o resultado: o farol na faixa ou o painel aberto.
 // O batimento (gravar) roda sempre, para esta sessão seguir viva no painel das outras.
 let painelAberto = false
+// O painel fechado por você (o Fechar ou o x): o último desenho dele não o reabre.
+let fechadoDeProposito = false
 let releitura: { cancel: () => void } | null = null
 
 const ajustarReleitura = async ($: EngineInterface) => {
@@ -221,10 +299,30 @@ const ajustarReleitura = async ($: EngineInterface) => {
     releitura.cancel()
     releitura = null
   }
+  await ajustarPisca($)
+}
+
+// O relógio do painel: com o painel do app aberto, o movimento ligado e ao menos um cartão com aviso (esperando
+// ou não visto), nas duas intensidades, o painel vira de fase a cada 0,6 s; a borda do esperando e os barcos que piscam a
+// seguem, todos juntos. Fora disso, ele para, aceso. No terminal não há animação (regra do repo).
+let relogioDoPainel: { cancel: () => void } | null = null
+let noTerminal = false
+const ajustarPisca = async ($: EngineInterface) => {
+  const a = (await read($, ajustes)) ?? PADRAO
+  const t = await read($, agora)
+  const comAviso = (await read($, sessoes)).some(r => ['esperando', 'nao-visto'].includes(visualDe(r, t)))
+  const precisa = painelAberto && !noTerminal && a.movimento && comAviso
+  if (precisa && !relogioDoPainel) relogioDoPainel = $.clock.every(600, () => void update($, aceso, x => !x).catch(() => undefined))
+  if (!precisa && relogioDoPainel) {
+    relogioDoPainel.cancel()
+    relogioDoPainel = null
+    await update($, aceso, () => true)
+  }
 }
 
 const abrir = async ($: EngineInterface) => {
   painelAberto = true
+  fechadoDeProposito = false
   await atualizar($).catch(() => undefined)
   await ajustarReleitura($)
   await $.ui.open({ id: PAINEL, title: 'Farol' })
@@ -232,6 +330,7 @@ const abrir = async ($: EngineInterface) => {
 
 const fechar = async ($: EngineInterface) => {
   painelAberto = false
+  fechadoDeProposito = true
   await update($, ajustesAbertos, () => false)
   await ajustarReleitura($)
   await $.ui.close({ id: PAINEL })
@@ -276,8 +375,9 @@ export const register: Register = on => {
       pastaDoFarol = `${casa}/.claude/farol`
       const id = await $.session.id()
       const t = await $.clock.now()
-      comecouEm = t
       spareSemDono = ehSpareDoApp(e.cwd)
+      noTerminal = e.surface === 'terminal'
+      transcricao = transcricaoDe(casa, e.cwd, id)
       eu = { id, pasta: pastaDoRegistro(e.cwd), titulo: await tituloDaConversa($), estado: 'livre', desde: t, vivoEm: t }
       // Sessão reaberta: a hora da última resposta continua, para o não visto sobreviver a um reinício do app.
       const anterior = lerRegistro(await $.fs.read(`${pastaDoFarol}/${id}.json`).catch(() => ''))
@@ -311,8 +411,11 @@ export const register: Register = on => {
   // chamada fecha o pedido de permissão dela, se houve (respondido ou recusado).
   on('tool.call', async ($, e, next) => {
     // A caixa é do app, e os tipos da API não a listam: o nome e o `blocked` se leem soltos.
-    const caixa = e as { tool: string; blocked?: unknown }
-    if (caixa.tool === FIM_DE_TURNO && e.agentId === undefined && caixa.blocked === true) paradaPorVoce = true
+    const caixa = e as { tool: string; blocked?: unknown; ask?: unknown }
+    if (caixa.tool === FIM_DE_TURNO && e.agentId === undefined) {
+      if (caixa.blocked === true) paradaPorVoce = true
+      else if (typeof caixa.ask === 'string' && caixa.ask.trim()) perguntouNoFim = true
+    }
     const pergunta = e.tool === PERGUNTA
     if (pergunta) {
       perguntas += 1
@@ -326,8 +429,8 @@ export const register: Register = on => {
     }
   }).catch(($, e, next) => next(e))
 
-  // No app, um "perguntar" da checagem, da sessão ou de um subagente, pode virar um pedido na sua tela. Fora do
-  // app não há como saber: o terminal não acende por pedido de permissão nesta versão.
+  // Um "perguntar" da checagem, da sessão ou de um subagente, pode virar um pedido na sua tela: no app, pelo modo do
+  // arquivo dele e pelo main.log; no terminal, pelo modo gravado na transcrição.
   on('tool.check', async ($, e, next) => {
     const verdict = await next(e)
     if (verdict.decision === 'ask' && e.tool_use_id && eu) {
@@ -358,7 +461,7 @@ export const register: Register = on => {
       }
     }
     voltarPara = 'livre'
-    await mudar($, esperaVoce() ? 'esperando' : 'livre')
+    await mudar($, esperaVoce() ? 'esperando' : perguntouNoFim ? 'pergunta' : 'livre')
     return result
   })
 
@@ -379,6 +482,7 @@ export const register: Register = on => {
     const r = await next(e)
     if (e.id === PAINEL && painelAberto) {
       painelAberto = false
+      fechadoDeProposito = true
       await update($, ajustesAbertos, () => false)
       await ajustarReleitura($)
     }
@@ -415,6 +519,12 @@ export const register: Register = on => {
   // linhas com fundo por sessão. Onde não há nenhum dos dois, uma linha de título e uma de "pasta · tempo · estado"
   // por sessão. Abaixo, os ajustes e o Fechar.
   on('ui.render', { component: 'Pane', requestId: PAINEL }, async ($, e) => {
+    // O painel que se desenha está aberto, também o que já estava na tela quando o farol recarregou (o "aberto" fica
+    // na memória do farol e se perde no recarregamento; sem ele, a releitura e o relógio do painel não ligam).
+    if (!painelAberto && !fechadoDeProposito) {
+      painelAberto = true
+      await ajustarReleitura($)
+    }
     const elementos = $.ui.resolve(e)
     const { Box, Text, Button } = elementos
     const t = await read($, agora)
@@ -446,8 +556,8 @@ export const register: Register = on => {
       const largura = e.props.bodyColumns * 8
       desenhos = (
         <Box flexDirection="column" gap={1}>
-          <Svg key="cena" source={cenaSvg(situacao, a.movimento, largura)} alt={descricaoDaCena(situacao)} height={ALTURA_CENA} isInteractive={a.movimento || undefined} />
-          {lista.length > 0 && desenharCartoes($, e, { lista, agora: t, minha, movimento: a.movimento, trocar: r => trocarDeSessao($, r) })}
+          <Svg key="cena" source={cenaSvg(situacao, a.movimento, largura, a.intensidade === 'alta')} alt={descricaoDaCena(situacao)} height={ALTURA_CENA} isInteractive={a.movimento || undefined} />
+          {lista.length > 0 && desenharCartoes($, e, { lista, agora: t, minha, movimento: a.movimento, aceso: relogioDoPainel ? await read($, aceso) : undefined, trocar: r => trocarDeSessao($, r) })}
         </Box>
       )
     }
@@ -505,18 +615,41 @@ export const register: Register = on => {
           {!terminal &&
             linha(
               'Movimento',
-              'O painel se mexendo (a cena e os barcos). Desligado, tudo fica parado.',
+              'O painel se mexendo (a cena, os barcos e a borda do esperando). Desligado, tudo fica parado.',
               seletorLigado('ajuste-movimento', 'movimento'),
             )}
+          {linha(
+            'Intensidade de avisos',
+            terminal
+              ? 'Na alta, o som do esperando se repete enquanto a sessão espera você.'
+              : 'Na alta, o esperando chama mais: o feixe gira mais rápido, sobem mais sinalizadores, a torre mostra a contagem e o som se repete.',
+            <Select
+              key="ajuste-intensidade"
+              options={opcoes(NOME_INTENSIDADE)}
+              value={a.intensidade}
+              onSelect={(v: string) => void mudarAjustes($, x => ({ ...x, intensidade: lerAjustes({ intensidade: v }).intensidade }))}
+            />,
+          )}
           <Box flexDirection="column" borderStyle="round" borderColor="subtle" paddingX={1}>
             <Text bold>Som</Text>
             <Text dimColor>
               {terminal
-                ? 'Cada sessão toca um som quando faz uma pergunta e passa a esperar você (no macOS).'
+                ? 'Cada sessão toca um som quando passa a esperar você (no macOS).'
                 : 'Cada sessão toca um som quando passa a esperar você e quando responde fora da tela.'}
             </Text>
-            {linhaDoSom('Esperando por você', seletorLigado('ajuste-som-esperando', 'somEsperando'))}
-            {!terminal && linhaDoSom('Resposta não vista', seletorLigado('ajuste-som-nao-visto', 'somNaoVisto'))}
+            <Box key="sons" flexDirection="column" gap={1} marginTop={1}>
+              {linhaDoSom('Esperando por você', seletorLigado('ajuste-som-esperando', 'somEsperando'))}
+              {!terminal && linhaDoSom('Resposta não vista', seletorLigado('ajuste-som-nao-visto', 'somNaoVisto'))}
+              {linhaDoSom(
+                'Volume',
+                <Select
+                  key="ajuste-volume"
+                  options={opcoes(NOME_VOLUME)}
+                  value={a.volume}
+                  onSelect={(v: string) => void mudarAjustes($, x => ({ ...x, volume: lerAjustes({ volume: v }).volume }))}
+                />,
+              )}
+            </Box>
           </Box>
           <Text dimColor>Os ajustes valem para todas as suas sessões.</Text>
         </Box>
@@ -532,7 +665,7 @@ export const register: Register = on => {
         {terminal && lista.length > 0 && desenharPainelNoTerminal($, e, { lista, agora: t, minha, temaClaro: await temaClaro($) })}
         {!desenhos && !terminal && lista.length > 0 && <Box flexDirection="column" gap={1}>{lista.map(sessao)}</Box>}
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-          <Button key="ajustes" label={abertos ? 'Esconder ajustes' : 'Ajustes'} dimColor onPress={() => update($, ajustesAbertos, x => !x)} />
+          <Button key="ajustes" label={abertos ? 'Esconder ajustes' : 'Ajustes'} variant={abertos ? 'primary' : undefined} dimColor={!abertos || undefined} onPress={() => update($, ajustesAbertos, x => !x)} />
           <Button key="fechar" label="Fechar" role="dismiss" onPress={() => fechar($)} />
         </Box>
         {blocoAjustes}

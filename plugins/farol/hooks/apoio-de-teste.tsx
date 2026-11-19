@@ -31,6 +31,8 @@ export type Mundo = {
   comandos: string[][]
   // As linhas do main.log do app que o `grep` devolve (vazio: o log não tem pedidos).
   log: { texto: string }
+  // O que o `grep` acha na transcrição desta sessão (`~/.claude/projects/<pasta>/<id>.jsonl`): o modo de cada prompt.
+  transcricao: { texto: string }
   // Os avisos mostrados pelo farol ($.ui.toast).
   avisos: string[]
   // As pastas listadas, na ordem.
@@ -114,6 +116,7 @@ export const preparar = (on: On, o: Opcoes = {}): Mundo => {
   const mudancas = new Map<string, number>()
   const comandos: string[][] = []
   const log = { texto: '' }
+  const transcricao = { texto: '' }
   let listagens = 0
   on('fs.write', (_, e) => {
     arquivos.set(e.path, e.text)
@@ -146,11 +149,12 @@ export const preparar = (on: On, o: Opcoes = {}): Mundo => {
     if (e.argv[0] === 'grep' && o.semGrep) return { deny: 'EACCES: grep' }
     const codigo = e.argv[0] === 'rm' ? (o.codigoDoRm ?? 0) : e.argv[0] === 'open' ? (o.codigoDoOpen ?? 0) : 0
     if (e.argv[0] === 'rm' && codigo === 0) for (const p of e.argv.slice(2)) arquivos.delete(p)
-    const stdout = e.argv[0] === 'grep' ? log.texto : ''
+    const grepNaTranscricao = e.argv[0] === 'grep' && String(e.argv.at(-1)).endsWith('.jsonl')
+    const stdout = grepNaTranscricao ? transcricao.texto : e.argv[0] === 'grep' ? log.texto : ''
     return { value: { exitCode: codigo, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
   })
 
-  return { arquivos, mudancas, comandos, log, avisos, listadas, listagens: () => listagens, paineis, sons, guardado, avancar: ms => relogio.advance(ms) }
+  return { arquivos, mudancas, comandos, log, transcricao, avisos, listadas, listagens: () => listagens, paineis, sons, guardado, avancar: ms => relogio.advance(ms) }
 }
 
 // Os arquivos de sessão do app desktop no macOS, na casa de exemplo.

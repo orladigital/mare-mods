@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { AGORA, CASA, FIM_DA_SESSAO, ID, INICIO, PAINEL, PASTA, preparar, registroDe } from './apoio-de-teste'
+import { AGORA, CASA, FIM_DA_SESSAO, ID, INICIO, PAINEL, PASTA, gravarOutra, preparar, registroDe } from './apoio-de-teste'
 
 const PERGUNTA = { tool: 'AskUserQuestion', tool_use_id: 'pergunta-1', input: { questions: [] } } as never
 const PERGUNTA_DO_SUBAGENTE = { tool: 'AskUserQuestion', tool_use_id: 'pergunta-2', agentId: 'subagente-1', input: { questions: [] } } as never
@@ -165,12 +165,42 @@ test('a caixa de fim de turno que depende de você deixa a sessão esperando at�
   expect(registroDe(m)?.estado).toBe('livre')
 })
 
-test('a caixa de fim de turno que só sugere um próximo passo deixa a sessão livre', async ($, on) => {
+test('a caixa de fim de turno com pergunta e sem `blocked` deixa a sessão em Pergunta, sem som, até o próximo prompt', async ($, on) => {
   const m = preparar(on)
   on('tool.call', () => ({ result: 'mostrada' }) as never)
   await $.session.start(INICIO)
   await $.prompt.submit({ text: 'oi' } as never)
   await $.tool.call(FIM_DE_TURNO(false))
   await $.turn.complete(FIM)
+  expect(registroDe(m)?.estado).toBe('pergunta')
+  expect(m.sons).toEqual([])
+
+  await $.prompt.submit({ text: 'A' } as never)
+  expect(registroDe(m)?.estado).toBe('trabalhando')
+  await $.turn.complete(FIM)
   expect(registroDe(m)?.estado).toBe('livre')
+})
+
+test('a caixa de fim de turno só com o resumo (sem pergunta) deixa a sessão livre', async ($, on) => {
+  const m = preparar(on)
+  on('tool.call', () => ({ result: 'mostrada' }) as never)
+  await $.session.start(INICIO)
+  await $.prompt.submit({ text: 'oi' } as never)
+  await $.tool.call({ tool: 'mcp__ccd_turn__wrap_up', tool_use_id: 'fim-resumo', recap: 'resumo' } as never)
+  await $.turn.complete(FIM)
+  expect(registroDe(m)?.estado).toBe('livre')
+})
+
+test('no painel, a Pergunta vem entre o esperando e o não visto, com o rótulo "Pergunta"', async ($, on) => {
+  const m = preparar(on)
+  gravarOutra(m, { id: 'espera', estado: 'esperando' })
+  gravarOutra(m, { id: 'pergunta', estado: 'pergunta' })
+  gravarOutra(m, { id: 'trabalha', estado: 'trabalhando' })
+  await $.session.start(INICIO)
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
+  const t = (await ui.findAll({ type: 'Text' })).map(x => x.text)
+  const ordem = ['espera', 'pergunta', 'trabalha'].map(id => t.indexOf(id))
+  expect(ordem).toEqual([...ordem].sort((a, b) => a - b))
+  expect(t.some(x => x.includes('Pergunta'))).toBe(true)
+  await ui.unmount()
 })

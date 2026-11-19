@@ -12,13 +12,15 @@ const TITULO_MAX = 70
 // O que se mostra de uma sessão: o estado gravado, o não visto (só no app) ou o sem sinal.
 export type Visual = Estado | 'nao-visto' | 'sem-sinal'
 
-// A ordem é a prioridade: esperando > não visto > trabalhando > livre; sem sinal por último.
+// A ordem é a prioridade: esperando > pergunta > não visto > trabalhando > livre; sem sinal por último. A pergunta
+// é a caixa de fim de turno do app que pergunta algo sem depender de você para seguir (sem `blocked`).
 const VISUAL: Record<Visual, { rotulo: string; ordem: number }> = {
   esperando: { rotulo: 'Esperando', ordem: 0 },
-  'nao-visto': { rotulo: 'Não visto', ordem: 1 },
-  trabalhando: { rotulo: 'Trabalhando', ordem: 2 },
-  livre: { rotulo: 'Livre', ordem: 3 },
-  'sem-sinal': { rotulo: 'Sem sinal', ordem: 4 },
+  pergunta: { rotulo: 'Pergunta', ordem: 1 },
+  'nao-visto': { rotulo: 'Não visto', ordem: 2 },
+  trabalhando: { rotulo: 'Trabalhando', ordem: 3 },
+  livre: { rotulo: 'Livre', ordem: 4 },
+  'sem-sinal': { rotulo: 'Sem sinal', ordem: 5 },
 }
 
 export const rotuloDe = (v: Visual): string => VISUAL[v].rotulo
@@ -70,7 +72,7 @@ export const tituloDe = (texto: string): string => {
 // O nome da pasta da sessão: a última parte do cwd, com / ou \ (Windows).
 export const pastaDoRegistro = (cwd: string): string => cwd.split(/[\\/]/).filter(Boolean).pop() ?? cwd
 
-const ESTADOS: readonly Estado[] = ['esperando', 'trabalhando', 'livre']
+const ESTADOS: readonly Estado[] = ['esperando', 'pergunta', 'trabalhando', 'livre']
 
 // O registro de outra sessão, lido do arquivo dela; um arquivo estragado ou de outro formato é ignorado. Só os
 // campos gravados valem: o não visto e o id no app são calculados ao ler, pelo app, e não vêm do arquivo.
@@ -104,3 +106,8 @@ export const tempoDe = (r: Registro, agora: number): string =>
 // A segunda linha de cada sessão no painel: "pasta · tempo · estado", e "esta sessão" na que está aberta aqui.
 export const detalheDe = (r: Registro, agora: number, minha: string): string =>
   `${r.pasta} · ${tempoDe(r, agora)} · ${rotuloDe(visualDe(r, agora))}${r.id === minha ? ' · esta sessão' : ''}`
+
+// A espera longa: a sessão esperando você há 5 min ou mais. O tempo dela fica mais forte no painel.
+export const ESPERA_LONGA_MS = 5 * 60_000
+export const esperaLonga = (r: Registro, agora: number): boolean =>
+  visualDe(r, agora) === 'esperando' && agora - r.desde >= ESPERA_LONGA_MS

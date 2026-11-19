@@ -7,7 +7,7 @@ import type { EngineInterface, RenderElement, RenderInput } from 'claude-code'
 
 import type { Registro } from '../types'
 import { semLarguraAmbigua } from './comum/largura'
-import { ha, rotuloDe, tempoDe, visualDe } from './estado'
+import { esperaLonga, ha, rotuloDe, tempoDe, visualDe } from './estado'
 import type { Visual } from './estado'
 
 // O cartão: com `fundo`, cheio; sem, só a `borda`. O texto vai no tom `texto` (um hex, ou uma cor do tema). `desta`:
@@ -32,18 +32,24 @@ const CARTOES: Record<Exclude<Visual, 'sem-sinal'>, Cartao> = {
     rotulo: 'Esperando você', fundo: '#C4564D', texto: '#FFF3EF', borda: '#EA8F85', estiloDaBorda: 'bold',
     desta: { fundo: '#D9726A', texto: '#3A0F0B' },
   },
+  // A pergunta: um coral escuro, bem abaixo do esperando, sem a borda grossa.
+  pergunta: {
+    rotulo: rotuloDe('pergunta'), fundo: '#4A2C22', texto: '#F6D3C2', borda: '#B8643C', estiloDaBorda: 'round',
+    desta: { fundo: '#6A3C2C', texto: '#FCE6DA' },
+  },
   trabalhando: {
-    rotulo: rotuloDe('trabalhando'), fundo: '#2E7A73', texto: '#E3F4F1', borda: '#2E7A73', estiloDaBorda: 'round',
-    desta: { fundo: '#4FA79E', texto: '#0B2E2A' },
+    rotulo: rotuloDe('trabalhando'), fundo: '#8FD0C8', texto: '#0B2E2A', borda: '#8FD0C8', estiloDaBorda: 'round',
+    desta: { fundo: '#B4E2DC', texto: '#0B2E2A' },
   },
   livre: LIVRE,
   'nao-visto': LIVRE,
 }
 
 // O resumo do topo: fundo claro, texto escuro e borda na cor do estado; o sem sinal fica de fora (é a linha do fim).
-type Resumo = { estado: 'esperando' | 'trabalhando' | 'livre'; nome: (n: number) => string; fundo: string; texto: string; borda: string }
+type Resumo = { estado: 'esperando' | 'pergunta' | 'trabalhando' | 'livre'; nome: (n: number) => string; fundo: string; texto: string; borda: string }
 const RESUMO: readonly Resumo[] = [
   { estado: 'esperando', nome: () => 'Esperando', fundo: '#F6D3CE', texto: '#8A2A22', borda: '#C4564D' },
+  { estado: 'pergunta', nome: n => (n === 1 ? 'Pergunta' : 'Perguntas'), fundo: '#F3DCCF', texto: '#7A3A1A', borda: '#B8643C' },
   { estado: 'trabalhando', nome: () => 'Trabalhando', fundo: '#CFEAE6', texto: '#1F5C56', borda: '#2E7A73' },
   { estado: 'livre', nome: n => (n === 1 ? 'Livre' : 'Livres'), fundo: '#DCE5E4', texto: '#3E5A66', borda: '#4F6563' },
 ]
@@ -51,27 +57,26 @@ const RESUMO: readonly Resumo[] = [
 // No resumo, o não visto conta como livre (no terminal não há não visto).
 const noResumo = (v: Visual): Resumo['estado'] | null => (v === 'sem-sinal' ? null : v === 'nao-visto' ? 'livre' : v)
 
-// A segunda linha do cartão: "projeto · tempo · estado". Na sessão aberta aqui, vem depois `ESTA_SESSAO`, em
-// negrito.
+// A segunda linha do cartão: "projeto · tempo · estado" (esta sessão fica na seção própria dela, sem marca aqui).
 export const detalheNoTerminal = (r: Registro, agora: number): string => {
   const v = visualDe(r, agora)
   const rotulo = v === 'sem-sinal' ? rotuloDe(v) : CARTOES[v].rotulo
   return `${r.pasta} · ${tempoDe(r, agora)} · ${rotulo}`
 }
-const ESTA_SESSAO = ' · esta sessão'
 
 // O fundo bem leve do cartão desta sessão, quando o estado não tem fundo próprio (o livre): um tom pouco acima do
 // fundo do terminal, que depende do tema (o terminal não tem cor de tema para isso; o tema vem do Claude Code).
 const FUNDO_DESTA = { escuro: '#2F3A42', claro: '#EFF4F6' } as const
 
-// As sem sinal numa linha: quantas, desde quando (da mais recente à mais antiga) e de que projetos.
+// As sem sinal numa linha: quantas, desde quando (da mais recente à mais antiga) e de que projetos, nessa ordem e
+// curta, para o que importa caber no painel estreito (os projetos são o que corta).
 export const linhaSemSinal = (lista: readonly Registro[], agora: number): string => {
   const parados = lista.map(r => agora - r.vivoEm)
   const recente = ha(Math.min(...parados))
   const antiga = ha(Math.max(...parados))
   const tempo = recente === antiga ? recente : `${recente} a ${antiga.replace(/^há /, '')}`
   const projetos = [...new Set(lista.map(r => r.pasta))].join(', ')
-  return `${lista.length} ${lista.length === 1 ? 'sessão' : 'sessões'} sem sinal · ${tempo} · ${projetos}`
+  return `${lista.length} sem sinal · ${tempo} · ${projetos}`
 }
 
 // `temaClaro`: o tema do Claude Code é um dos claros (o fundo desta sessão muda com ele).
@@ -107,13 +112,15 @@ export function desenharPainelNoTerminal($: EngineInterface, e: RenderInput<'Pan
         <Text color={texto} bold wrap="truncate-end">
           {semLarguraAmbigua(r.titulo)}
         </Text>
-        {minha ? (
+        {esperaLonga(r, d.agora) ? (
+          // A espera longa: o tempo em negrito e sublinhado. Em vermelho sumiria no fundo vermelho do esperando.
           <Text color={texto} wrap="truncate-end">
-            <Text dimColor={!c.fundo}>{detalhe}</Text>
-            <Text bold>{ESTA_SESSAO}</Text>
+            <Text>{`${r.pasta} · `}</Text>
+            <Text bold underline>{tempoDe(r, d.agora)}</Text>
+            <Text>{` · ${c.rotulo}`}</Text>
           </Text>
         ) : (
-          <Text color={c.texto} dimColor={!c.fundo} wrap="truncate-end">
+          <Text color={texto} dimColor={!c.fundo && !minha} wrap="truncate-end">
             {detalhe}
           </Text>
         )}
@@ -121,7 +128,19 @@ export function desenharPainelNoTerminal($: EngineInterface, e: RenderInput<'Pan
     )
   }
 
-  // Os cartões vão colados: a borda de cada um já os separa.
+  // Esta sessão numa seção própria, entre o resumo e as outras: achada de relance, e o "esta sessão" sai da linha de
+  // baixo, que cortava no painel estreito. Os cartões vão colados: a borda de cada um já os separa.
+  const minha = comSinal.filter(r => r.id === d.minha)
+  const outras = comSinal.filter(r => r.id !== d.minha)
+  const secao = (chave: string, titulo: string, lista: readonly Registro[]) =>
+    lista.length > 0 && (
+      <Box key={chave} flexDirection="column">
+        <Text color="inactive" bold>
+          {titulo}
+        </Text>
+        {lista.map(cartao)}
+      </Box>
+    )
   return (
     <Box key="painel-terminal" flexDirection="column" gap={1}>
       {resumo.length > 0 && (
@@ -129,13 +148,10 @@ export function desenharPainelNoTerminal($: EngineInterface, e: RenderInput<'Pan
           {resumo}
         </Box>
       )}
-      {comSinal.length > 0 && (
-        <Box key="cartoes" flexDirection="column">
-          {comSinal.map(cartao)}
-        </Box>
-      )}
+      {secao('secao-esta', 'Esta sessão', minha)}
+      {minha.length > 0 ? secao('cartoes', 'Outras sessões', outras) : outras.length > 0 && <Box key="cartoes" flexDirection="column">{outras.map(cartao)}</Box>}
       {semSinal.length > 0 && (
-        <Text dimColor wrap="truncate-end">
+        <Text color="inactive" wrap="truncate-end">
           {linhaSemSinal(semSinal, d.agora)}
         </Text>
       )}
