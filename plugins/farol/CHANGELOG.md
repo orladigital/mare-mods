@@ -1,5 +1,14 @@
 # Changelog do farol
 
+## 0.7.0 (2026-11-19)
+
+- **`/farol demo`:** sessões fictícias passam pelas situações do farol no painel e na faixa, um ciclo só, com o nome
+  da situação em destaque no topo do painel. No app, 23 situações em cerca de 1 min 52 s, entre uma abertura de dia
+  e um encerramento ao pôr do sol, com o farol visto do calçadão; três delas seguidas da mesma na intensidade alta,
+  e um "E tem mais" que mostra a torre na faixa, os cartões clicáveis, os sons e o terminal. No terminal, 5, de 6 s
+  cada. Nada é gravado, nenhum som toca e nenhuma escolha no painel muda os seus ajustes; no fim do ciclo, ou com o
+  painel fechado, o farol volta às suas sessões.
+
 ## 0.6.0 (2026-11-18)
 
 O farol chama mais o olho e se entende de relance.

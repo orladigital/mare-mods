@@ -39,6 +39,9 @@ export type Ajustes = {
   volume: Volume
 }
 
+// Onde o /farol demo roda: o app (e a IDE) ou o terminal, cada um com as suas situações.
+export type SuperficieDaDemo = 'app' | 'terminal'
+
 export type Intensidade = 'padrao' | 'alta'
 export type Volume = 'baixo' | 'medio' | 'alto'
 
@@ -53,6 +56,8 @@ declare module 'claude-code' {
       ajustesAbertos: boolean
       // A fase do relógio do painel do app.
       aceso: boolean
+      // O /farol demo em curso (null fora dele): a superfície, a situação da vez (de 0) e a hora em que começou.
+      demo: { superficie: SuperficieDaDemo; passo: number; inicio: number } | null
     }
   }
 }

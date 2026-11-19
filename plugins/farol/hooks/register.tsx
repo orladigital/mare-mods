@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { Ajustes, Estado, Registro } from '../types'
+import type { Ajustes, Estado, Registro, SuperficieDaDemo } from '../types'
 import { NOME_INTENSIDADE, NOME_NA_FAIXA, NOME_VOLUME, PADRAO, lerAjustes } from './ajustes'
 import type { AjusteLigado } from './ajustes'
 import { abrirNoApp, comOApp, ehSpareDoApp, idEmFoco, lerArquivosDoApp } from './app'
@@ -9,10 +9,13 @@ import type { LeituraDoApp, NoApp } from './app'
 import { contarNoLog, lerLogDePermissoes, modoPede, pedidosNoLog } from './comum/permissao'
 import { desenharCartoes } from './cartoes'
 import { ALTURA_CENA, cenaSvg, descricaoDaCena, situacaoDaCena } from './cena'
+import { situacoesDaDemo } from './demo'
 import { SEM_TITULO, casaDe, detalheDe, lerRegistro, ordenar, pastaDoRegistro, tituloDe, visualDe } from './estado'
 import { desenharFaixa } from './faixa'
 import { tocar } from './sons'
 import { desenharPainelNoTerminal } from './terminal'
+import { desenhoDoTour } from './tour'
+import type { Especial } from './tour'
 
 const PAINEL = 'farol'
 // O nome do mod, como o Claude Code o dá a cada linha da faixa.
@@ -24,6 +27,28 @@ const ajustes = atom({ plugin: 'farol', key: 'ajustes' } as const, null)
 const ajustesAbertos = atom({ plugin: 'farol', key: 'ajustesAbertos' } as const, false)
 // A fase do relógio do painel do app (aceso ou apagado).
 const aceso = atom({ plugin: 'farol', key: 'aceso' } as const, true)
+// O /farol demo em curso: a superfície, a situação da vez e a hora em que começou (null fora da demonstração).
+const demo = atom({ plugin: 'farol', key: 'demo' } as const, null)
+// O título da demonstração no topo do painel: uma faixa num lilás acinzentado, discreto, que não se confunde com a cor
+// de nenhum estado nem com a cena do farol, com o texto branco.
+const LILAS = '#585273'
+const BRANCO = '#FFFFFF'
+
+// O que o painel e a faixa mostram: as sessões reais ou, durante o /farol demo, as fictícias da situação da vez, com
+// os ajustes no padrão (mais o que a situação muda), o bloco de ajustes aberto ou não e o título do topo do painel.
+type NaDemo = { numero: number; total: number; nome: string; ajustesAbertos: boolean; recado: string[]; especial?: Especial }
+type Vista = { lista: readonly Registro[]; agora: number; minha: string; ajustes: Ajustes; demo?: NaDemo }
+const vista = async ($: EngineInterface): Promise<Vista> => {
+  const d = await read($, demo)
+  const situacoes = d ? situacoesDaDemo(d.superficie, d.inicio) : []
+  const s = d ? situacoes[d.passo] : undefined
+  // Sem o relógio (o farol recarregou no meio dela), a demonstração já não anda: valem as sessões reais.
+  if (d && s && relogioDaDemo) {
+    const naDemo = { numero: d.passo + 1, total: situacoes.length, nome: s.nome, ajustesAbertos: s.ajustesAbertos, recado: s.recado, especial: s.especial }
+    return { lista: s.sessoes, agora: d.inicio, minha: s.minha, ajustes: { ...PADRAO, ...s.ajustes }, demo: naDemo }
+  }
+  return { lista: await read($, sessoes), agora: await read($, agora), minha: await read($, minhaId), ajustes: (await read($, ajustes)) ?? PADRAO }
+}
 
 // A pergunta ao usuário que para a sessão até a resposta.
 const PERGUNTA = 'AskUserQuestion'
@@ -308,10 +333,9 @@ const ajustarReleitura = async ($: EngineInterface) => {
 let relogioDoPainel: { cancel: () => void } | null = null
 let noTerminal = false
 const ajustarPisca = async ($: EngineInterface) => {
-  const a = (await read($, ajustes)) ?? PADRAO
-  const t = await read($, agora)
-  const comAviso = (await read($, sessoes)).some(r => ['esperando', 'nao-visto'].includes(visualDe(r, t)))
-  const precisa = painelAberto && !noTerminal && a.movimento && comAviso
+  const mostra = await vista($)
+  const comAviso = mostra.lista.some(r => ['esperando', 'nao-visto'].includes(visualDe(r, mostra.agora)))
+  const precisa = painelAberto && !noTerminal && mostra.ajustes.movimento && comAviso
   if (precisa && !relogioDoPainel) relogioDoPainel = $.clock.every(600, () => void update($, aceso, x => !x).catch(() => undefined))
   if (!precisa && relogioDoPainel) {
     relogioDoPainel.cancel()
@@ -332,8 +356,48 @@ const fechar = async ($: EngineInterface) => {
   painelAberto = false
   fechadoDeProposito = true
   await update($, ajustesAbertos, () => false)
+  await pararDemo($)
   await ajustarReleitura($)
   await $.ui.close({ id: PAINEL })
+}
+
+// O /farol demo: abre o painel e passa pelas situações da superfície desta sessão, uma a cada 6 s, um ciclo só;
+// no fim, o painel e a faixa voltam às sessões reais. Rodado de novo, recomeça; o painel fechado o encerra.
+// Cada começo e cada parada trocam a rodada: um passo do relógio de uma rodada velha (que ainda corria quando você
+// fechou o painel ou rodou o comando de novo) não mexe mais na demonstração.
+let relogioDaDemo: { cancel: () => void } | null = null
+let rodadaDaDemo = 0
+const pararDemo = async ($: EngineInterface) => {
+  rodadaDaDemo += 1
+  relogioDaDemo?.cancel()
+  relogioDaDemo = null
+  if (!(await read($, demo))) return
+  await update($, demo, () => null)
+  await ajustarPisca($)
+}
+// Cada situação fica o seu tempo: o relógio marca uma vez o fim da situação da vez e, na seguinte, a próxima.
+const marcarProxima = ($: EngineInterface, rodada: number, tempos: readonly number[], passo: number) => {
+  relogioDaDemo = $.clock.after(tempos[passo] ?? 0, () => {
+    void (async () => {
+      if (rodada !== rodadaDaDemo) return
+      if (passo + 1 >= tempos.length) return pararDemo($)
+      await update($, demo, x => (x && rodada === rodadaDaDemo ? { ...x, passo: passo + 1 } : x))
+      await ajustarPisca($)
+      if (rodada === rodadaDaDemo) marcarProxima($, rodada, tempos, passo + 1)
+    })().catch(() => undefined)
+  })
+}
+// Devolve quantas situações e quantos segundos a demonstração tem.
+const comecarDemo = async ($: EngineInterface): Promise<{ total: number; segundos: number }> => {
+  relogioDaDemo?.cancel()
+  const rodada = ++rodadaDaDemo
+  const superficie: SuperficieDaDemo = noTerminal ? 'terminal' : 'app'
+  const tempos = situacoesDaDemo(superficie, 0).map(s => s.ms)
+  const inicio = await $.clock.now()
+  await update($, demo, () => ({ superficie, passo: 0, inicio }))
+  marcarProxima($, rodada, tempos, 0)
+  await abrir($)
+  return { total: tempos.length, segundos: Math.round(tempos.reduce((a, b) => a + b, 0) / 1000) }
 }
 
 // O tema do Claude Code no terminal é um dos claros (`light`, `light-daltonized`…), pela linha `theme` do /config;
@@ -366,8 +430,13 @@ export const register: Register = on => {
     const guardados = lerAjustes(await $.store.get('ajustes').catch(() => undefined))
     await update($, ajustes, () => guardados)
     await $.command
-      .register({ name: PAINEL, description: 'Abre o painel com o estado de todas as sessões abertas' })
+      .register({
+        name: PAINEL,
+        description: 'Abre o painel com o estado de todas as sessões abertas (com "demo", uma demonstração)',
+        argumentHint: '[demo]',
+      })
       .catch(() => undefined)
+    noTerminal = e.surface === 'terminal'
 
     casa = casaDe(await $.env.get('HOME'), await $.env.get('USERPROFILE')) ?? ''
     if (!casa) return result
@@ -376,7 +445,6 @@ export const register: Register = on => {
       const id = await $.session.id()
       const t = await $.clock.now()
       spareSemDono = ehSpareDoApp(e.cwd)
-      noTerminal = e.surface === 'terminal'
       transcricao = transcricaoDe(casa, e.cwd, id)
       eu = { id, pasta: pastaDoRegistro(e.cwd), titulo: await tituloDaConversa($), estado: 'livre', desde: t, vivoEm: t }
       // Sessão reaberta: a hora da última resposta continua, para o não visto sobreviver a um reinício do app.
@@ -472,7 +540,11 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('command.run', { command: PAINEL }, async $ => {
+  on('command.run', { command: PAINEL }, async ($, e) => {
+    if ((e.args ?? '').trim() === 'demo') {
+      const { total, segundos } = await comecarDemo($)
+      return { text: `Demonstração do farol: ${total} situações em ${segundos} s; no fim, o painel volta às suas sessões.` }
+    }
     await abrir($)
     return { text: 'Farol aberto.' }
   })
@@ -484,6 +556,7 @@ export const register: Register = on => {
       painelAberto = false
       fechadoDeProposito = true
       await update($, ajustesAbertos, () => false)
+      await pararDemo($)
       await ajustarReleitura($)
     }
     return r
@@ -494,10 +567,9 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
     const outros = await next(e)
-    const a = (await read($, ajustes)) ?? PADRAO
-    if (a.naFaixa === 'esconder') return outros
-    const dados = { lista: await read($, sessoes), agora: await read($, agora), ajustes: a, abrir: () => abrir($) }
-    return desenharFaixa($, e, outros, dados)
+    const mostra = await vista($)
+    if (mostra.ajustes.naFaixa === 'esconder') return outros
+    return desenharFaixa($, e, outros, { ...mostra, abrir: () => abrir($) })
   })
 
   // A partir do Claude Code 2.1.323, cada mod desenha a própria linha da faixa e o Claude Code as empilha; o farol
@@ -508,11 +580,10 @@ export const register: Register = on => {
     if (e.props.hasSurvey) return next(e)
     const outras = e.props.rows.filter(r => r.plugin !== PLUGIN)
     if (outras.length === e.props.rows.length || outras.length === 0) return next(e)
-    const a = (await read($, ajustes)) ?? PADRAO
-    if (a.naFaixa === 'esconder') return next(e)
+    const mostra = await vista($)
+    if (mostra.ajustes.naFaixa === 'esconder') return next(e)
     const resto = await next({ ...e, props: { ...e.props, rows: outras } })
-    const dados = { lista: await read($, sessoes), agora: await read($, agora), ajustes: a, abrir: () => abrir($) }
-    return desenharFaixa($, e, resto, dados)
+    return desenharFaixa($, e, resto, { ...mostra, abrir: () => abrir($) })
   })
 
   // O painel: no app, a cena do farol no topo e um cartão com barco por sessão; no terminal, um cartão de duas
@@ -527,13 +598,18 @@ export const register: Register = on => {
     }
     const elementos = $.ui.resolve(e)
     const { Box, Text, Button } = elementos
-    const t = await read($, agora)
-    const minha = await read($, minhaId)
+    // Os desenhos e o bloco de ajustes seguem a vista: na demonstração, os ajustes dela, só para mostrar.
+    const mostra = await vista($)
+    const t = mostra.agora
+    const minha = mostra.minha
+    // No encerramento da demonstração, o recado vai abaixo do desenho.
+    const recado = mostra.demo?.recado ?? []
     const terminal = e.surface === 'terminal'
     // No terminal não há não visto nesta versão: a sessão que estaria azul aparece livre.
-    const todas = await read($, sessoes)
-    const lista = ordenar(terminal ? todas.map(r => ({ ...r, naoVisto: false })) : todas, t)
-    const a = (await read($, ajustes)) ?? PADRAO
+    const lista = ordenar(terminal ? mostra.lista.map(r => ({ ...r, naoVisto: false })) : mostra.lista, t)
+    // Na demonstração, o bloco de ajustes é só exibição: os valores da situação, e nenhuma escolha muda nada.
+    const a = mostra.demo ? mostra.ajustes : ((await read($, ajustes)) ?? PADRAO)
+    const mudar = (muda: (x: Ajustes) => Ajustes) => (mostra.demo ? undefined : void mudarAjustes($, muda))
 
     const sessao = (r: Registro) => {
       const v = visualDe(r, t)
@@ -554,17 +630,34 @@ export const register: Register = on => {
       const situacao = situacaoDaCena(lista, t)
       // A largura do painel em pixels não vem na API: estimada pelas colunas (a cena se ajusta ao que vier).
       const largura = e.props.bodyColumns * 8
-      desenhos = (
-        <Box flexDirection="column" gap={1}>
-          <Svg key="cena" source={cenaSvg(situacao, a.movimento, largura, a.intensidade === 'alta')} alt={descricaoDaCena(situacao)} height={ALTURA_CENA} isInteractive={a.movimento || undefined} />
-          {lista.length > 0 && desenharCartoes($, e, { lista, agora: t, minha, movimento: a.movimento, aceso: relogioDoPainel ? await read($, aceso) : undefined, trocar: r => trocarDeSessao($, r) })}
-        </Box>
-      )
+      const movimento = mostra.ajustes.movimento
+      const especial = mostra.demo?.especial
+      if (especial) {
+        // A abertura, o "E tem mais" e o encerramento: um desenho próprio no lugar da cena e dos cartões.
+        const tour = desenhoDoTour(especial, largura, movimento)
+        desenhos = (
+          <Box flexDirection="column" gap={1}>
+            <Svg key={`tour-${especial}`} source={tour.svg} alt={tour.alt} height={tour.altura} isInteractive={movimento || undefined} />
+            {recado.length > 0 && (
+              <Box key="recado" flexDirection="column" alignItems="center">
+                {recado.map((linha, i) => <Text key={`recado-${i}`} dimColor>{linha}</Text>)}
+              </Box>
+            )}
+          </Box>
+        )
+      } else {
+        desenhos = (
+          <Box flexDirection="column" gap={1}>
+            <Svg key="cena" source={cenaSvg(situacao, movimento, largura, mostra.ajustes.intensidade === 'alta')} alt={descricaoDaCena(situacao)} height={ALTURA_CENA} isInteractive={movimento || undefined} />
+            {lista.length > 0 && desenharCartoes($, e, { lista, agora: t, minha, movimento, aceso: relogioDoPainel ? await read($, aceso) : undefined, trocar: r => trocarDeSessao($, r) })}
+          </Box>
+        )
+      }
     }
 
-    const semRegistro = !pastaDoFarol
+    const semRegistro = !pastaDoFarol && !mostra.demo
     let blocoAjustes = null
-    const abertos = await read($, ajustesAbertos)
+    const abertos = mostra.demo ? mostra.demo.ajustesAbertos : await read($, ajustesAbertos)
     if (abertos && 'Select' in elementos) {
       const { Select } = elementos
       const opcoes = (nomes: Record<string, string>) => Object.entries(nomes).map(([value, label]) => ({ value, label }))
@@ -583,7 +676,7 @@ export const register: Register = on => {
           key={key}
           options={opcoes(nomes)}
           value={a[campo] ? 'sim' : 'nao'}
-          onSelect={(v: string) => void mudarAjustes($, x => ({ ...x, [campo]: v === 'sim' }))}
+          onSelect={(v: string) => mudar(x => ({ ...x, [campo]: v === 'sim' }))}
         />
       )
       // Uma linha do cartão "Som": o som à esquerda e a escolha à direita.
@@ -603,7 +696,7 @@ export const register: Register = on => {
               key="ajuste-na-faixa"
               options={opcoes(NOME_NA_FAIXA)}
               value={a.naFaixa}
-              onSelect={(v: string) => void mudarAjustes($, x => ({ ...x, naFaixa: lerAjustes({ naFaixa: v }).naFaixa }))}
+              onSelect={(v: string) => mudar(x => ({ ...x, naFaixa: lerAjustes({ naFaixa: v }).naFaixa }))}
             />,
           )}
           {!terminal &&
@@ -627,7 +720,7 @@ export const register: Register = on => {
               key="ajuste-intensidade"
               options={opcoes(NOME_INTENSIDADE)}
               value={a.intensidade}
-              onSelect={(v: string) => void mudarAjustes($, x => ({ ...x, intensidade: lerAjustes({ intensidade: v }).intensidade }))}
+              onSelect={(v: string) => mudar(x => ({ ...x, intensidade: lerAjustes({ intensidade: v }).intensidade }))}
             />,
           )}
           <Box flexDirection="column" borderStyle="round" borderColor="subtle" paddingX={1}>
@@ -646,7 +739,7 @@ export const register: Register = on => {
                   key="ajuste-volume"
                   options={opcoes(NOME_VOLUME)}
                   value={a.volume}
-                  onSelect={(v: string) => void mudarAjustes($, x => ({ ...x, volume: lerAjustes({ volume: v }).volume }))}
+                  onSelect={(v: string) => mudar(x => ({ ...x, volume: lerAjustes({ volume: v }).volume }))}
                 />,
               )}
             </Box>
@@ -659,13 +752,19 @@ export const register: Register = on => {
     // No terminal, uma linha em branco separa o painel das abas do app de painéis.
     return (
       <Box flexDirection="column" gap={1} marginTop={terminal ? 1 : 0}>
+        {mostra.demo && (
+          <Box key="titulo-da-demo" flexDirection="column" alignItems="center" backgroundColor={LILAS} borderStyle="round" borderColor={LILAS} paddingX={1}>
+            <Text color={BRANCO} size="caption" bold>{`DEMONSTRAÇÃO · ${mostra.demo.numero} DE ${mostra.demo.total}`}</Text>
+            <Text color={BRANCO} size="heading" bold>{mostra.demo.nome.toUpperCase()}</Text>
+          </Box>
+        )}
         {semRegistro && <Text dimColor>Sem a pasta da casa (nem HOME nem USERPROFILE): o farol não registra as sessões aqui.</Text>}
         {desenhos}
         {!semRegistro && lista.length === 0 && <Text dimColor>Nenhuma sessão com o farol ligado.</Text>}
         {terminal && lista.length > 0 && desenharPainelNoTerminal($, e, { lista, agora: t, minha, temaClaro: await temaClaro($) })}
         {!desenhos && !terminal && lista.length > 0 && <Box flexDirection="column" gap={1}>{lista.map(sessao)}</Box>}
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-          <Button key="ajustes" label={abertos ? 'Esconder ajustes' : 'Ajustes'} variant={abertos ? 'primary' : undefined} dimColor={!abertos || undefined} onPress={() => update($, ajustesAbertos, x => !x)} />
+          <Button key="ajustes" label={abertos ? 'Esconder ajustes' : 'Ajustes'} variant={abertos ? 'primary' : undefined} dimColor={!abertos || undefined} onPress={() => (mostra.demo ? undefined : update($, ajustesAbertos, x => !x))} />
           <Button key="fechar" label="Fechar" role="dismiss" onPress={() => fechar($)} />
         </Box>
         {blocoAjustes}

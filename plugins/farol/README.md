@@ -109,6 +109,23 @@ Os ajustes ficam guardados para você e valem nas sessões seguintes.
 Os sons são sintetizados pelo `sons/gerar.mjs`, sem licença de terceiros (`node plugins/farol/sons/gerar.mjs`
 regrava os dois arquivos).
 
+## Demonstração
+
+O `/farol demo` mostra, no painel e na faixa, sessões fictícias passando pelas situações do farol, um ciclo só, com o
+nome da situação em destaque no topo do painel:
+
+- **no app, 23 situações em cerca de 1 min 52 s,** cada uma pelo seu tempo (de 3 a 15 s): uma abertura com o mar e o
+  farol em movimento, vistos do calçadão de Copacabana, de dia; as calmas, com o destaque de "esta sessão"; os
+  avisos, com três situações de uma sessão esperando seguidas delas mesmas na intensidade alta, para comparar as
+  duas; todas as cenas do topo; os ajustes abertos e recolhidos e o movimento desligado; um "E tem mais", com a
+  torre na faixa, os cartões clicáveis, os sons e o terminal; e um encerramento ao pôr do sol, com o farol aceso;
+- **no terminal, 5, de 6 s cada:** esperando, trabalhando e livre (com a seção "Esta sessão"), só trabalhando, todas
+  livres, duas esperando (`🚨 2`) e pergunta com trabalhando.
+
+A demonstração não grava nada e não toca som. O painel é só exibição: cada situação usa os ajustes no padrão (mais o
+que ela muda), o bloco de ajustes abre e fecha sozinho, e nenhuma escolha muda os seus. No fim do ciclo, ou ao fechar
+o painel, o farol volta às suas sessões e aos seus ajustes; o `/farol demo` de novo recomeça do início.
+
 ## Como funciona
 
 Cada sessão com o farol grava o próprio estado em `~/.claude/farol/<id da sessão>.json` e renova o arquivo a
