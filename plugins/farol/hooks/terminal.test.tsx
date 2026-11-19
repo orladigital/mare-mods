@@ -30,17 +30,17 @@ test('no terminal: o resumo por estado no topo, um cartão por sessão e as sem 
     '1 Esperando',
     '1 Trabalhando',
     '2 Livres',
+    'Esta sessão',
+    '(sem mensagem ainda)',
+    'exemplo · agora · Livre',
+    'Outras sessões',
     'Escolher o tom',
     'exemplo · há 2 min · Esperando você',
     'Rodar os testes',
     'exemplo · há 5 min · Trabalhando',
-    '(sem mensagem ainda)',
-    'exemplo · agora · Livre · esta sessão',
-    'exemplo · agora · Livre',
-    ' · esta sessão',
     'Revisar o PR',
     'exemplo · há 1h10 · Livre',
-    '2 sessões sem sinal · há 4 min a 35 min · exemplo, outra',
+    '2 sem sinal · há 4 min a 35 min · exemplo, outra',
   ])
   await ui.unmount()
 })
@@ -55,8 +55,10 @@ test('no terminal, o resumo só mostra os estados que têm sessão, e uma sessã
   expect(t[0]).toBe('1 Livre')
   expect(t).not.toContain('1 Esperando')
   expect(t).not.toContain('1 Trabalhando')
-  expect(t.at(-1)).toBe('1 sessão sem sinal · há 4 min · exemplo')
-  expect((await texto(ui, '1 sessão sem sinal · há 4 min · exemplo'))?.props.dimColor).toBe(true)
+  expect(t.at(-1)).toBe('1 sem sinal · há 4 min · exemplo')
+  // Mais fraca que o resto: a cor "inativa" do tema, sem apagar mais.
+  const linha = await texto(ui, '1 sem sinal · há 4 min · exemplo')
+  expect([linha?.props.color, linha?.props.dimColor]).toEqual(['inactive', undefined])
   await ui.unmount()
 })
 
@@ -68,13 +70,13 @@ test('no terminal: fundo cheio só no esperando (com a borda grossa) e no trabal
   const ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
   const cartoes = (await caixas(ui)).filter(b => String(b.key ?? '').startsWith('cartao-'))
   expect(cartoes.map(b => [b.key, b.backgroundColor ?? null, b.borderStyle ?? null, b.borderColor ?? null])).toEqual([
-    ['cartao-esperando', '#C4564D', 'bold', '#EA8F85'],
-    ['cartao-trabalhando', '#2E7A73', 'round', '#2E7A73'],
     ['cartao-sessao-exemplo-1', '#2F3A42', 'double', '#9DB4BE'],
+    ['cartao-esperando', '#C4564D', 'bold', '#EA8F85'],
+    ['cartao-trabalhando', '#8FD0C8', 'round', '#8FD0C8'],
     ['cartao-livre', null, 'round', '#9DB4BE'],
   ])
   expect((await texto(ui, 'Escolher o tom'))?.props.color).toBe('#FFF3EF')
-  expect((await texto(ui, 'exemplo · há 5 min · Trabalhando'))?.props.color).toBe('#E3F4F1')
+  expect((await texto(ui, 'exemplo · há 5 min · Trabalhando'))?.props.color).toBe('#0B2E2A')
   expect((await texto(ui, 'exemplo · há 1h10 · Livre'))?.props.dimColor).toBe(true)
   // Sem fundo, o texto do livre vai na cor de texto do tema do Claude Code, que acompanha o fundo do painel (e não a
   // do terminal, que pode ser de outro tema).
@@ -128,7 +130,7 @@ test('no terminal, o título troca os símbolos de largura ambígua e corta no f
   await ui.unmount()
 })
 
-test('no terminal, o cartão desta sessão tem borda dupla e "esta sessão" em negrito, sem o apagado do resto', async ($, on) => {
+test('no terminal, esta sessão fica numa seção própria acima das outras, com borda dupla, sem "esta sessão" na linha de baixo', async ($, on) => {
   const m = preparar(on)
   gravarOutra(m, { id: 'outra' })
   await $.session.start(INICIO)
@@ -140,10 +142,11 @@ test('no terminal, o cartão desta sessão tem borda dupla e "esta sessão" em n
   expect(minha?.backgroundColor).toBe('#2F3A42')
   const outra = (await caixas(ui)).find(b => b.key === 'cartao-outra')
   expect([outra?.borderStyle, outra?.backgroundColor ?? null]).toEqual(['round', null])
-  const esta = await texto(ui, ' · esta sessão')
-  expect(esta?.props.bold).toBe(true)
-  expect(esta?.props.dimColor).toBeFalsy()
-  expect((await texto(ui, 'exemplo · agora · Livre'))?.props.dimColor).toBe(true)
+  const t = await textos(ui)
+  expect(t.some(x => x.includes('esta sessão'))).toBe(false)
+  expect(t.indexOf('Esta sessão')).toBeLessThan(t.indexOf('(sem mensagem ainda)'))
+  expect(t.indexOf('(sem mensagem ainda)')).toBeLessThan(t.indexOf('Outras sessões'))
+  expect(t.indexOf('Outras sessões')).toBeLessThan(t.indexOf('outra'))
   await ui.unmount()
 })
 
@@ -157,7 +160,6 @@ test('no terminal, com esta sessão esperando, o cartão fica com a borda grossa
   const ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
   const minha = (await caixas(ui)).find(b => b.key === `cartao-${ID}`)
   expect([minha?.borderStyle, minha?.borderColor]).toEqual(['bold', '#EA8F85'])
-  expect((await texto(ui, ' · esta sessão'))?.props.bold).toBe(true)
   await ui.unmount()
 })
 
@@ -178,7 +180,7 @@ test('no terminal, esta sessão trabalhando ou esperando fica num tom bem mais c
   await $.session.start(INICIO)
 
   for (const [estado, fundo, cor, doEstado] of [
-    ['trabalhando', '#4FA79E', '#0B2E2A', '#2E7A73'],
+    ['trabalhando', '#B4E2DC', '#0B2E2A', '#8FD0C8'],
     ['esperando', '#D9726A', '#3A0F0B', '#C4564D'],
   ] as const) {
     gravarOutra(m, { id: ID, estado })

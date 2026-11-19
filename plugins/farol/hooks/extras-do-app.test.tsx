@@ -113,6 +113,57 @@ test('no app, no modo Manual, um pedido de permissão deixa a sessão esperando 
   expect(registroDe(m)?.estado).toBe('trabalhando')
 })
 
+// O terminal não tem o arquivo do app nem o main.log: o modo vem da transcrição da sessão, que grava o
+// `permissionMode` de cada prompt.
+const TRANSCRICAO = `/Users/exemplo/.claude/projects/-Users-exemplo-projetos-exemplo/${ID}.jsonl`
+const modoNaTranscricao = (...modos: string[]) => modos.map(m => `"permissionMode":"${m}"`).join('\n')
+
+test('no terminal, no modo Manual, um pedido de permissão deixa a sessão esperando e toca, até a chamada terminar', async ($, on) => {
+  const m = preparar(on)
+  perguntar(on)
+  m.transcricao.texto = modoNaTranscricao('auto', 'default')
+  m.arquivos.set(TRANSCRICAO, '')
+  await $.session.start(INICIO)
+  await $.prompt.submit({ text: 'oi' } as never)
+
+  await $.tool.check(CHECAGEM('b1'))
+  expect(registroDe(m)?.estado).toBe('esperando')
+  expect(m.comandos.some(c => c[0] === 'grep' && c.at(-1) === TRANSCRICAO)).toBe(true)
+  expect(m.sons.length).toBe(1)
+  await $.tool.call(CHAMADA('b1'))
+  expect(registroDe(m)?.estado).toBe('trabalhando')
+})
+
+// O Claude Code pode abreviar o nome da pasta da sessão (um caminho muito longo): sem a transcrição onde o caminho
+// montado aponta, o farol a procura pelo id nas pastas de ~/.claude/projects.
+test('no terminal, a transcrição numa pasta de nome abreviado também é achada, pelo id', async ($, on) => {
+  const m = preparar(on)
+  perguntar(on)
+  const abreviada = `/Users/exemplo/.claude/projects/-Users-exemplo-proj-abc123/${ID}.jsonl`
+  m.arquivos.set(abreviada, '')
+  m.transcricao.texto = modoNaTranscricao('default')
+  await $.session.start(INICIO)
+  await $.prompt.submit({ text: 'oi' } as never)
+  await $.tool.check(CHECAGEM('b1'))
+  expect(registroDe(m)?.estado).toBe('esperando')
+  expect(m.comandos.some(c => c[0] === 'grep' && c.at(-1) === abreviada)).toBe(true)
+})
+
+test('no terminal, no Auto (ou sem a transcrição), o pedido de permissão não acende: quem decide é o classificador', async ($, on) => {
+  const m = preparar(on)
+  perguntar(on)
+  m.transcricao.texto = modoNaTranscricao('default', 'auto')
+  m.arquivos.set(TRANSCRICAO, '')
+  await $.session.start(INICIO)
+  await $.prompt.submit({ text: 'oi' } as never)
+  await $.tool.check(CHECAGEM('b1'))
+  expect(registroDe(m)?.estado).toBe('trabalhando')
+
+  m.transcricao.texto = ''
+  await $.tool.check(CHECAGEM('b2'))
+  expect(registroDe(m)?.estado).toBe('trabalhando')
+})
+
 test('no app, no Auto, o vermelho vem do main.log: acende com o pedido na tela e apaga com a sua resposta', async ($, on) => {
   const m = preparar(on)
   perguntar(on)
@@ -246,7 +297,8 @@ test('sem os arquivos do app, o farol fica no núcleo: sem azul, sem vermelho pe
   expect(await textos(ui)).toContain('primeira mensagem da outra')
   await ui.press({ key: clique('outra', 1) })
   await ui.unmount()
-  expect(m.comandos.filter(c => c[0] === 'grep' || c[0] === 'open')).toEqual([])
+  // Sem o main.log e sem troca; o modo do pedido vem da transcrição (aqui vazia: não acende).
+  expect(m.comandos.filter(c => (c[0] === 'grep' && !String(c.at(-1)).endsWith('.jsonl')) || c[0] === 'open')).toEqual([])
 
   // Fora do app, a hora da resposta não é gravada (não há não visto).
   await $.turn.complete(FIM)
@@ -360,17 +412,49 @@ test('um arquivo do app estragado ou de outro formato é ignorado, sem erro', as
   await ui.unmount()
 })
 
-test('sem o arquivo desta sessão no app no primeiro minuto (terminal), o farol para de ler os arquivos do app', async ($, on) => {
+test('numa sessão do terminal, no macOS, as sessões do app aparecem pelo nome da barra lateral, também renomeadas', async ($, on) => {
+  const m = preparar(on)
+  gravarNoApp(m, { cli: 'outra', local: 'local_outra', nome: 'Nome no app', focadoEm: AGORA - 10 * MIN })
+  gravarOutra(m, { id: 'outra', titulo: 'primeira mensagem da outra' })
+  await $.session.start(INICIO)
+
+  let ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
+  expect(await textos(ui)).toContain('Nome no app')
+  await ui.unmount()
+
+  gravarNoApp(m, { cli: 'outra', local: 'local_outra', nome: 'Nome novo', focadoEm: AGORA - 10 * MIN })
+  await m.avancar(5_000)
+  ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
+  const t = await textos(ui)
+  expect(t).toContain('Nome novo')
+  expect(t.some(x => x.includes('Não visto'))).toBe(false)
+  await ui.unmount()
+})
+
+test('uma spare noutra pasta do app, reconhecida pelo nome (`spare-` e seis letras), não entra no farol sem uso', async ($, on) => {
+  const m = preparar(on)
+  await $.session.start({ ...INICIO, cwd: '/Users/exemplo/Library/Outra pasta/spare-exempl' })
+  await m.avancar(5 * MIN)
+  expect(registroDe(m)).toBeUndefined()
+})
+
+// O app pré-abre sessões numa pasta que muda de versão para versão: a que nasce numa delas e só é usada depois do
+// primeiro minuto ainda se acha no app, e o clique nos outros cartões troca de sessão.
+test('a sessão que só aparece nos arquivos do app depois do primeiro minuto troca de sessão pelo clique', async ($, on) => {
   const m = preparar(on)
   gravarNoApp(m, { cli: 'outra', local: 'local_outra', focadoEm: AGORA - 10 * MIN })
-  await $.session.start(INICIO)
-  const leiturasDoApp = () => m.listadas.filter(p => p === ARQUIVOS_DO_APP).length
-  expect(leiturasDoApp()).toBeGreaterThan(0)
+  gravarOutra(m, { id: 'outra' })
+  await $.session.start({ ...INICIO, cwd: '/Users/exemplo/Library/Outra pasta/spare-exempl' })
+  await m.avancar(5 * MIN)
 
-  await m.avancar(65_000)
-  const depois = leiturasDoApp()
+  gravarNoApp(m, { cli: ID, local: 'local_eu', nome: 'Esta sessão', focadoEm: AGORA + 5 * MIN, cwd: '/Users/exemplo/projetos/meu-projeto' })
   await m.avancar(30_000)
-  expect(leiturasDoApp()).toBe(depois)
+  expect(registroDe(m)).toEqual(expect.objectContaining({ pasta: 'meu-projeto' }))
+
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  await ui.press({ key: clique('outra', 1) })
+  await ui.unmount()
+  expect(m.comandos.filter(c => c[0] === 'open')).toEqual([['open', 'claude://code/continue?session=local_outra']])
 })
 
 // Uma sessão que o app deixa pré-aberta, na pasta das spares, à espera de você abrir uma sessão nova.

@@ -12,20 +12,21 @@ export const LARGURA_TORRE = 34
 export const ALTURA_TORRE = 24
 const VIEWBOX = '-1.5 -2.4 29 20.5'
 
-// A luz do feixe: vermelha com alguma sessão esperando; azul só com não visto (no app no macOS).
-export type Luz = 'vermelha' | 'azul' | null
+// A luz do feixe: vermelha com alguma sessão esperando; coral com uma pergunta; azul só com não visto (no app no
+// macOS).
+export type Luz = 'vermelha' | 'coral' | 'azul' | null
 
 export const luzDaFaixa = (lista: readonly Registro[], agora: number): Luz => {
   const geral = estadoGeral(lista, agora)
-  return geral === 'esperando' ? 'vermelha' : geral === 'nao-visto' ? 'azul' : null
+  return geral === 'esperando' ? 'vermelha' : geral === 'pergunta' ? 'coral' : geral === 'nao-visto' ? 'azul' : null
 }
 
 // A torre em silhueta na cor do texto: o tema do app chega ao SVG pelo prefers-color-scheme (o mod não sabe
 // o tema). O feixe sai da lanterna para os dois lados.
 // A classe do SVG de cada luz; as cores de cada classe, nos dois temas, estão no <style> da torre.
-const CLASSE_DA_LUZ = { vermelha: 'v', azul: 'a' } as const
+const CLASSE_DA_LUZ = { vermelha: 'v', coral: 'c', azul: 'a' } as const
 
-// O vermelho pisca (`pisca`, só no app e com o movimento ligado); o azul fica parado.
+// O vermelho pisca (`pisca`, só no app e com o movimento ligado); o coral e o azul ficam parados.
 export const torreSvg = (luz: Luz, pisca = false): string => {
   const cor = luz ? CLASSE_DA_LUZ[luz] : null
   const piscando = pisca && luz === 'vermelha' ? '<animate attributeName="opacity" values="1;0.25;1" dur="1.2s" repeatCount="indefinite"/>' : ''
@@ -34,8 +35,8 @@ export const torreSvg = (luz: Luz, pisca = false): string => {
     : '<rect class="t" opacity="0.55" x="11" y="2.5" width="4" height="3"/>'
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VIEWBOX}" width="${LARGURA_TORRE}" height="${ALTURA_TORRE}">`,
-    '<style>.t{fill:#2B2B2B}.v{fill:#D6453B}.a{fill:#2F6FE0}',
-    '@media (prefers-color-scheme: dark){.t{fill:#E6E3DE}.v{fill:#F2907F}.a{fill:#8FBDF5}}</style>',
+    '<style>.t{fill:#2B2B2B}.v{fill:#D6453B}.c{fill:#E0835A}.a{fill:#2F6FE0}',
+    '@media (prefers-color-scheme: dark){.t{fill:#E6E3DE}.v{fill:#F2907F}.c{fill:#F2A483}.a{fill:#8FBDF5}}</style>',
     luzAcesa,
     '<polygon class="t" points="10.5,2.5 13,0.5 15.5,2.5"/>',
     '<rect class="t" x="9.5" y="5.5" width="7" height="1"/>',
@@ -48,7 +49,11 @@ export const torreSvg = (luz: Luz, pisca = false): string => {
 const sessoesEsperando = (n: number): string => (n === 1 ? '1 sessão esperando você' : n > 1 ? `${n} sessões esperando você` : 'nenhuma sessão esperando você')
 
 export const descricaoDaTorre = (luz: Luz, n: number): string =>
-  luz === 'azul' && n === 0 ? 'Farol: uma sessão respondeu e você não viu' : `Farol: ${sessoesEsperando(n)}`
+  luz === 'coral' && n === 0
+    ? 'Farol: uma sessão tem uma pergunta para você'
+    : luz === 'azul' && n === 0
+      ? 'Farol: uma sessão respondeu e você não viu'
+      : `Farol: ${sessoesEsperando(n)}`
 
 export const rotuloTerminal = (n: number): string => (n > 0 ? `🚨 ${n}` : '🚦')
 
@@ -65,7 +70,9 @@ export function desenharFaixa($: EngineInterface, e: RenderInput<'AbovePrompt' |
   const elementos = $.ui.resolve(e)
   const { Box, Button, Text } = elementos
   const n = esperandoAgora(d.lista, d.agora)
-  if (e.surface === 'terminal' || !('Svg' in elementos)) {
+  // Na extensão da IDE (`vscode`), o botão é nativo e ignora o `plain`: o botão invisível por cima da torre vira um
+  // retângulo azul. Ali vale o botão do terminal, que a IDE desenha como um botão de verdade.
+  if (e.surface === 'terminal' || e.surface === 'vscode' || !('Svg' in elementos)) {
     return (
       <Box flexDirection="row" gap={2} alignItems="flex-end">
         {/* O alinhamento pela base da caixa não chega ao botão no terminal: sem o alignSelf, a torre fica uma linha

@@ -2,6 +2,7 @@
 // ela responde fora da tela do app. Os WAV e o script que os gera estão em sons/, na pasta do mod.
 import type { EngineInterface } from 'claude-code'
 
+import type { Volume } from '../types'
 import { lerAjustes } from './ajustes'
 import type { AjusteLigado } from './ajustes'
 
@@ -13,6 +14,9 @@ const SONS: Record<Som, { arquivo: string; ajuste: AjusteLigado }> = {
   'nao-visto': { arquivo: 'sons/nao-visto.wav', ajuste: 'somNaoVisto' },
 }
 
+// O volume dos ajustes, como o ganho do som (os arquivos estão a 60% do máximo).
+const GANHO: Record<Volume, number> = { baixo: 0.4, medio: 0.7, alto: 1 }
+
 // Cada som, no máximo uma vez a cada 10 s nesta sessão: uma pergunta logo depois de outra não toca de novo.
 const INTERVALO_MS = 10_000
 const tocadoEm = new Map<Som, number>()
@@ -23,12 +27,13 @@ const tocadoEm = new Map<Som, number>()
 export async function tocar($: EngineInterface, som: Som): Promise<void> {
   try {
     const { arquivo, ajuste } = SONS[som]
-    if (!lerAjustes(await $.store.get('ajustes'))[ajuste]) return
+    const a = lerAjustes(await $.store.get('ajustes'))
+    if (!a[ajuste]) return
     const t = await $.clock.now()
     const antes = tocadoEm.get(som)
     if (antes !== undefined && t - antes < INTERVALO_MS) return
     tocadoEm.set(som, t)
-    void $.audio.play({ asset: arquivo }, { gain: 1 }).catch(() => undefined)
+    void $.audio.play({ asset: arquivo }, { gain: GANHO[a.volume] }).catch(() => undefined)
   } catch {
     // sem som
   }

@@ -11,8 +11,10 @@ import { pastaDoRegistro } from './estado'
 const PASTA_DO_APP = 'Library/Application Support/Claude/claude-code-sessions'
 
 // O app deixa sessões pré-abertas (spares) numa pasta própria e usa uma delas quando você abre uma sessão nova; o
-// Claude Code segue achando que ela roda ali. A spare só entra no farol quando o app a usa.
-export const ehSpareDoApp = (cwd: string): boolean => /[\\/]Claude[\\/]claude-code-spare[\\/]/.test(cwd)
+// Claude Code segue achando que ela roda ali. A spare só entra no farol quando o app a usa. A pasta mudou de versão
+// para versão, então vale também o nome da pasta da spare (`spare-` e seis letras ou números).
+export const ehSpareDoApp = (cwd: string): boolean =>
+  /[\\/]Claude[\\/]claude-code-spare[\\/]/.test(cwd) || /[\\/]spare-[A-Za-z0-9]{6}[\\/]?$/.test(cwd)
 
 // O que o app sabe de uma sessão, lido do arquivo dela; `cwd` é a pasta onde ela roda para o app.
 export type NoApp = { titulo?: string; appId?: string; focadoEm?: number; ativoEm?: number; modo?: string; cwd?: string }

@@ -117,3 +117,37 @@ describe('o desenho da cena em cada situação', () => {
     expect(cenaSvg('esperando', true)).toMatch(/<rect id="lanterna"[^>]*>\s*<animate attributeName="opacity" values="1;/)
   })
 })
+
+describe('a Pergunta na cena (a caixa de fim de turno do app com pergunta e sem `blocked`)', () => {
+  test('sem esperando, a Pergunta acende a lanterna coral, com o halo parado e sem feixes girando', async () => {
+    expect(situacaoDaCena([reg('a', 'pergunta'), reg('b', 'trabalhando')], T)).toBe('pergunta')
+    const svg = cenaSvg('pergunta', true)
+    expect(svg).toContain('id="halo-coral"')
+    expect(svg).not.toContain('feixes-')
+    expect(svg).toMatch(/<circle id="halo-coral"[^>]*><\/circle>/)
+  })
+
+  test('o esperando ganha da Pergunta; com não visto, a boia acende junto', async () => {
+    expect(situacaoDaCena([reg('a', 'pergunta'), reg('b', 'esperando')], T)).toBe('esperando')
+    expect(situacaoDaCena([reg('a', 'pergunta'), naoVista('b')], T)).toBe('pergunta-e-nao-visto')
+    expect(cenaSvg('pergunta-e-nao-visto', true)).toContain('id="halo-coral"')
+  })
+})
+
+describe('a intensidade Alta na cena', () => {
+  test('o feixe vermelho gira em 1,2 s (2 s no padrão) e são quatro sinalizadores, maiores e mais vezes (dois no padrão)', async () => {
+    const padrao = cenaSvg('esperando', true, 400)
+    const alta = cenaSvg('esperando', true, 400, true)
+    expect(padrao).toContain('dur="2s"')
+    expect(alta).toContain('keyTimes="0;0.25;0.5;0.75;1" dur="1.2s"')
+    expect(padrao.match(/class="sinal"/g)?.length).toBe(2)
+    expect(alta.match(/class="sinal"/g)?.length).toBe(4)
+    expect(padrao).toContain('values="0;0;12;16"')
+    expect(alta).toContain('values="0;0;18;24"')
+    expect(alta).toContain('dur="1.6s" begin="0.8s"')
+  })
+
+  test('com o movimento desligado, a Alta não anima nada', async () => {
+    expect(cenaSvg('esperando', false, 400, true)).not.toContain('<animate')
+  })
+})

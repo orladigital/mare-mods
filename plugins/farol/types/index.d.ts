@@ -1,5 +1,5 @@
 // O que a sessão faz agora, gravado no registro dela.
-export type Estado = 'esperando' | 'trabalhando' | 'livre'
+export type Estado = 'esperando' | 'pergunta' | 'trabalhando' | 'livre'
 
 // O registro de uma sessão em ~/.claude/farol/<id>.json: um arquivo por sessão, renovado a cada 30 s.
 export type Registro = {
@@ -32,7 +32,15 @@ export type Ajustes = {
   somEsperando: boolean
   // O som quando esta sessão responde fora da tela do app (só no app).
   somNaoVisto: boolean
+  // O quanto o farol chama o olho: na alta, no app, o feixe vermelho gira mais rápido, sobem quatro sinalizadores e a
+  // contagem aparece na torre; nas duas superfícies, o som do esperando se repete enquanto a sessão espera.
+  intensidade: Intensidade
+  // O volume dos sons (o `gain` do `$.audio.play`).
+  volume: Volume
 }
+
+export type Intensidade = 'padrao' | 'alta'
+export type Volume = 'baixo' | 'medio' | 'alto'
 
 declare module 'claude-code' {
   interface PluginState {
@@ -43,6 +51,8 @@ declare module 'claude-code' {
       ajustes: Ajustes | null
       // O bloco de ajustes aberto no painel (abre recolhido).
       ajustesAbertos: boolean
+      // A fase do relógio do painel do app.
+      aceso: boolean
     }
   }
 }

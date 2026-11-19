@@ -53,12 +53,13 @@ describe('o barco de cada estado', () => {
 
 describe('os tons do cartão', () => {
   test('o fundo na cor do estado com transparência, como na prévia', async () => {
-    expect((['esperando', 'nao-visto', 'trabalhando', 'livre', 'sem-sinal'] as const).map(v => tonsDoCartao(v).fundo)).toEqual([
+    expect((['esperando', 'pergunta', 'nao-visto', 'trabalhando', 'livre', 'sem-sinal'] as const).map(v => tonsDoCartao(v).fundo)).toEqual([
       '#D6453B1F',
+      '#E0835A1F',
       '#2F6FE01F',
       '#4FB3A91A',
       '#5E7F8C1A',
-      '#8A847812',
+      '#8A84780A',
     ])
   })
 
@@ -66,5 +67,24 @@ describe('os tons do cartão', () => {
     expect(tonsDoCartao('esperando').borda).toBe('#D6453B')
     expect(tonsDoCartao('nao-visto').borda).toBe('#2F6FE0')
     for (const v of ['trabalhando', 'livre', 'sem-sinal'] as const) expect(tonsDoCartao(v).borda).toMatch(/^#[0-9A-F]{8}$/)
+  })
+})
+
+describe('a bandeira e o casco piscam juntos, nas mesmas cores', () => {
+  test('no padrão, a animação da bandeira é a mesma do casco (a cor do estado e o lampejo claro)', async () => {
+    const svg = barcoSvg('esperando', true)
+    const anima = (id: string) => parte(svg, id)?.match(/<animate [^>]*\/>/)?.[0]
+    expect(anima('bandeira')).toBeDefined()
+    expect(anima('bandeira')).toBe(anima('casco'))
+    expect(svg).toContain('dur="2.5s"')
+  })
+
+  test('com o relógio do painel, o barco não se anima sozinho: o relógio do painel escolhe o desenho aceso ou o apagado', async () => {
+    const aceso = barcoSvg('esperando', true, true)
+    const apagado = barcoSvg('esperando', true, false)
+    for (const svg of [aceso, apagado]) expect(svg).not.toContain('<animate')
+    // Em contraponto à borda: com a borda acesa, o barco fica na cor do estado (mais escuro); apagada, no lampejo claro.
+    expect([parte(aceso, 'bandeira'), parte(aceso, 'casco')].every(p => p?.includes('fill="#D6453B"'))).toBe(true)
+    expect([parte(apagado, 'bandeira'), parte(apagado, 'casco')].every(p => p?.includes('fill="#FF8A7A"'))).toBe(true)
   })
 })

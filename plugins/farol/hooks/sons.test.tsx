@@ -1,6 +1,7 @@
 // Os sons do farol: o "esperando por você" quando esta sessão passa a esperar você e a "resposta não vista" quando
 // ela responde fora da tela do app. Cada sessão toca só a própria virada.
 import { expect, test } from 'claude-code/testing'
+import type { Engine } from 'claude-code/testing'
 
 import { AGORA, ID, INICIO, gravarNoApp, gravarOutra, preparar, registroDe } from './apoio-de-teste'
 import type { Mundo, Opcoes } from './apoio-de-teste'
@@ -209,5 +210,49 @@ test('a resposta que termina numa pergunta que depende de você toca só o "espe
   await $.tool.call(FIM_DE_TURNO)
   await $.turn.complete(FIM)
   expect(registroDe(m)?.estado).toBe('esperando')
+  expect(m.sons).toEqual([ESPERANDO])
+})
+
+test('o volume dos ajustes vai no ganho do som: baixo 0,4, médio 0,7, alto 1', async ($, on) => {
+  const m = comPerguntas(on, { guardado: { ajustes: { volume: 'baixo' } } })
+  await $.session.start(INICIO)
+  await $.prompt.submit({ text: 'oi' } as never)
+  await $.tool.call(PERGUNTA)
+  expect(m.sons).toEqual(['sons/esperando.wav x0.4'])
+})
+
+// A caixa de fim de turno que depende de você: a sessão fica esperando até o próximo prompt.
+const PARADA = { tool: 'mcp__ccd_turn__wrap_up', tool_use_id: 'fim-parada', recap: 'resumo', ask: 'Sigo?', blocked: true } as never
+const esperarComCaixa = async ($: Engine, on: Parameters<typeof preparar>[0], o: Opcoes) => {
+  const m = preparar(on, o)
+  on('tool.call', () => ({ result: 'mostrada' }) as never)
+  await $.session.start(INICIO)
+  await $.prompt.submit({ text: 'oi' } as never)
+  await $.tool.call(PARADA)
+  await $.turn.complete(FIM)
+  return m
+}
+
+test('na Alta, o esperando repete o som a cada 2 min enquanto a sessão espera, no máximo 3 vezes', async ($, on) => {
+  const m = await esperarComCaixa($, on, { guardado: { ajustes: { intensidade: 'alta' } } })
+  expect(m.sons).toEqual([ESPERANDO])
+  await m.avancar(2 * MIN)
+  expect(m.sons).toEqual([ESPERANDO, ESPERANDO])
+  await m.avancar(4 * MIN)
+  expect(m.sons.length).toBe(4)
+  await m.avancar(6 * MIN)
+  expect(m.sons.length).toBe(4)
+})
+
+test('o lembrete para quando a sessão deixa de esperar, e no padrão não há lembrete', async ($, on) => {
+  const m = await esperarComCaixa($, on, { guardado: { ajustes: { intensidade: 'alta' } } })
+  await $.prompt.submit({ text: 'sim' } as never)
+  await m.avancar(10 * MIN)
+  expect(m.sons).toEqual([ESPERANDO])
+})
+
+test('no padrão, o esperando toca uma vez só', async ($, on) => {
+  const m = await esperarComCaixa($, on, {})
+  await m.avancar(10 * MIN)
   expect(m.sons).toEqual([ESPERANDO])
 })

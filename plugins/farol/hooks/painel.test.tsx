@@ -18,7 +18,8 @@ test('o painel lista as sessões pela prioridade, com "pasta · tempo · estado"
   // No terminal, as linhas têm outro formato (terminal.test.tsx).
   const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
   const t = await textos(ui)
-  expect(t.filter(x => / · /.test(x))).toEqual([
+  // As linhas inteiras ("pasta · tempo · estado"); a desta sessão é feita de pedaços, que ficam de fora.
+  expect(t.filter(x => (x.match(/ · /g) ?? []).length >= 2)).toEqual([
     'exemplo · há 2 min · Esperando',
     'exemplo · agora · Livre · esta sessão',
     'exemplo · há 7 min · Livre',
@@ -239,4 +240,192 @@ test('o cartão "Som" desliga cada som: a escolha vale ao abrir de novo e cala a
   await $.prompt.submit({ text: 'oi' } as never)
   await $.tool.call({ tool: 'AskUserQuestion', tool_use_id: 'pergunta-1', input: { questions: [] } } as never)
   expect(m.sons).toEqual([])
+})
+
+type Caixa = { props: Record<string, unknown> }
+const caixas = async (ui: { findAll: (q: { type: 'Box' }) => Promise<Caixa[]> }) => (await ui.findAll({ type: 'Box' })).map(b => b.props)
+
+test('no app, o cartão desta sessão tem o aspecto de aba selecionada: a barra à esquerda, na cor do estado, e o fundo mais forte', async ($, on) => {
+  const m = preparar(on)
+  gravarOutra(m, { id: 'outra', estado: 'livre' })
+  await $.session.start(INICIO)
+
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const bs = await caixas(ui)
+  const aba = bs.filter(b => String(b.key ?? '').startsWith('aba-'))
+  // A barra na cor cheia do estado do cartão (aqui, o livre), não na do texto.
+  expect(aba.map(b => [b.key, b.backgroundColor])).toEqual([['aba-sessao-exemplo-1', '#6F8E9A']])
+  const minha = bs.find(b => b.key === 'cartao-sessao-exemplo-1')
+  const outra = bs.find(b => b.key === 'cartao-outra')
+  expect(minha?.backgroundColor).not.toBe(outra?.backgroundColor)
+  await ui.unmount()
+})
+
+test('no app, o resumo no topo conta só o que pede atenção ou está em curso: sem o livre e sem o sem sinal', async ($, on) => {
+  const m = preparar(on)
+  gravarOutra(m, { id: 'a', estado: 'esperando' })
+  gravarOutra(m, { id: 'b', estado: 'pergunta' })
+  gravarOutra(m, { id: 'c', estado: 'pergunta' })
+  gravarOutra(m, { id: 'd', estado: 'trabalhando' })
+  gravarOutra(m, { id: 'e', estado: 'livre', respondeuEm: AGORA })
+  gravarOutra(m, { id: 'f', estado: 'trabalhando', vivoEm: AGORA - 10 * 60_000 })
+  await $.session.start(INICIO)
+
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const t = await textos(ui)
+  expect(t.filter(x => /^\d+ /.test(x))).toEqual(['1 Esperando', '2 Perguntas', '1 Trabalhando'])
+  await ui.unmount()
+})
+
+test('no app, o "esta sessão" da linha de baixo sai em negrito', async ($, on) => {
+  preparar(on)
+  await $.session.start(INICIO)
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const esta = (await ui.findAll({ type: 'Text' })).find(t => t.text === ' · esta sessão')
+  expect(esta?.props.bold).toBe(true)
+  await ui.unmount()
+})
+
+test('a espera longa: depois de 5 min esperando, o tempo sai em vermelho e negrito no app, e em negrito sublinhado no terminal', async ($, on) => {
+  const m = preparar(on)
+  gravarOutra(m, { id: 'longa', estado: 'esperando', desde: AGORA - 7 * 60_000 })
+  gravarOutra(m, { id: 'curta', estado: 'esperando', desde: AGORA - 3 * 60_000 })
+  await $.session.start(INICIO)
+
+  const app = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  let ts = await app.findAll({ type: 'Text' })
+  const noApp = ts.find(t => t.text === 'há 7 min')
+  expect([noApp?.props.bold, noApp?.props.color]).toEqual([true, '#C9433A'])
+  expect(ts.some(t => t.text === 'há 3 min')).toBe(false)
+  await app.unmount()
+
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
+  ts = await ui.findAll({ type: 'Text' })
+  const noTerminal = ts.find(t => t.text === 'há 7 min')
+  expect([noTerminal?.props.bold, noTerminal?.props.underline]).toEqual([true, true])
+  expect(ts.some(t => t.text === 'há 3 min')).toBe(false)
+  await ui.unmount()
+})
+
+test('nos ajustes, a "Intensidade de avisos" (padrão ou alta) nas duas superfícies, e o volume no cartão Som', async ($, on) => {
+  const m = preparar(on)
+  await $.session.start(INICIO)
+
+  const terminal = await $.ui.mount({ ...PAINEL, surface: 'terminal' })
+  await terminal.press({ key: 'ajustes' })
+  expect(await terminal.find({ key: 'ajuste-intensidade' })).toBeDefined()
+  expect(await terminal.find({ key: 'ajuste-volume' })).toBeDefined()
+  await terminal.unmount()
+
+  // O bloco de ajustes segue aberto (ele vale para os dois painéis).
+  const app = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  await app.select({ key: 'ajuste-intensidade', value: 'alta' })
+  await app.select({ key: 'ajuste-volume', value: 'medio' })
+  await app.unmount()
+  expect(m.guardado.ajustes).toEqual(expect.objectContaining({ intensidade: 'alta', volume: 'medio' }))
+})
+
+
+type SvgAchado = { props: Record<string, unknown> }
+const barcoDe = async (ui: { findAll: (q: { type: 'Svg' }) => Promise<SvgAchado[]> }, alt: string) =>
+  (await ui.findAll({ type: 'Svg' })).filter(s => s.props.alt === alt).map(s => String(s.props.source))
+const bordaDe = async (ui: { findAll: (q: { type: 'Box' }) => Promise<SvgAchado[]> }, id: string) =>
+  (await ui.findAll({ type: 'Box' })).find(b => b.props.key === `cartao-${id}`)?.props.borderColor
+
+test('um relógio só no painel do app (aqui na Alta): a borda do esperando e os barcos piscam juntos, a cada 0,6 s', async ($, on) => {
+  const m = preparar(on, { guardado: { ajustes: { intensidade: 'alta' } } })
+  gravarOutra(m, { id: 'espera-1', estado: 'esperando' })
+  gravarOutra(m, { id: 'espera-2', estado: 'esperando' })
+  await $.session.start({ ...INICIO, surface: 'desktop' })
+  await $.command.run({ command: 'farol' } as never)
+
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const antes = { borda: await bordaDe(ui, 'espera-1'), barcos: await barcoDe(ui, 'Barco: Esperando') }
+  // Os dois barcos no mesmo desenho, sem animação própria.
+  expect(new Set(antes.barcos).size).toBe(1)
+  expect(antes.barcos[0]).not.toContain('<animate')
+  await m.avancar(600)
+  const depois = { borda: await bordaDe(ui, 'espera-1'), barcos: await barcoDe(ui, 'Barco: Esperando') }
+  expect(depois.borda).not.toBe(antes.borda)
+  expect(new Set(depois.barcos).size).toBe(1)
+  expect(depois.barcos[0]).not.toBe(antes.barcos[0])
+  await m.avancar(600)
+  expect(await bordaDe(ui, 'espera-1')).toBe(antes.borda)
+  // A borda que pisca é a do próprio cartão, sem desenho por cima dela.
+  expect((await ui.findAll({ type: 'Svg' })).some(s => String(s.props.alt).startsWith('Borda'))).toBe(false)
+  await ui.unmount()
+})
+
+for (const [nome, ajustes] of [
+  ['no padrão com o movimento desligado', { intensidade: 'padrao', movimento: false }],
+  ['na Alta com o movimento desligado', { intensidade: 'alta', movimento: false }],
+] as const) {
+  test(`${nome}, o painel não tem relógio: a borda fica parada`, async ($, on) => {
+    const m = preparar(on, { guardado: { ajustes } })
+    gravarOutra(m, { id: 'espera', estado: 'esperando' })
+    await $.session.start({ ...INICIO, surface: 'desktop' })
+    await $.command.run({ command: 'farol' } as never)
+    const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+    const antes = await bordaDe(ui, 'espera')
+    await m.avancar(600)
+    expect(await bordaDe(ui, 'espera')).toBe(antes)
+    await ui.unmount()
+  })
+}
+
+test('no app, os selos do resumo são menores (fonte "footnote") e só o do esperando vai em negrito', async ($, on) => {
+  const m = preparar(on)
+  gravarOutra(m, { id: 'a', estado: 'esperando' })
+  gravarOutra(m, { id: 'b', estado: 'trabalhando' })
+  await $.session.start(INICIO)
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const selo = async (texto: string) => (await ui.findAll({ type: 'Text' })).find(t => t.text === texto)?.props
+  expect([(await selo('1 Esperando'))?.size, (await selo('1 Esperando'))?.bold]).toEqual(['footnote', true])
+  expect([(await selo('1 Trabalhando'))?.size, (await selo('1 Trabalhando'))?.bold]).toEqual(['footnote', undefined])
+  await ui.unmount()
+})
+
+test('na Alta, o relógio liga também com o painel que já estava aberto quando o farol recarregou (sem o /farol)', async ($, on) => {
+  const m = preparar(on, { guardado: { ajustes: { intensidade: 'alta' } } })
+  gravarOutra(m, { id: 'espera', estado: 'esperando' })
+  await $.session.start({ ...INICIO, surface: 'desktop' })
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const antes = await bordaDe(ui, 'espera')
+  await m.avancar(600)
+  expect(await bordaDe(ui, 'espera')).not.toBe(antes)
+  await ui.unmount()
+})
+
+test('no padrão também, a borda do esperando e os barcos piscam pelo relógio do painel', async ($, on) => {
+  const m = preparar(on)
+  gravarOutra(m, { id: 'espera', estado: 'esperando' })
+  await $.session.start({ ...INICIO, surface: 'desktop' })
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const antes = { borda: await bordaDe(ui, 'espera'), barco: await barcoDe(ui, 'Barco: Esperando') }
+  expect(antes.barco[0]).not.toContain('<animate')
+  await m.avancar(600)
+  expect(await bordaDe(ui, 'espera')).not.toBe(antes.borda)
+  expect(await barcoDe(ui, 'Barco: Esperando')).not.toEqual(antes.barco)
+  await ui.unmount()
+})
+
+test('os selos do resumo do app não têm espaço vertical dentro da borda', async ($, on) => {
+  const m = preparar(on)
+  gravarOutra(m, { id: 'a', estado: 'esperando' })
+  await $.session.start(INICIO)
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const selo = (await ui.findAll({ type: 'Box' })).find(b => b.props.key === 'resumo-esperando')
+  expect(selo?.props.paddingY).toBe(0)
+  await ui.unmount()
+})
+
+test('o botão "Esconder ajustes", com o bloco aberto, tem o destaque forte (primary); fechado, fica apagado', async ($, on) => {
+  preparar(on)
+  await $.session.start(INICIO)
+  const ui = await $.ui.mount({ ...PAINEL, surface: 'desktop' })
+  const botao = async () => (await ui.find({ key: 'ajustes' }))?.props
+  expect([(await botao())?.variant, (await botao())?.dimColor]).toEqual([undefined, true])
+  await ui.press({ key: 'ajustes' })
+  expect([(await botao())?.variant, (await botao())?.dimColor]).toEqual(['primary', undefined])
+  await ui.unmount()
 })

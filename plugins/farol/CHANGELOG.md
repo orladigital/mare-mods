@@ -1,5 +1,32 @@
 # Changelog do farol
 
+## 0.6.0 (2026-11-18)
+
+O farol chama mais o olho e se entende de relance.
+
+- **A pergunta:** no app, a resposta que termina com uma caixa que pergunta algo, sem depender de você para seguir,
+  deixa a sessão em "Pergunta", em coral, até o próximo prompt, sem o som do esperando. Fica entre o esperando e o
+  não visto.
+- **O pedido de permissão no terminal** passa a acender o esperando (e o som), no modo Manual e no plano, pelo modo
+  que o Claude Code grava na transcrição da sessão. No Auto, não acende.
+- **A borda e os barcos piscam juntos:** com o painel do app aberto e o "Movimento" ligado, a borda do cartão
+  esperando e os barcos que avisam (o vermelho e o azul) seguem um relógio só, a cada 0,6 segundo.
+- **Intensidade de avisos (padrão / alta),** nos ajustes. Na alta, no app, o feixe vermelho gira mais rápido, sobem
+  quatro sinalizadores e a torre mostra a contagem; nas duas superfícies, o "esperando por você" se repete a cada 2
+  minutos enquanto a sessão espera, no máximo 3 vezes.
+- **Volume (baixo / médio / alto)** no cartão Som; alto é o volume de antes.
+- **No app,** um resumo em selos abaixo da cena (sem o livre e sem o sem sinal); o cartão desta sessão com o aspecto
+  de aba selecionada; as sessões sem sinal mais apagadas; o botão "Esconder ajustes" em destaque com os ajustes
+  abertos, e os seletores do cartão Som mais espaçados.
+- **No terminal,** esta sessão numa seção própria, acima das outras, sem cortar no painel estreito; o trabalhando
+  num verde-água mais claro; as sem sinal numa linha curta, mais apagada.
+- **A espera longa:** depois de 5 minutos esperando você, o tempo da sessão fica mais forte.
+- **No macOS, o terminal mostra as sessões do app pelo nome da barra lateral**, também depois de renomeadas.
+- **Na extensão da IDE,** a faixa usa o botão do terminal, sem o retângulo azul por cima da torre.
+- **Correções:** a sessão que nasce numa sessão pré-aberta do app e é usada depois do primeiro minuto volta a trocar
+  de sessão pelo clique; a sessão pré-aberta que ninguém usou não aparece mais como sem sinal; com o painel aberto,
+  o farol recarregado volta a reler as outras sessões.
+
 ## 0.5.0 (2026-11-13)
 
 O farol ganha som.

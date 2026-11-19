@@ -4,7 +4,7 @@ import type { Engine } from 'claude-code/testing'
 import type { Registro } from '../types'
 import { FAIXA, INICIO, gravarOutra, preparar } from './apoio-de-teste'
 import type { Mundo } from './apoio-de-teste'
-import { torreSvg } from './faixa'
+import { luzDaFaixa, torreSvg } from './faixa'
 
 // Outras sessões abertas na máquina, uma por estado.
 const outras = (m: Mundo, estados: Registro['estado'][]) =>
@@ -196,5 +196,23 @@ test('com o farol escondido da faixa, ficam só as linhas dos outros mods', asyn
   if (!ui) return
   expect(await ui.findAll({ key: 'abrir-farol' })).toHaveLength(0)
   expect(JSON.stringify(await ui.drawn())).toContain('barra de outro mod')
+  await ui.unmount()
+})
+
+test('no app, a Pergunta acende o feixe da torre em coral, parado', async () => {
+  const lista: Registro[] = [{ id: 'a', pasta: 'exemplo', titulo: 'a', estado: 'pergunta', desde: 0, vivoEm: 0 }]
+  expect(luzDaFaixa(lista, 0)).toBe('coral')
+  const svg = torreSvg('coral', true)
+  expect(svg).toContain('class="c"')
+  expect(svg).not.toContain('<animate')
+})
+
+test('na extensão da IDE, a faixa usa o botão do terminal (🚦, 🚨 N), sem a torre e sem o botão invisível por cima', async ($, on) => {
+  const m = preparar(on)
+  outras(m, ['esperando'])
+  await $.session.start(INICIO)
+  const ui = await $.ui.mount({ ...FAIXA, surface: 'vscode' })
+  expect((await ui.find({ key: 'abrir-farol' }))?.text).toBe('🚨 1')
+  expect(await ui.find({ type: 'Svg' })).toBeUndefined()
   await ui.unmount()
 })
