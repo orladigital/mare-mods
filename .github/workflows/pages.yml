@@ -1,0 +1,70 @@
+name: pages
+
+# Publica a página (site/) no GitHub Pages. Roda na main, depois do merge de um PR que mexeu na página, ou à mão
+# (Actions → pages → Run workflow). Um PR não publica nada: este workflow não roda em pull_request.
+#
+# Os cuidados, e por quê:
+# - as ações são fixadas pelo commit (o comentário ao lado diz a versão): uma tag pode ser movida para outro
+#   código, um commit não;
+# - o workflow começa sem permissão nenhuma, e cada job recebe só a que usa; só o "publicar" escreve no Pages;
+# - os testes da página rodam antes: se um falhar, nada vai ao ar;
+# - só os arquivos da lista do passo "Separa" são publicados, um a um; nada mais da pasta nem do repositório;
+# - não há segredo nem variável: a página não precisa de nenhum.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'scripts/site.test.mjs'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+# Um deploy de cada vez; o que já começou termina antes do próximo.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  montar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Confere a página antes de publicar
+        run: node --test scripts/site.test.mjs scripts/dados-pessoais.test.mjs
+      - name: Separa só os arquivos que vão ao ar
+        # A lista é fechada de propósito: um arquivo novo em site/ só é publicado quando entra aqui, e o teste da
+        # página cobra que tudo o que o index.html usa esteja nela.
+        run: |
+          set -euo pipefail
+          mkdir -p _site/fontes
+          cp site/index.html site/estilo.css site/app.js site/favicon.svg _site/
+          cp site/fontes/inter-latin.woff2 site/fontes/inter-tight-latin.woff2 site/fontes/space-mono-400-latin.woff2 _site/fontes/
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  publicar:
+    needs: montar
+    # A trava de verdade é a do ambiente github-pages (Settings → Environments), que só aceita a main; esta
+    # condição repete a regra aqui, para quem lê o arquivo.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+    steps:
+      - id: publicar
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

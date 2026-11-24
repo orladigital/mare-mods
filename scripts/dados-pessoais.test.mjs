@@ -1,7 +1,7 @@
-// Varre os arquivos do farol atrás de dado pessoal ou segredo: caminho de usuário real (só /Users/exemplo vale),
-// e-mail, id real de sessão e token (as chaves de nuvem ficam com o gitleaks, no job "segredos"). O passo "Procura
-// dados pessoais" do CI já barra parte disso (caminho de usuário e id do app) no repo inteiro; este teste cobre o
-// resto. Roda com `node --test scripts/dados-pessoais.test.mjs`.
+// Varre os arquivos do farol e da página (site/) atrás de dado pessoal ou segredo: caminho de usuário real (só
+// /Users/exemplo vale), e-mail, id real de sessão e token (as chaves de nuvem ficam com o gitleaks, no job
+// "segredos"). O passo "Procura dados pessoais" do CI já barra parte disso (caminho de usuário e id do app) no
+// repo inteiro; este teste cobre o resto. Roda com `node --test scripts/dados-pessoais.test.mjs`.
 //
 // É um teste de Node, e não do `claude plugin test`, porque lá o disco é o que o próprio teste responde: o mod
 // não lê os arquivos de verdade.
@@ -49,6 +49,11 @@ for (const mod of MODS) {
     assert.deepEqual(procurar(join(RAIZ, 'plugins', mod)), [])
   })
 }
+
+// A página é pública e vai ao ar a cada merge: o mesmo cuidado dos mods vale para ela.
+test('site: nenhum arquivo tem dado pessoal nem segredo', () => {
+  assert.deepEqual(procurar(join(RAIZ, 'site')), [])
+})
 
 // Os exemplos montam o caminho por partes: escrito inteiro, o passo "Procura dados pessoais" do CI o barraria.
 const USUARIOS = '/Users/'

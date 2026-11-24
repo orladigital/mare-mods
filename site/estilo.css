@@ -1,0 +1,3255 @@
+/*
+ * Maré Mods · a página dos mods.
+ * A página é a orla de Copacabana vista de cima, na ordem em que ela existe: a avenida (a barra de cima), o
+ * calçadão de pedra portuguesa, a areia, a beira do mar, o mar aberto (os mods) e, de volta, a pedra e a areia.
+ * As cores do mar, da areia e do farol são as dos próprios mods (plugins/barra-de-uso e plugins/farol); o azul e
+ * as fontes são os da Orla (orla.tech).
+ * Sem estilo dentro do HTML: a política de segurança (no index.html) só aceita este arquivo.
+ * As fontes (Inter Tight, Inter e Space Mono) ficam na própria pasta, em fontes/: nada é carregado de fora.
+ */
+
+/* Inter Tight e Inter são fontes variáveis: um arquivo serve todos os pesos. Só o subconjunto latino, que cobre o
+   português. Enquanto a fonte não chega, o texto aparece na fonte do sistema (swap). */
+@font-face {
+  font-family: "Inter Tight";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fontes/inter-tight-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fontes/inter-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Space Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fontes/space-mono-400-latin.woff2") format("woff2");
+}
+
+:root {
+  /* A pedra e a avenida */
+  --tinta: #131416;
+  --basalto: #17181b;
+  --pedra: #ebe7dc;
+  --pedra-clara: #f3f0e8;
+  --meio-fio: #b9b3a6;
+  --tinta-2: #45463f;
+
+  /* A areia */
+  --areia: #f1dfa8;
+  --areia-clara: #f6e9c2;
+  --areia-molhada: #c9ae6c;
+  --areia-tinta: #5a4a1f;
+
+  /* O mar */
+  --mar: #2f6fe0;
+  --mar-meio: #3f9bd8;
+  --beira: #54c9c1;
+  --espuma: #eefbf8;
+  --mar-fundo: #173f93;
+  --noite: #06121f;
+
+  /* A Orla */
+  --azul: #0059ff;
+  --azul-forte: #0047cc;
+
+  /* O farol */
+  --vermelho: #ff5a4a;
+  --coral: #e0835a;
+  --ceu-azul: #6fa8ff;
+  --ambar: #f2c35b;
+  --verde-agua: #4fb3a9;
+
+  /* As telas escuras (a janela e as demonstrações) */
+  --tela: #0d0e12;
+  --tela-2: #14161c;
+  --claro: #fafafa;
+  --claro-2: rgb(250 250 250 / 0.78);
+  --claro-3: #a1a1aa;
+  --fio: rgb(255 255 255 / 0.1);
+  --fio-2: rgb(255 255 255 / 0.18);
+
+  --titulo: "Inter Tight", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --corpo: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "Space Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --largura: 1180px;
+  --margem: clamp(18px, 4vw, 44px);
+  --foco: var(--azul);
+
+  /* As pedrinhas: as juntas do mosaico, por cima de qualquer pedra. */
+  --juntas: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><path d='M0 .5h28M0 7.5h28M0 14.5h28M0 21.5h28M5 0v7M13 0v7M21 0v7M2 7v7M9 7v7M17 7v7M25 7v7M6 14v7M14 14v7M22 14v7M3 21v7M11 21v7M18 21v7M26 21v7' stroke='%23808080' stroke-opacity='.3' stroke-width='.7' fill='none'/></svg>");
+  /* As ondas do calçadão de Copacabana: faixas de basalto sobre a pedra branca, todas com a mesma curva. */
+  --ondas: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='40' viewBox='0 0 160 40'><g fill='%2317181b'><path d='M0 -30 Q20 -60 40 -30 T80 -30 T120 -30 T160 -30 V-10 Q140 20 120 -10 T80 -10 T40 -10 T0 -10 Z'/><path d='M0 10 Q20 -20 40 10 T80 10 T120 10 T160 10 V30 Q140 60 120 30 T80 30 T40 30 T0 30 Z'/><path d='M0 50 Q20 20 40 50 T80 50 T120 50 T160 50 V70 Q140 100 120 70 T80 70 T40 70 T0 70 Z'/></g></svg>");
+  /* Os grãos da areia. */
+  --graos: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .42 0 0 0 0 .3 0 0 0 0 .1 2.4 0 0 0 -1.2'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 76px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--basalto);
+  color: var(--tinta);
+  font-family: var(--corpo);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--azul);
+  color: #fff;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+}
+
+/* O atributo hidden vale sempre, também nos elementos que têm display próprio. */
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.moldes {
+  position: absolute;
+}
+
+.pular {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 50;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--tinta);
+  font-weight: 500;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.pular:focus {
+  transform: none;
+}
+
+/* ---------- Botões ---------- */
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  font-size: 15.5px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.botao svg {
+  width: 14px;
+  height: 14px;
+}
+
+.botao-p {
+  min-height: 38px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+
+.botao-azul {
+  background: var(--azul);
+  color: #fff;
+}
+
+.botao-azul:hover {
+  background: var(--azul-forte);
+}
+
+.botao-tinta {
+  background: var(--tinta);
+  color: #fff;
+}
+
+.botao-tinta:hover {
+  background: #000;
+}
+
+.botao-linha {
+  border-color: currentColor;
+  background: transparent;
+}
+
+.botao-linha:hover {
+  background: var(--tinta);
+  border-color: var(--tinta);
+  color: #fff;
+}
+
+/* ---------- A avenida (a barra de cima) ---------- */
+
+.avenida {
+  --foco: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 58px;
+  padding: 8px var(--margem);
+  background: var(--basalto);
+  color: #fff;
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--titulo);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.marca svg {
+  width: 19px;
+  height: 19px;
+  color: var(--beira);
+}
+
+.marca small {
+  font-family: var(--corpo);
+  font-size: 13px;
+  font-weight: 400;
+  color: rgb(255 255 255 / 0.55);
+}
+
+.menu {
+  display: none;
+  gap: 30px;
+  font-size: 14.5px;
+  color: rgb(255 255 255 / 0.8);
+}
+
+.menu a {
+  padding: 6px 0;
+  text-decoration: none;
+  border-bottom: 1.5px solid transparent;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+
+.menu a:hover {
+  color: #fff;
+  border-bottom-color: var(--beira);
+}
+
+@media (min-width: 820px) {
+  .menu {
+    display: flex;
+  }
+}
+
+/* ---------- O calçadão ---------- */
+
+.calcadao {
+  height: 80px;
+  background-color: var(--pedra);
+  background-image: var(--juntas), var(--ondas);
+  background-size: 28px 28px, 160px 40px;
+  background-position: 0 0, 0 0;
+}
+
+.calcadao-alto {
+  height: clamp(84px, 12vh, 120px);
+  background-size: 28px 28px, 192px 48px;
+}
+
+/* O meio-fio: a borda de concreto entre a pedra e a areia. */
+.meio-fio {
+  height: 7px;
+  background: linear-gradient(180deg, #cfc9bc 0 45%, var(--meio-fio) 45% 100%);
+  box-shadow: 0 3px 0 rgb(74 58 23 / 0.16);
+}
+
+/* ---------- A praia (a abertura) ---------- */
+
+.praia {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - 58px);
+}
+
+.areia {
+  position: relative;
+  flex: 1;
+  display: grid;
+  align-items: center;
+  padding: clamp(30px, 4vh, 52px) var(--margem) clamp(88px, 10.5vh, 108px);
+  background-color: var(--areia-clara);
+  background-image: var(--graos), linear-gradient(180deg, transparent 0, transparent calc(100% - 110px), rgb(201 174 108 / 0.8) 100%);
+}
+
+.enfeites {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.enfeites svg {
+  position: absolute;
+  display: block;
+}
+
+/* Os coqueiros ficam na borda da areia, com a copa por cima do meio-fio e do calçadão. */
+.coqueiro {
+  top: calc(var(--t) * -0.375 - 4px);
+  width: var(--t);
+  height: var(--t);
+  transform-origin: 37.5% 37.5%;
+}
+
+.coqueiro-1 {
+  left: 2%;
+}
+
+.coqueiro-2 {
+  left: 27%;
+  transform: scale(0.84);
+}
+
+.coqueiro-3 {
+  right: 31%;
+  transform: scale(1.06);
+}
+
+.coqueiro-4 {
+  right: 3%;
+}
+
+.guarda-sol {
+  width: clamp(54px, 6.4vw, 88px);
+  height: clamp(54px, 6.4vw, 88px);
+}
+
+.canga {
+  width: clamp(30px, 3.4vw, 46px);
+  height: clamp(45px, 5.1vw, 69px);
+}
+
+.guarda-sol-1 {
+  left: 5%;
+  bottom: 14px;
+  color: #e5484d;
+}
+
+.canga-1 {
+  left: calc(5% + clamp(54px, 6.4vw, 88px));
+  bottom: 8px;
+  color: var(--beira);
+  transform: rotate(-12deg);
+}
+
+.guarda-sol-2 {
+  right: 9%;
+  bottom: 22px;
+  color: var(--azul);
+  transform: rotate(22deg);
+}
+
+.canga-2 {
+  right: calc(9% + clamp(58px, 6.8vw, 94px));
+  bottom: 12px;
+  color: #e0745a;
+  transform: rotate(9deg);
+}
+
+.guarda-sol-3 {
+  left: 66%;
+  bottom: 30px;
+  color: #f2a900;
+  transform: rotate(-30deg) scale(0.86);
+}
+
+.praia-conteudo {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 52px;
+  align-items: center;
+  width: 100%;
+  max-width: var(--largura);
+  margin: 0 auto;
+}
+
+@media (min-width: 1000px) {
+  .praia-conteudo {
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+    gap: 64px;
+  }
+}
+
+.praia-texto {
+  display: grid;
+  gap: 18px;
+  justify-items: start;
+}
+
+.sobretitulo,
+.etiqueta {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sobretitulo {
+  color: var(--areia-tinta);
+}
+
+h1 {
+  max-width: 11ch;
+  font-family: var(--titulo);
+  font-size: clamp(2.3rem, 3.9vw, 3.3rem);
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: -0.042em;
+  text-wrap: balance;
+}
+
+.apoio {
+  max-width: 58ch;
+  text-wrap: pretty;
+}
+
+.praia .apoio {
+  max-width: 46ch;
+  font-size: clamp(1.02rem, 1.5vw, 1.16rem);
+  color: #3b331d;
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+/* A janela de demonstração: uma sessão genérica, com a faixa dos mods acima do prompt. Fica pousada na areia,
+   com a sombra do mesmo lado das dos coqueiros. */
+.janela {
+  --foco: #fff;
+  position: relative;
+  border: 1px solid #000;
+  border-radius: 14px;
+  background: var(--tela);
+  color: var(--claro);
+  box-shadow: 12px 16px 0 rgb(74 58 23 / 0.2);
+}
+
+.janela-topo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--fio);
+  font-size: 12.5px;
+  color: var(--claro-3);
+}
+
+.janela-topo i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.16);
+}
+
+.janela-topo span {
+  margin-left: 10px;
+}
+
+.janela-corpo {
+  display: grid;
+  gap: 12px;
+  padding: 20px 18px 16px;
+  font-size: 14.5px;
+}
+
+.fala {
+  max-width: 56ch;
+  line-height: 1.5;
+}
+
+.fala-voce {
+  justify-self: end;
+  padding: 9px 14px;
+  border-radius: 14px 14px 3px 14px;
+  background: rgb(255 255 255 / 0.08);
+}
+
+.fala-resposta {
+  color: var(--claro-2);
+}
+
+.faixa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  min-height: 44px;
+  margin: 0 12px;
+  padding: 9px 12px;
+  border: 1px solid rgb(84 201 193 / 0.5);
+  border-radius: 10px;
+  background: rgb(84 201 193 / 0.07);
+  font-size: 13px;
+  color: var(--claro-2);
+}
+
+.faixa svg {
+  display: block;
+  width: auto;
+  height: 20px;
+}
+
+.faixa .item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.faixa .item b {
+  font-weight: 500;
+  color: var(--claro);
+  font-variant-numeric: tabular-nums;
+}
+
+.faixa .divisa {
+  width: 1px;
+  height: 16px;
+  background: var(--fio-2);
+}
+
+.faixa .ancora {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+.faixa .torre {
+  color: #e6e3de;
+}
+
+.prompt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 10px 12px 12px;
+  padding: 13px 15px;
+  border: 1px solid var(--fio-2);
+  border-radius: 10px;
+  font-size: 14.5px;
+  color: var(--claro-3);
+}
+
+.prompt b {
+  width: 1.5px;
+  height: 18px;
+  background: var(--beira);
+  animation: pisca 1.1s steps(1) infinite;
+}
+
+@keyframes pisca {
+  50% {
+    opacity: 0;
+  }
+}
+
+.janela figcaption {
+  position: absolute;
+  top: calc(100% + 26px);
+  left: 0;
+  right: 0;
+  font-size: 13px;
+  color: var(--areia-tinta);
+}
+
+/* A beira do mar: a areia molhada, a marca da espuma que a última onda deixou, e as ondas que vão e voltam. */
+.beira-mar {
+  position: relative;
+  height: clamp(104px, 16vh, 164px);
+  overflow: hidden;
+  background: linear-gradient(180deg, rgb(201 174 108 / 0.8), var(--areia-molhada) 40%);
+  background-color: var(--areia-clara);
+}
+
+.beira-mar svg {
+  position: absolute;
+  inset: 0;
+  width: 200%;
+  height: 100%;
+}
+
+.onda {
+  will-change: transform;
+}
+
+.onda-espuma {
+  fill: var(--espuma);
+  animation: corre-360 30s linear infinite;
+}
+
+.onda-beira {
+  fill: var(--beira);
+  animation: corre-360 30s linear infinite;
+}
+
+.onda-meio {
+  fill: var(--mar-meio);
+  animation: corre-480 22s linear infinite reverse;
+}
+
+.onda-fundo {
+  fill: var(--mar);
+  animation: corre-300 17s linear infinite;
+}
+
+/* A beira vai e volta, como no desenho do mod. */
+.vai-e-vem {
+  animation: vai-e-vem 6.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes vai-e-vem {
+  0%,
+  100% {
+    transform: translateY(14px);
+  }
+
+  50% {
+    transform: translateY(-16px);
+  }
+}
+
+/* Cada onda anda um período do próprio desenho (em unidades do SVG) e recomeça sem emenda. */
+@keyframes corre-360 {
+  to {
+    transform: translateX(-360px);
+  }
+}
+
+@keyframes corre-480 {
+  to {
+    transform: translateX(-480px);
+  }
+}
+
+@keyframes corre-300 {
+  to {
+    transform: translateX(-300px);
+  }
+}
+
+/* ---------- Seções ---------- */
+
+.secao {
+  padding: clamp(64px, 9vw, 120px) var(--margem);
+}
+
+.secao > * {
+  max-width: var(--largura);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.secao-cabeca {
+  display: grid;
+  gap: 16px;
+  margin-bottom: clamp(36px, 5vw, 64px);
+}
+
+h2 {
+  max-width: 19ch;
+  font-family: var(--titulo);
+  font-size: clamp(2.1rem, 4.8vw, 3.5rem);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+h3 {
+  font-family: var(--titulo);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- Os mods, mar adentro: do azul da beira até a noite do farol ---------- */
+
+.mar-aberto {
+  --foco: #fff;
+  padding-top: clamp(40px, 6vw, 80px);
+  background: linear-gradient(180deg, var(--mar) 0, #2259c4 18%, var(--mar-fundo) 44%, #0b2452 66%, var(--noite) 86%);
+  color: #fff;
+}
+
+.mar-aberto .etiqueta {
+  color: #cdeffb;
+}
+
+.mar-aberto .apoio {
+  color: rgb(255 255 255 / 0.86);
+}
+
+.mod {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 36px;
+  align-items: center;
+  padding: clamp(36px, 5vw, 64px) 0;
+  border-top: 1px solid rgb(255 255 255 / 0.28);
+}
+
+@media (min-width: 980px) {
+  .mod {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: 64px;
+  }
+
+  .mod-invertido {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  }
+
+  .mod-invertido .mod-texto {
+    order: 2;
+  }
+}
+
+.mod-texto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  justify-items: start;
+  min-width: 0;
+}
+
+.mod-nome {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 15px;
+}
+
+.indice {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: rgb(255 255 255 / 0.6);
+}
+
+.mod-nome code {
+  font-size: 15px;
+  color: #fff;
+}
+
+.onde {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.62);
+}
+
+.mod h3 {
+  font-size: clamp(1.7rem, 3.1vw, 2.4rem);
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+.mod-texto > p {
+  color: rgb(255 255 255 / 0.86);
+}
+
+.pontos {
+  display: grid;
+  gap: 10px;
+  font-size: 15.5px;
+  color: rgb(255 255 255 / 0.84);
+}
+
+/* O marcador de cada ponto é uma ondinha. */
+.pontos li {
+  position: relative;
+  padding-left: 30px;
+}
+
+.pontos li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 20px;
+  height: 9px;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 9'><path d='M1 6 Q4 1 7 5 T13 5 T19 4' fill='none' stroke='%2354c9c1' stroke-width='1.8' stroke-linecap='round'/></svg>") no-repeat;
+}
+
+.pontos b {
+  font-weight: 600;
+  color: #fff;
+}
+
+.comando {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 10px 10px 16px;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 10px;
+  background: var(--tela);
+}
+
+/* O comando quebra em linhas: nada fica escondido atrás de uma rolagem lateral. */
+.comando code {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  color: #dff3ff;
+}
+
+.copiar {
+  flex: none;
+  min-width: 84px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 7px;
+  background: transparent;
+  color: #fff;
+  font: 500 13px var(--corpo);
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.copiar:hover {
+  background: #fff;
+  border-color: #fff;
+  color: var(--tinta);
+}
+
+.copiar[data-copiado] {
+  border-color: var(--beira);
+  background: var(--beira);
+  color: var(--tinta);
+}
+
+@media (max-width: 520px) {
+  .comando {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+  }
+}
+
+.ligacao {
+  font-size: 14.5px;
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 0.45);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.18s ease;
+}
+
+.ligacao:hover {
+  text-decoration-color: currentColor;
+}
+
+/* A demonstração de cada mod: uma tela escura, como a do app. */
+.demo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #000;
+  border-radius: 14px;
+  background: var(--tela);
+  color: var(--claro);
+  box-shadow: 10px 12px 0 rgb(0 0 0 / 0.22);
+}
+
+.demo-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.demo-rotulo,
+.demo-dica {
+  font-size: 12.5px;
+  color: var(--claro-3);
+}
+
+.demo-rotulo {
+  font-family: var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.seletor {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--fio-2);
+  border-radius: 9px;
+}
+
+.seletor button,
+.estados button {
+  white-space: nowrap;
+}
+
+.seletor button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--claro-3);
+  font: 500 13px var(--corpo);
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.seletor button:hover {
+  color: var(--claro);
+}
+
+.seletor button[aria-pressed="true"] {
+  background: var(--claro);
+  color: var(--tinta);
+}
+
+.palco {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  min-height: 148px;
+  padding: 18px;
+  border: 1px solid var(--fio);
+  border-radius: 10px;
+  background: var(--tela-2);
+}
+
+.palco-app {
+  display: grid;
+  gap: 18px;
+}
+
+.medida {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) 104px;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.medida-nome {
+  color: var(--claro-2);
+}
+
+.medida-valor {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.desenho svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+@media (max-width: 520px) {
+  .medida {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .medida .desenho {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .demo-dica {
+    display: none;
+  }
+}
+
+/* A faixa no terminal: cada medida é um pedaço que não quebra no meio. Com pouca largura, os pedaços descem
+   inteiros para a linha de baixo, como no mod; o traço entre eles some no começo de cada linha. */
+.palco-terminal {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.terminal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 0;
+  margin-left: -15px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--claro-2);
+}
+
+.terminal .pedaco {
+  padding: 0 14px;
+  border-left: 1px solid rgb(255 255 255 / 0.4);
+  white-space: nowrap;
+}
+
+.terminal .apagada {
+  color: rgb(255 255 255 / 0.16);
+}
+
+.controles {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 560px) {
+  .controles {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.controle {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--claro-3);
+}
+
+input[type="range"] {
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--mar), var(--beira));
+}
+
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--mar), var(--beira));
+}
+
+#controle-5h::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, #ffe23a, #ff8a1a, #7e4a8c);
+}
+
+#controle-5h::-moz-range-track {
+  background: linear-gradient(90deg, #ffe23a, #ff8a1a, #7e4a8c);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--tela);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--tela);
+}
+
+.leitura {
+  min-height: 3.2em;
+  font-size: 14px;
+  color: var(--claro-2);
+}
+
+.leitura[data-alerta] {
+  color: #cff5f1;
+}
+
+/* O farol. */
+.cena svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 26px;
+}
+
+.selo {
+  padding: 2px 10px;
+  border: 1px solid;
+  border-radius: 5px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.sessoes {
+  display: grid;
+  gap: 8px;
+}
+
+.sessao {
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid var(--fio);
+  border-left-width: 3px;
+  border-radius: 8px;
+  transition: border-color 0.35s ease, background-color 0.35s ease;
+}
+
+.sessao-titulo {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessao-linha {
+  font-size: 12.5px;
+  color: var(--claro-3);
+}
+
+.sessao-linha b {
+  font-weight: 500;
+}
+
+[data-tom="esperando"] {
+  --tom: var(--vermelho);
+}
+
+[data-tom="pergunta"] {
+  --tom: var(--coral);
+}
+
+[data-tom="nao-visto"] {
+  --tom: var(--ceu-azul);
+}
+
+[data-tom="trabalhando"] {
+  --tom: var(--verde-agua);
+}
+
+[data-tom="livre"] {
+  --tom: #8a8a93;
+}
+
+.selo[data-tom] {
+  border-color: color-mix(in srgb, var(--tom) 50%, transparent);
+  background: color-mix(in srgb, var(--tom) 14%, transparent);
+  color: color-mix(in srgb, var(--tom) 70%, #fff);
+}
+
+.sessao[data-tom]:not([data-tom="livre"]) {
+  border-color: color-mix(in srgb, var(--tom) 55%, transparent);
+  background: color-mix(in srgb, var(--tom) 10%, transparent);
+}
+
+.sessao[data-tom] .sessao-linha b {
+  color: color-mix(in srgb, var(--tom) 75%, #fff);
+}
+
+.sessao[data-tom="esperando"] {
+  animation: borda-pisca 1.2s steps(1) infinite;
+}
+
+@keyframes borda-pisca {
+  50% {
+    border-color: color-mix(in srgb, var(--vermelho) 20%, transparent);
+  }
+}
+
+.estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.estados button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--fio-2);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--claro-2);
+  font: 500 13px var(--corpo);
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.estados button:hover {
+  border-color: rgb(255 255 255 / 0.5);
+  color: #fff;
+}
+
+.estados button[aria-pressed="true"] {
+  border-color: #fff;
+  background: #fff;
+  color: var(--tinta);
+}
+
+/* ---------- Instalar e Confiança: de volta à pedra ---------- */
+
+.pedra {
+  background: var(--pedra-clara);
+}
+
+.pedra-segue {
+  padding-top: 0;
+}
+
+.pedra .etiqueta {
+  color: var(--azul);
+}
+
+.pedra .apoio {
+  color: var(--tinta-2);
+}
+
+.instalador {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  padding: clamp(20px, 3.4vw, 40px);
+  border: 1.5px solid var(--tinta);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.instalador-escolhas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+}
+
+.escolha {
+  display: grid;
+  gap: 8px;
+}
+
+.escolha-nome {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b6b63;
+}
+
+.seletor-claro {
+  border-color: var(--tinta);
+}
+
+.seletor-claro button {
+  min-height: 38px;
+  padding: 0 18px;
+  color: var(--tinta-2);
+  font-size: 14px;
+}
+
+.seletor-claro button:hover {
+  color: var(--tinta);
+}
+
+.seletor-claro button[aria-pressed="true"] {
+  background: var(--tinta);
+  color: #fff;
+}
+
+.passos ol {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+  counter-reset: passo;
+}
+
+.passos li {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding-left: 46px;
+  counter-increment: passo;
+}
+
+.passos li::before {
+  content: counter(passo, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 2px;
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--azul);
+}
+
+.passos b {
+  font-weight: 600;
+}
+
+.passos p code,
+.requisitos code,
+.manutencao code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #efece4;
+}
+
+.instalador .comando {
+  border-color: var(--tinta);
+}
+
+.nota {
+  font-size: 14px;
+  color: #6b6b63;
+}
+
+.requisitos {
+  padding-top: 22px;
+  border-top: 1px solid rgb(19 20 22 / 0.16);
+  font-size: 15px;
+  color: var(--tinta-2);
+}
+
+.requisitos a {
+  margin-left: 6px;
+  color: var(--azul);
+  text-underline-offset: 4px;
+  white-space: nowrap;
+}
+
+.manutencao {
+  font-size: 15px;
+}
+
+.manutencao summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+.manutencao summary::-webkit-details-marker {
+  display: none;
+}
+
+.manutencao summary::before {
+  content: "+";
+  font-family: var(--mono);
+  font-size: 17px;
+  color: var(--azul);
+}
+
+.manutencao[open] summary::before {
+  content: "−";
+}
+
+.manutencao dl {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.manutencao dl div {
+  display: grid;
+  gap: 4px;
+}
+
+@media (min-width: 720px) {
+  .manutencao dl div {
+    grid-template-columns: 220px 1fr;
+    align-items: baseline;
+  }
+}
+
+.manutencao dt {
+  color: var(--tinta-2);
+}
+
+.manutencao dd {
+  overflow-wrap: anywhere;
+}
+
+/* As garantias: uma lista numerada, cada item com um fio em cima. */
+.garantias {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 48px;
+  counter-reset: garantia;
+}
+
+@media (min-width: 700px) {
+  .garantias {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1040px) {
+  .garantias {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.garantias li {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 18px 0 30px;
+  border-top: 1.5px solid var(--tinta);
+  counter-increment: garantia;
+}
+
+.garantias li::before {
+  content: counter(garantia, decimal-leading-zero);
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--azul);
+}
+
+.garantias h3 {
+  font-size: 1.3rem;
+}
+
+.garantias p {
+  font-size: 15.5px;
+  color: var(--tinta-2);
+}
+
+.franqueza {
+  max-width: 70ch;
+  margin-top: 18px;
+  margin-left: 0;
+  padding: 4px 0 4px 18px;
+  border-left: 3px solid #c98a12;
+  font-size: 15.5px;
+  color: var(--tinta-2);
+}
+
+.secao > .franqueza {
+  margin-left: max(0px, calc((100% - var(--largura)) / 2));
+}
+
+.franqueza b {
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+/* ---------- Contribuir: de novo na areia ---------- */
+
+.areia-fim {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--areia-clara);
+  background-image: var(--graos);
+}
+
+.convite {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+}
+
+.areia-fim .etiqueta {
+  color: var(--areia-tinta);
+}
+
+.areia-fim .apoio {
+  max-width: 50ch;
+  color: #3b331d;
+}
+
+.guarda-sol-4 {
+  right: 7%;
+  top: 22%;
+  width: clamp(70px, 10vw, 150px);
+  height: clamp(70px, 10vw, 150px);
+  color: #e5484d;
+  transform: rotate(14deg);
+}
+
+.canga-3 {
+  right: calc(7% + clamp(76px, 10.6vw, 160px));
+  top: 34%;
+  width: clamp(36px, 5vw, 76px);
+  height: clamp(54px, 7.5vw, 114px);
+  color: var(--azul);
+  transform: rotate(-8deg);
+}
+
+.guarda-sol-5 {
+  right: 24%;
+  bottom: 9%;
+  width: clamp(52px, 7vw, 104px);
+  height: clamp(52px, 7vw, 104px);
+  color: #f2a900;
+  transform: rotate(-40deg);
+}
+
+.coqueiro-5 {
+  top: auto;
+  right: -2%;
+  bottom: -5%;
+  width: clamp(120px, 17vw, 250px);
+  height: clamp(120px, 17vw, 250px);
+}
+
+/* ---------- Rodapé: a avenida de novo ---------- */
+
+.rodape {
+  --foco: #fff;
+  background: var(--basalto);
+  color: #fff;
+}
+
+.rodape-conteudo {
+  display: grid;
+  gap: 32px;
+  max-width: calc(var(--largura) + 2 * var(--margem));
+  margin: 0 auto;
+  padding: 52px var(--margem) 0;
+}
+
+@media (min-width: 760px) {
+  .rodape-conteudo {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.rodape-marca {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
+
+.rodape-marca p {
+  max-width: 44ch;
+  font-size: 15px;
+  color: rgb(255 255 255 / 0.66);
+}
+
+.rodape-marca p a {
+  color: #fff;
+  text-underline-offset: 4px;
+}
+
+.rodape-ligacoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
+  align-content: start;
+  font-size: 15px;
+}
+
+.rodape-ligacoes a {
+  color: rgb(255 255 255 / 0.8);
+  text-decoration: none;
+}
+
+.rodape-ligacoes a:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.rodape-nota {
+  max-width: calc(var(--largura) + 2 * var(--margem));
+  margin: 36px auto 0;
+  padding: 20px var(--margem) 36px;
+  border-top: 1px solid rgb(255 255 255 / 0.12);
+  font-size: 13px;
+  color: rgb(255 255 255 / 0.55);
+}
+
+/* ---------- A barra de cima: o índice dos mods, a pausa e a maré da página ---------- */
+
+.avenida {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+.menu {
+  align-items: center;
+}
+
+.menu a[aria-current="true"] {
+  color: #fff;
+  border-bottom-color: var(--beira);
+}
+
+.menu-mods {
+  position: relative;
+}
+
+.menu-mods > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.menu-mods > a svg {
+  width: 10px;
+  height: 6px;
+  transition: transform 0.18s ease;
+}
+
+.menu-mods:hover > a svg,
+.menu-mods:focus-within > a svg {
+  transform: rotate(180deg);
+}
+
+/* O índice abre ao passar o mouse ou ao chegar pelo teclado. A folga de cima mantém o mouse dentro do menu no
+   caminho entre o link e a lista. */
+.submenu {
+  position: absolute;
+  top: 100%;
+  left: -18px;
+  width: 310px;
+  padding: 14px 8px 8px;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+}
+
+.submenu::before {
+  content: "";
+  position: absolute;
+  inset: 8px 0 0;
+  z-index: -1;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 12px;
+  background: var(--basalto);
+  box-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.6);
+}
+
+.menu-mods:hover .submenu,
+.menu-mods:focus-within .submenu {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+}
+
+.submenu a {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 12px;
+  border-bottom: 0;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.submenu a:hover,
+.submenu a:focus-visible {
+  background: rgb(255 255 255 / 0.08);
+}
+
+.submenu-n {
+  flex: none;
+  width: 22px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--beira);
+}
+
+.submenu b {
+  display: block;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  font-weight: 400;
+}
+
+.submenu small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: rgb(255 255 255 / 0.6);
+}
+
+.avenida-acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pausa {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(255 255 255 / 0.8);
+  font: 500 13px var(--corpo);
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.pausa:hover {
+  border-color: #fff;
+  color: #fff;
+}
+
+.pausa svg {
+  width: 13px;
+  height: 13px;
+}
+
+.pausa-seta,
+.pausa[aria-pressed="true"] .pausa-barras {
+  display: none;
+}
+
+.pausa[aria-pressed="true"] .pausa-seta {
+  display: inline;
+}
+
+@media (max-width: 1099px) {
+  .pausa span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .pausa {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+/* A maré da página: a mesma praia do barra-de-uso, medindo o quanto você já desceu. O fim da tira é o calçadão. */
+.mare {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, var(--areia) 0 85%, transparent 85%),
+    repeating-linear-gradient(90deg, var(--basalto) 0 5px, var(--pedra) 5px 10px);
+}
+
+.mare i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-right: 2px solid #fff;
+  background: linear-gradient(90deg, var(--mar), var(--beira));
+}
+
+/* Com o movimento pausado, tudo para onde está. */
+[data-parado] *,
+[data-parado] *::before,
+[data-parado] *::after {
+  animation-play-state: paused !important;
+}
+
+/* ---------- A abertura: o índice, o convite a mergulhar e a janela com os dois mods ---------- */
+
+.rol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 13.5px;
+}
+
+.rol a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--tinta);
+  text-decoration: none;
+  border-bottom: 1.5px solid rgb(19 20 22 / 0.3);
+  transition: border-color 0.18s ease;
+}
+
+.rol a:hover {
+  border-bottom-color: var(--tinta);
+}
+
+.rol span {
+  color: var(--areia-tinta);
+}
+
+.janela-miolo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* O painel do farol cresce até os títulos das sessões caberem inteiros, sem tirar da conversa a largura de que a
+   faixa do barra-de-uso precisa para ficar numa linha. */
+@container (min-width: 700px) {
+  .janela-miolo {
+    grid-template-columns: minmax(0, 1fr) clamp(184px, 100cqw - 556px, 232px);
+  }
+}
+
+.janela-conversa {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.janela-corpo {
+  flex: 1;
+  align-content: start;
+}
+
+.painel-farol {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 10px 12px;
+  border-top: 1px solid var(--fio);
+}
+
+@container (min-width: 700px) {
+  .painel-farol {
+    border-top: 0;
+    border-left: 1px solid var(--fio);
+  }
+}
+
+.painel-titulo {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--claro-3);
+}
+
+.sessoes-mini {
+  gap: 6px;
+}
+
+.sessoes-mini .sessao {
+  padding: 7px 8px;
+}
+
+.sessoes-mini .sessao-titulo {
+  font-size: 12px;
+}
+
+.sessoes-mini .sessao-linha {
+  font-size: 11px;
+}
+
+.faixa svg {
+  height: 24px;
+}
+
+/* ---------- A vida no mar: sombras debaixo d'água, cada vez mais fundo ---------- */
+
+.mar-aberto {
+  position: relative;
+  overflow: hidden;
+}
+
+.mar-aberto > :not(.vida-marinha) {
+  position: relative;
+}
+
+.vida-marinha {
+  position: absolute;
+  inset: 0;
+  max-width: none;
+  pointer-events: none;
+}
+
+.bicho {
+  position: absolute;
+  display: block;
+  fill: #04122e;
+  color: #04122e;
+  opacity: 0.2;
+}
+
+.cardume-1 {
+  top: 150px;
+  right: 7%;
+  width: clamp(110px, 12vw, 170px);
+  height: clamp(51px, 5.6vw, 79px);
+  animation: nada 46s ease-in-out infinite alternate;
+}
+
+.tartaruga-1 {
+  top: 31%;
+  left: 3%;
+  width: clamp(64px, 7vw, 104px);
+  height: clamp(50px, 5.4vw, 81px);
+  transform: rotate(-24deg);
+  animation: boia 14s ease-in-out infinite alternate;
+}
+
+.arraia-1 {
+  top: 49%;
+  right: 2.5%;
+  width: clamp(84px, 9vw, 130px);
+  height: clamp(53px, 5.7vw, 83px);
+  opacity: 0.24;
+  transform: rotate(152deg);
+  animation: plana 18s ease-in-out infinite alternate;
+}
+
+.cardume-2 {
+  top: 63%;
+  left: 5%;
+  width: clamp(96px, 10vw, 150px);
+  height: clamp(45px, 4.7vw, 70px);
+  opacity: 0.28;
+  animation: nada 58s ease-in-out -20s infinite alternate-reverse;
+}
+
+/* No fundo, à noite, as águas-vivas acendem. */
+.agua-viva {
+  width: clamp(26px, 3vw, 44px);
+  height: clamp(26px, 3vw, 44px);
+  fill: #8fd0ff;
+  opacity: 0.26;
+  animation: pulsa 7s ease-in-out infinite;
+}
+
+.agua-viva-1 {
+  top: 79%;
+  right: 6%;
+}
+
+.agua-viva-2 {
+  top: 86%;
+  left: 8%;
+  animation-delay: -2.4s;
+  transform: scale(0.7);
+}
+
+.agua-viva-3 {
+  top: 93%;
+  right: 38%;
+  animation-delay: -4.6s;
+  transform: scale(0.55);
+}
+
+@keyframes nada {
+  to {
+    translate: -9vw 14px;
+  }
+}
+
+@keyframes boia {
+  to {
+    translate: 22px -16px;
+  }
+}
+
+@keyframes plana {
+  to {
+    translate: -26px 20px;
+  }
+}
+
+@keyframes pulsa {
+  50% {
+    opacity: 0.5;
+    scale: 1.14;
+  }
+}
+
+/* ---------- Os próximos mods ---------- */
+
+.mod-futuro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: 16px;
+}
+
+.mod-futuro > p:not(.mod-nome) {
+  max-width: 60ch;
+  color: rgb(255 255 255 / 0.84);
+}
+
+.botao-branco {
+  background: #fff;
+  color: var(--tinta);
+}
+
+.botao-branco:hover {
+  background: var(--espuma);
+}
+
+.mar-aberto .botao-linha:hover {
+  background: #fff;
+  border-color: #fff;
+  color: var(--tinta);
+}
+
+/* ---------- Instalar: as escolhas ---------- */
+
+.instalador-escolhas {
+  align-items: end;
+}
+
+.ver-mods {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-left: auto;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--azul);
+  text-underline-offset: 4px;
+}
+
+.ver-mods svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+.comandos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .ver-mods {
+    margin-left: 0;
+  }
+}
+
+/* ---------- A barra de cima: o selo e o índice que abre só com o mouse ---------- */
+
+.alfa {
+  padding: 2px 8px 3px;
+  border: 1px solid rgb(84 201 193 / 0.55);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--beira);
+}
+
+@media (max-width: 560px) {
+  .marca small {
+    display: none;
+  }
+}
+
+/* A tira da maré não pode ficar no caminho do mouse entre "Mods" e a lista: sem isto, o índice fechava. */
+.mare {
+  pointer-events: none;
+}
+
+.submenu {
+  z-index: 2;
+}
+
+.menu-mods[data-aberto] .submenu {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+}
+
+.menu-mods[data-aberto] > a svg {
+  transform: rotate(180deg);
+}
+
+/* ---------- A ciclovia e quem passa ---------- */
+
+.orla-topo {
+  position: relative;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.ciclovia {
+  height: 30px;
+  background: linear-gradient(180deg, transparent 14px, rgb(255 255 255 / 0.2) 14px 15px, transparent 15px), #a4523d;
+  box-shadow: inset 0 2px 0 rgb(255 255 255 / 0.14), inset 0 -2px 0 rgb(0 0 0 / 0.2);
+}
+
+/* Cada um atravessa a tela num passo só, some por um tempo e volta: em média, dois à vista. Os de roda vão pela
+   ciclovia; os a pé, pela pedra. `--parada` é onde cada um fica com o movimento desligado. */
+.passante {
+  position: absolute;
+  left: 0;
+  display: block;
+  translate: -90px 0;
+}
+
+.p-ciclista {
+  --parada: 22vw;
+  top: -1px;
+  width: 46px;
+  height: 23px;
+  animation: vai-30 44s linear -3s infinite;
+}
+
+.p-patinete {
+  --parada: 72vw;
+  top: 9px;
+  width: 38px;
+  height: 24px;
+  animation: vem-30 58s linear -30s infinite;
+}
+
+@keyframes vai-30 {
+  0% {
+    translate: -90px 0;
+  }
+
+  30%,
+  100% {
+    translate: calc(100vw + 30px) 0;
+  }
+}
+
+@keyframes vem-30 {
+  0% {
+    translate: calc(100vw + 30px) 0;
+  }
+
+  30%,
+  100% {
+    translate: -90px 0;
+  }
+}
+
+@keyframes vai-55 {
+  0% {
+    translate: -90px 0;
+  }
+
+  55%,
+  100% {
+    translate: calc(100vw + 30px) 0;
+  }
+}
+
+@keyframes vem-55 {
+  0% {
+    translate: calc(100vw + 30px) 0;
+  }
+
+  55%,
+  100% {
+    translate: -90px 0;
+  }
+}
+
+/* O passo: um pé à frente, o outro atrás, e os braços no sentido contrário. */
+.pe-a {
+  animation: passo 0.5s ease-in-out infinite alternate;
+}
+
+.pe-b {
+  animation: passo 0.5s ease-in-out infinite alternate-reverse;
+}
+
+.braco-a {
+  animation: balanco 0.5s ease-in-out infinite alternate-reverse;
+}
+
+.braco-b {
+  animation: balanco 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes passo {
+  from {
+    transform: translateX(-5px);
+  }
+
+  to {
+    transform: translateX(5.5px);
+  }
+}
+
+@keyframes balanco {
+  from {
+    transform: translateX(-2.6px);
+  }
+
+  to {
+    transform: translateX(2.6px);
+  }
+}
+
+.pedal-a {
+  animation: pedala 0.6s ease-in-out infinite alternate;
+}
+
+.pedal-b {
+  animation: pedala 0.6s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes pedala {
+  from {
+    transform: translateX(-3px);
+  }
+
+  to {
+    transform: translateX(3px);
+  }
+}
+
+/* ---------- Os coqueiros e os cocos ---------- */
+
+.enfeites,
+.areia-fim .enfeites {
+  --t: clamp(101px, 12.8vw, 165px);
+}
+
+/* Poucos cocos, na areia ao pé de cada coqueiro. */
+.coco {
+  width: 15px;
+  height: 15px;
+}
+
+.coco-1 {
+  left: calc(2% + var(--t) * 0.5);
+  top: calc(var(--t) * 0.36);
+}
+
+.coco-2 {
+  left: calc(2% + var(--t) * 0.12);
+  top: calc(var(--t) * 0.44);
+  transform: scale(0.85);
+}
+
+.coco-3 {
+  right: calc(31% + var(--t) * 0.72);
+  top: calc(var(--t) * 0.4);
+}
+
+.coco-4 {
+  right: calc(3% + var(--t) * 0.9);
+  top: calc(var(--t) * 0.34);
+  transform: scale(0.9);
+}
+
+.coco-5 {
+  right: calc(3% + var(--t) * 0.3);
+  top: calc(var(--t) * 0.5);
+}
+
+/* ---------- A janela da abertura: uma fonte só, e a faixa numa linha ---------- */
+
+/* Tudo do tamanho do título dos cartões do farol. A janela mede a própria largura: o painel do farol só fica ao
+   lado quando sobra espaço para a faixa do barra-de-uso caber numa linha, como no app. */
+.janela {
+  container-type: inline-size;
+  font-size: 12px;
+}
+
+.janela-topo,
+.janela-corpo,
+.janela .faixa,
+.prompt,
+.painel-titulo,
+.sessoes-mini .sessao-titulo,
+.sessoes-mini .sessao-linha {
+  font-size: 12px;
+}
+
+.janela-corpo {
+  min-height: 150px;
+  padding: 18px 16px 14px;
+}
+
+.painel-titulo {
+  letter-spacing: 0.06em;
+}
+
+.janela .faixa {
+  gap: 6px 9px;
+  min-height: 36px;
+  margin: 0 10px;
+  padding: 7px 10px;
+}
+
+.janela .faixa .item {
+  gap: 6px;
+}
+
+/* As barras saem no tamanho real do mod: 16 px de altura, e de 64 a 96 px de largura conforme o espaço. */
+.janela .faixa svg {
+  width: auto;
+  height: 16px;
+}
+
+.janela .faixa .ancora {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 20px;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 0.09);
+  font-size: 11px;
+  opacity: 1;
+}
+
+.prompt {
+  margin: 8px 10px 10px;
+  padding: 11px 12px;
+}
+
+.prompt b {
+  height: 14px;
+}
+
+/* ---------- O botão de mergulhar ---------- */
+
+.mergulho {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 20px 0 16px;
+  border: 2px solid var(--tinta);
+  border-radius: 999px;
+  background: var(--mar);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  box-shadow: 5px 7px 0 rgb(74 58 23 / 0.24);
+  transition: background-color 0.18s ease, translate 0.18s ease, box-shadow 0.18s ease;
+}
+
+.mergulho:hover {
+  background: var(--azul);
+  translate: 0 2px;
+  box-shadow: 3px 4px 0 rgb(74 58 23 / 0.24);
+}
+
+.mergulho-mascara {
+  width: 31px;
+  height: 21px;
+}
+
+.mergulho-seta {
+  width: 16px;
+  height: 16px;
+  animation: desce 1.8s ease-in-out infinite;
+}
+
+@keyframes desce {
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+/* ---------- Quem passa a pé: sozinho, correndo ou em casal ---------- */
+
+.calcadao-alto {
+  height: clamp(100px, 13vh, 128px);
+}
+
+.p-so-1 {
+  --parada: 61vw;
+  top: 34px;
+  width: 28px;
+  height: 28px;
+  animation: vai-55 62s linear -8s infinite;
+}
+
+.p-so-2 {
+  --parada: 12vw;
+  bottom: 5px;
+  width: 28px;
+  height: 28px;
+  animation: vem-55 70s linear -40s infinite;
+}
+
+.p-so-3 {
+  --parada: 86vw;
+  top: 38px;
+  width: 27px;
+  height: 27px;
+  animation: vai-30 60s linear -33s infinite;
+}
+
+.p-casal-1 {
+  --parada: 40vw;
+  top: 38px;
+  width: 28px;
+  height: 43px;
+  animation: vai-55 68s linear -30s infinite;
+}
+
+.p-casal-2 {
+  --parada: 74vw;
+  bottom: 3px;
+  width: 28px;
+  height: 43px;
+  animation: vem-55 76s linear -12s infinite;
+}
+
+.p-casal-3 {
+  --parada: 27vw;
+  top: 36px;
+  width: 28px;
+  height: 43px;
+  animation: vai-55 84s linear -62s infinite;
+}
+
+/* No casal, o segundo anda meio passo depois do primeiro. */
+.par .pe-a,
+.par .pe-b,
+.par .braco-a,
+.par .braco-b {
+  animation-delay: -0.22s;
+}
+
+/* Quem corre dá o passo mais largo e mais rápido. */
+.corre .pe-a,
+.corre .pe-b {
+  animation-name: passada;
+  animation-duration: 0.3s;
+}
+
+.corre .braco-a,
+.corre .braco-b {
+  animation-duration: 0.3s;
+}
+
+@keyframes passada {
+  from {
+    transform: translateX(-7px);
+  }
+
+  to {
+    transform: translateX(7.5px);
+  }
+}
+
+.coco {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------- A janela da abertura: o Claude trabalhando e a contagem na torre ---------- */
+
+.fala-trabalho {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--claro-3);
+}
+
+.fala-trabalho i {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border: 1.6px solid rgb(255 255 255 / 0.2);
+  border-top-color: var(--beira);
+  border-radius: 50%;
+  animation: roda 0.8s linear infinite;
+}
+
+@keyframes roda {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.janela .faixa .torre {
+  gap: 4px;
+}
+
+.janela .faixa .torre b:empty {
+  display: none;
+}
+
+.janela .faixa .torre b {
+  color: #f2907f;
+}
+
+/* ---------- "Mexa você mesmo": a aba em cima de cada demonstração ---------- */
+
+.demo {
+  position: relative;
+}
+
+.mexa {
+  position: absolute;
+  left: 18px;
+  bottom: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px 6px;
+  border-radius: 9px 9px 0 0;
+  background: var(--beira);
+  color: var(--tinta);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mexa svg {
+  width: 12px;
+  height: 12px;
+  animation: cutuca 1.6s ease-in-out infinite;
+}
+
+@keyframes cutuca {
+  50% {
+    transform: translate(2px, 2px);
+  }
+}
+
+/* ---------- A ponta do farol: o fim do mar, de frente ---------- */
+
+/* A noite continua no céu; o mar, os rochedos e o farol ficam no desenho; as pedras claras da frente terminam
+   na cor da seção de baixo. A passagem do escuro ao claro é a própria beira, com a espuma. */
+.ponta {
+  position: relative;
+  height: clamp(340px, 43vw, 860px);
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--noite) 0, #091b31 26%, #10294a 33.8%, var(--pedra-clara) 33.9%);
+}
+
+/* O alto do desenho some aos poucos: em tela muito larga, onde o céu é cortado, a claridade da lanterna não
+   termina numa linha reta. */
+.ponta svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 9%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 9%);
+}
+
+/* O giro, visto de frente: cada feixe encolhe até a torre, some e reaparece do outro lado. O segundo sai meio
+   giro depois, então há sempre um para cada lado. */
+.feixe {
+  transform-origin: 1130px 55px;
+  animation: varre 9s infinite;
+}
+
+.feixe-2 {
+  animation-delay: -4.5s;
+}
+
+@keyframes varre {
+  0% {
+    transform: scaleX(1);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.47, 0, 0.745, 0.715);
+  }
+
+  25% {
+    transform: scaleX(0.02);
+    opacity: 0.1;
+    animation-timing-function: cubic-bezier(0.39, 0.575, 0.565, 1);
+  }
+
+  50% {
+    transform: scaleX(-1);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.47, 0, 0.745, 0.715);
+  }
+
+  75% {
+    transform: scaleX(-0.02);
+    opacity: 0.1;
+    animation-timing-function: cubic-bezier(0.39, 0.575, 0.565, 1);
+  }
+
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* Quando o feixe passa de frente, a lanterna brilha mais. */
+.clarao {
+  animation: lampejo 4.5s ease-in-out infinite;
+}
+
+@keyframes lampejo {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.espuma {
+  animation: rebenta 4.6s ease-in-out infinite alternate;
+}
+
+.beira-clara {
+  animation: rebenta 5.4s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes rebenta {
+  from {
+    transform: translateY(-3px);
+  }
+
+  to {
+    transform: translateY(5px);
+  }
+}
+
+/* O mar se mexe: cada marola vai e vem no seu tempo, umas para um lado e outras para o outro, subindo e
+   descendo um pouco e clareando no alto do balanço. */
+.marola {
+  animation: marola 5.6s ease-in-out infinite alternate;
+}
+
+.m2 {
+  animation-duration: 7.2s;
+  animation-direction: alternate-reverse;
+}
+
+.m3 {
+  animation-duration: 6.4s;
+  animation-delay: -2s;
+}
+
+.m4 {
+  animation-duration: 8.4s;
+  animation-direction: alternate-reverse;
+  animation-delay: -3s;
+}
+
+.m5 {
+  animation-duration: 4.8s;
+  animation-delay: -1s;
+}
+
+@keyframes marola {
+  from {
+    transform: translate(-34px, 2px);
+    opacity: 0.55;
+  }
+
+  to {
+    transform: translate(34px, -2px);
+    opacity: 1;
+  }
+}
+
+/* Os respingos da onda na pedra: saltam, somem e voltam. */
+.respingos {
+  animation: respinga 2.6s ease-out infinite;
+}
+
+@keyframes respinga {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+}
+
+/* ---------- O rodapé: um título pequeno em cima de cada coluna de links ---------- */
+
+.rodape-ligacoes {
+  gap: 24px;
+}
+
+.rodape-ligacoes div {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.rodape-ligacoes h3 {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.5);
+}
+
+/* ---------- O índice lateral: um risco por parte da página ---------- */
+
+/* Só em tela larga e com mouse. O branco com a mistura "difference" aparece sobre a areia, o mar, a noite e a pedra. */
+.trilha {
+  position: fixed;
+  top: 50%;
+  right: 12px;
+  z-index: 30;
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  transform: translateY(-50%);
+  mix-blend-mode: difference;
+}
+
+@media (min-width: 1280px) and (hover: hover) {
+  .trilha {
+    display: flex;
+  }
+}
+
+.trilha a {
+  --foco: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  height: 24px;
+  padding-left: 12px;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.trilha a::after {
+  content: "";
+  width: 12px;
+  height: 2px;
+  background: #fff;
+  opacity: 0.5;
+  transition: width 0.18s ease, opacity 0.18s ease;
+}
+
+.trilha span {
+  opacity: 0;
+  white-space: nowrap;
+  transition: opacity 0.18s ease;
+}
+
+.trilha a:hover span,
+.trilha a:focus-visible span {
+  opacity: 1;
+}
+
+.trilha a:hover::after,
+.trilha a:focus-visible::after,
+.trilha a[aria-current="true"]::after {
+  width: 26px;
+  opacity: 1;
+}
+
+/* ---------- Telas estreitas: menos enfeite, o texto primeiro ---------- */
+
+@media (max-width: 999px) {
+  .janela {
+    margin-bottom: 44px;
+  }
+
+  /* Sem a largura para ficar entre os guarda-sóis, o convite a mergulhar entra na fila, depois da janela. */
+  .mergulho {
+    position: static;
+    justify-self: center;
+    margin-top: 30px;
+    transform: none;
+  }
+
+  .enfeites .guarda-sol-3,
+  .enfeites .canga-2 {
+    display: none;
+  }
+
+  .passante {
+    scale: 0.82;
+  }
+}
+
+/* No celular, o que ficaria por cima do texto sai da areia. */
+@media (max-width: 640px) {
+  .enfeites .canga-3,
+  .enfeites .guarda-sol-5 {
+    display: none;
+  }
+
+  .areia {
+    padding-bottom: 112px;
+  }
+
+  .guarda-sol-4 {
+    top: 6%;
+    right: 4%;
+  }
+
+  .janela {
+    box-shadow: 7px 9px 0 rgb(74 58 23 / 0.2);
+  }
+}
+
+/* ---------- Menos movimento ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Os enfeites da areia ocupam a seção inteira, não só a coluna do texto. */
+.areia-fim > .enfeites {
+  max-width: none;
+}
+
+/* O último bloco dos mods não precisa do respiro inteiro: a ponta do farol vem logo depois. */
+.mar-aberto {
+  padding-bottom: clamp(40px, 5vw, 72px);
+}
+
+/* O fundo do índice fica atrás dos links dele, e não atrás da barra. */
+.submenu {
+  isolation: isolate;
+}
+
+/* Os guarda-sóis da direita ficam fora da coluna do texto, para não cobrir a legenda da janela. */
+.guarda-sol-2 {
+  right: 2.5%;
+  bottom: 12px;
+}
+
+.canga-2 {
+  right: calc(2.5% + clamp(58px, 6.8vw, 94px));
+  bottom: 6px;
+}
+
+.guarda-sol-3 {
+  left: 70%;
+  bottom: 8px;
+}
+
+/* No celular, o selo fica só "alfa". */
+@media (max-width: 480px) {
+  .alfa span {
+    display: none;
+  }
+}
+
+/* Com o movimento desligado pelo sistema, cada passante fica parado num ponto do calçadão. */
+@media (prefers-reduced-motion: reduce) {
+  .passante {
+    translate: var(--parada) 0;
+  }
+}
+
+/* A abertura usa mais largura que o resto da página: a janela precisa dela para mostrar os dois mods lado a lado. */
+.praia-conteudo {
+  max-width: 1320px;
+}
+
+/* Quando o painel do farol desce para baixo da conversa, a cena e os cartões ficam lado a lado, para a janela
+   não crescer demais. */
+@container (min-width: 460px) and (max-width: 699.98px) {
+  .painel-farol {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+    column-gap: 12px;
+  }
+
+  .painel-titulo {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Os cocos ficam na beira de cima da areia, ao lado de cada copa, e o texto começa abaixo deles. */
+.areia {
+  padding-top: clamp(50px, 6vh, 64px);
+}
+
+.coqueiro-1 {
+  left: -1%;
+}
+
+.coco-1 {
+  left: calc(-1% + var(--t) * 0.78);
+  top: 9px;
+}
+
+.coco-2 {
+  left: calc(-1% + var(--t) * 0.9);
+  top: 25px;
+}
+
+.coco-3 {
+  right: calc(31% + var(--t) * 0.8);
+  top: 12px;
+}
+
+.coco-4 {
+  right: calc(3% + var(--t) * 0.82);
+  top: 8px;
+}
+
+.coco-5 {
+  right: calc(3% + var(--t) * 0.94);
+  top: 26px;
+}
+
+.sobretitulo {
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 640px) {
+  .enfeites .coco-2,
+  .enfeites .coco-5 {
+    display: none;
+  }
+}
+
+/* No índice lateral, em tela bem larga, os títulos ficam sempre à vista: bem sutis, um pouco mais fortes na parte
+   em que se está, e mais fortes ainda sob o mouse. */
+@media (min-width: 1560px) and (hover: hover) {
+  .trilha span {
+    opacity: 0.32;
+  }
+
+  .trilha a[aria-current="true"] span {
+    opacity: 0.74;
+  }
+
+  .trilha a:hover span,
+  .trilha a:focus-visible span {
+    opacity: 1;
+  }
+}
+
+/* ---------- A demonstração do farol: várias situações de uma vez e a intensidade dos avisos ---------- */
+
+.demo-topo {
+  flex-wrap: wrap;
+}
+
+.intensidade {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.intensidade-rotulo,
+.estados-dica {
+  font-size: 12.5px;
+  color: var(--claro-3);
+}
+
+.situacoes {
+  display: grid;
+  gap: 8px;
+}
+
+/* Cada situação é uma caixa de marcar: o quadrado diz que dá para ligar mais de uma. */
+.estados button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.estados button::before {
+  content: "";
+  flex: none;
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid currentColor;
+  border-radius: 3.5px;
+  opacity: 0.55;
+}
+
+/* "Todas livres" desmarca tudo: fica ao lado da dica, menor que as caixas. */
+.situacoes-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.todas-livres {
+  min-height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--fio-2);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--claro-2);
+  font: 500 12.5px var(--corpo);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.todas-livres:hover {
+  border-color: rgb(255 255 255 / 0.5);
+  color: #fff;
+}
+
+.todas-livres[aria-pressed="true"] {
+  border-color: var(--claro);
+  background: var(--claro);
+  color: var(--tinta);
+}
+
+.estados button[aria-pressed="true"]::before {
+  border-color: var(--tinta);
+  background: var(--tinta) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.6 6.3l2.3 2.3 4.5-5' fill='none' stroke='%23fff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px no-repeat;
+  opacity: 1;
+}
+
+#leitura-farol {
+  min-height: 4.8em;
+}
+
+/* Numa coluna só, a aba do "Mexa você mesmo" não encosta no link de cima. */
+@media (max-width: 979px) {
+  .mod .demo {
+    margin-top: 26px;
+  }
+}
+
+/* ---------- A abertura em tela baixa (notebook): tudo um pouco mais junto, para o convite a mergulhar e a beira
+   do mar aparecerem sem rolar. Só no computador: em tela estreita a abertura já é uma coluna só. ---------- */
+
+@media (min-width: 1000px) and (max-height: 920px) {
+  .calcadao-alto {
+    height: 84px;
+  }
+
+  .areia {
+    padding-top: 42px;
+  }
+
+  .praia-texto {
+    gap: 14px;
+  }
+}
+
+@media (min-width: 1000px) and (max-height: 800px) {
+  .calcadao-alto {
+    height: 72px;
+  }
+
+  .areia {
+    padding-top: 40px;
+    padding-bottom: 92px;
+  }
+
+  .praia-texto {
+    gap: 12px;
+  }
+
+  .praia h1 {
+    font-size: 2.75rem;
+  }
+
+  .praia .apoio {
+    font-size: 1rem;
+  }
+
+  .mergulho {
+    bottom: 12px;
+    min-height: 44px;
+  }
+
+  .janela-topo {
+    padding-block: 10px;
+  }
+
+  .painel-farol {
+    gap: 8px;
+    padding-block: 10px;
+  }
+
+  .sessoes-mini .sessao {
+    padding-block: 5px;
+  }
+
+  .janela figcaption {
+    top: calc(100% + 12px);
+  }
+}
+
+/* Sobre o farol do fim do mar, o índice lateral sai da frente do desenho (o script marca). Com o foco do teclado
+   nele, fica. */
+.trilha {
+  transition: opacity 0.25s ease, visibility 0.25s;
+}
+
+.trilha[data-recolhida]:not(:focus-within) {
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* O link dentro do texto de "Tem uma ideia de mod?". */
+.convite .apoio a {
+  font-weight: 600;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+
+.convite .apoio a:hover {
+  text-decoration-thickness: 2.5px;
+}
+
+/* Janela de navegador bem baixa (notebook de 768 px com as barras do navegador): mais um aperto, para o convite a
+   mergulhar caber inteiro. Com o calçadão fino, um casal a menos passa por ele. */
+@media (min-width: 1000px) and (max-height: 740px) {
+  .calcadao-alto {
+    height: 60px;
+  }
+
+  .p-casal-2 {
+    display: none;
+  }
+
+  .praia-texto {
+    gap: 10px;
+  }
+
+  .praia h1 {
+    font-size: 2.25rem;
+  }
+
+  .painel-farol {
+    gap: 6px;
+    padding-block: 8px;
+  }
+
+  .sessoes-mini {
+    gap: 4px;
+  }
+
+  .sessoes-mini .sessao {
+    padding-block: 4px;
+  }
+}

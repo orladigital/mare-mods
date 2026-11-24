@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <!-- A política de segurança: a página só aceita o script, o estilo e as imagens desta pasta, não fala com a
+         rede e não envia formulário. O GitHub Pages não deixa definir cabeçalho HTTP, por isso ela fica aqui. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maré Mods · Mods gratuitos para o Claude Code, da Orla</title>
+    <meta
+      name="description"
+      content="Mods gratuitos e de código aberto para o Claude Code: o contexto da sessão como uma praia, a janela de 5h como um pôr do sol e um farol que avisa qual sessão espera você."
+    />
+    <meta name="theme-color" content="#131416" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content="Maré Mods · Mods gratuitos para o Claude Code" />
+    <meta
+      property="og:description"
+      content="O contexto como uma praia, a janela de 5h como um pôr do sol e um farol para as suas sessões. Gratuitos e abertos, da Orla."
+    />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preload" as="font" type="font/woff2" href="fontes/inter-tight-latin.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="fontes/inter-latin.woff2" crossorigin />
+    <link rel="stylesheet" href="estilo.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+    <!-- Os desenhos que se repetem, todos vistos de cima: os coqueiros, o guarda-sol, a canga, quem passa no
+         calçadão e os bichos do mar. -->
+    <svg class="moldes" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <!-- A folha do coqueiro: curva, com os folíolos em dois tons do mesmo verde (nada de vão transparente). -->
+        <path id="lente" d="M60 60 C77 51 87 27 73 5 C60 21 55 42 60 60Z" />
+        <clipPath id="recorte-folha"><use href="#lente" /></clipPath>
+        <g id="folha">
+          <use href="#lente" fill="currentColor" />
+          <path d="M60 60 C66 45 75 27 73 7" fill="none" stroke="#06200f" stroke-opacity=".2" stroke-width="34" stroke-dasharray="2.6 2.6" clip-path="url(#recorte-folha)" />
+          <path d="M60 59 C66 45 75 27 73 9" fill="none" stroke="#0f3d22" stroke-opacity=".55" stroke-width="1.2" stroke-linecap="round" />
+        </g>
+        <!-- O tronco, visto de cima, no meio da copa. -->
+        <g id="tronco">
+          <circle cx="60" cy="60" r="6.6" fill="#6b4a22" />
+          <circle cx="60" cy="60" r="6.6" fill="none" stroke="#3d2a12" stroke-opacity=".55" stroke-width="1.6" />
+          <circle cx="58.4" cy="58.4" r="2" fill="#8a6736" opacity=".8" />
+        </g>
+
+        <!-- Três coqueiros, vistos de cima: a copa, o tronco no meio dela, e a sombra do tronco e da copa na areia,
+             sempre para o mesmo lado. -->
+        <symbol id="coqueiro-a" viewBox="0 0 160 160">
+          <path d="M60 60 L78 84" stroke="#4a3a17" stroke-opacity=".2" stroke-width="5" stroke-linecap="round" />
+          <g fill="#4a3a17" opacity=".13" transform="translate(19 25)">
+            <use href="#lente" /><use href="#lente" transform="rotate(47 60 60)" /><use href="#lente" transform="rotate(92 60 60)" /><use href="#lente" transform="rotate(138 60 60)" />
+            <use href="#lente" transform="rotate(183 60 60)" /><use href="#lente" transform="rotate(229 60 60)" /><use href="#lente" transform="rotate(271 60 60)" /><use href="#lente" transform="rotate(316 60 60)" />
+          </g>
+          <g color="#1f6e3f">
+            <use href="#folha" /><use href="#folha" transform="rotate(92 60 60)" /><use href="#folha" transform="rotate(183 60 60)" /><use href="#folha" transform="rotate(271 60 60)" />
+          </g>
+          <g color="#2c8a50">
+            <use href="#folha" transform="rotate(47 60 60)" /><use href="#folha" transform="rotate(138 60 60)" /><use href="#folha" transform="rotate(229 60 60)" /><use href="#folha" transform="rotate(316 60 60)" />
+          </g>
+          <use href="#tronco" />
+        </symbol>
+        <symbol id="coqueiro-b" viewBox="0 0 160 160">
+          <path d="M60 60 L78 84" stroke="#4a3a17" stroke-opacity=".2" stroke-width="5" stroke-linecap="round" />
+          <g fill="#4a3a17" opacity=".13" transform="translate(19 25)">
+            <use href="#lente" transform="rotate(20 60 60)" /><use href="#lente" transform="rotate(78 60 60)" /><use href="#lente" transform="rotate(141 60 60)" />
+            <use href="#lente" transform="rotate(200 60 60)" /><use href="#lente" transform="rotate(263 60 60)" /><use href="#lente" transform="rotate(322 60 60)" />
+          </g>
+          <g color="#2c8a50">
+            <use href="#folha" transform="rotate(20 60 60)" /><use href="#folha" transform="rotate(141 60 60)" /><use href="#folha" transform="rotate(263 60 60)" />
+          </g>
+          <g color="#3d9c5f">
+            <use href="#folha" transform="rotate(78 60 60)" /><use href="#folha" transform="rotate(200 60 60)" /><use href="#folha" transform="rotate(322 60 60)" />
+          </g>
+          <use href="#tronco" />
+        </symbol>
+        <symbol id="coqueiro-c" viewBox="0 0 160 160">
+          <path d="M60 60 L78 84" stroke="#4a3a17" stroke-opacity=".2" stroke-width="5" stroke-linecap="round" />
+          <g fill="#4a3a17" opacity=".13" transform="translate(19 25)">
+            <use href="#lente" transform="rotate(8 60 60)" /><use href="#lente" transform="rotate(44 60 60)" /><use href="#lente" transform="rotate(81 60 60)" /><use href="#lente" transform="rotate(116 60 60)" /><use href="#lente" transform="rotate(154 60 60)" />
+            <use href="#lente" transform="rotate(189 60 60)" /><use href="#lente" transform="rotate(223 60 60)" /><use href="#lente" transform="rotate(260 60 60)" /><use href="#lente" transform="rotate(297 60 60)" /><use href="#lente" transform="rotate(333 60 60)" />
+          </g>
+          <g color="#17592f">
+            <use href="#folha" transform="rotate(8 60 60)" /><use href="#folha" transform="rotate(81 60 60)" /><use href="#folha" transform="rotate(154 60 60)" /><use href="#folha" transform="rotate(223 60 60)" /><use href="#folha" transform="rotate(297 60 60)" />
+          </g>
+          <g color="#23783f">
+            <use href="#folha" transform="rotate(44 60 60)" /><use href="#folha" transform="rotate(116 60 60)" /><use href="#folha" transform="rotate(189 60 60)" /><use href="#folha" transform="rotate(260 60 60)" /><use href="#folha" transform="rotate(333 60 60)" />
+          </g>
+          <use href="#tronco" />
+        </symbol>
+        <!-- Um coco verde caído na areia: a casca, o lado da sombra, o brilho e a tampa de onde ele se soltou. -->
+        <symbol id="coco" viewBox="0 0 26 26">
+          <ellipse cx="15" cy="17" rx="8.5" ry="6" fill="#4a3a17" opacity=".24" />
+          <ellipse cx="12" cy="12" rx="7.6" ry="8.6" fill="#6fa53c" transform="rotate(-24 12 12)" />
+          <path d="M17.6 7.2 C20.6 11.6 19.2 17.6 14.4 20 C17 15.8 17.6 11.4 17.6 7.2 Z" fill="#3f7a26" opacity=".75" />
+          <ellipse cx="9.6" cy="10.4" rx="1.7" ry="3" fill="#bfe08a" opacity=".75" transform="rotate(-24 9.6 10.4)" />
+          <circle cx="8.4" cy="5.6" r="2.7" fill="#8a6a36" />
+          <circle cx="8.4" cy="5.6" r="1" fill="#4a3516" />
+        </symbol>
+
+        <symbol id="guarda-sol" viewBox="0 0 120 120">
+          <ellipse cx="72" cy="76" rx="42" ry="40" fill="#4a3a17" opacity=".22" />
+          <circle cx="56" cy="56" r="44" fill="#fbf7ea" />
+          <g fill="currentColor">
+            <path d="M56 56 L56 12 A44 44 0 0 1 87.1 24.9 Z" />
+            <path d="M56 56 L56 12 A44 44 0 0 1 87.1 24.9 Z" transform="rotate(90 56 56)" />
+            <path d="M56 56 L56 12 A44 44 0 0 1 87.1 24.9 Z" transform="rotate(180 56 56)" />
+            <path d="M56 56 L56 12 A44 44 0 0 1 87.1 24.9 Z" transform="rotate(270 56 56)" />
+          </g>
+          <circle cx="56" cy="56" r="44" fill="none" stroke="#17181b" stroke-opacity=".18" stroke-width="1.5" />
+          <circle cx="56" cy="56" r="4" fill="#17181b" opacity=".7" />
+        </symbol>
+        <symbol id="canga" viewBox="0 0 80 120">
+          <rect x="10" y="10" width="56" height="96" rx="3" fill="#4a3a17" opacity=".16" transform="translate(5 6)" />
+          <rect x="10" y="10" width="56" height="96" rx="3" fill="#fbf7ea" />
+          <g fill="currentColor">
+            <rect x="10" y="22" width="56" height="10" />
+            <rect x="10" y="44" width="56" height="10" />
+            <rect x="10" y="66" width="56" height="10" />
+            <rect x="10" y="88" width="56" height="10" />
+          </g>
+        </symbol>
+
+        <!-- Os bichos do mar: sombras debaixo d'água, nadando para a direita. -->
+        <symbol id="peixe" viewBox="0 0 34 16">
+          <path d="M34 8 C28 2 16 2 8 8 C16 14 28 14 34 8 Z M9 8 L0 2 L2.5 8 L0 14 Z" />
+        </symbol>
+        <symbol id="tartaruga" viewBox="0 0 90 70">
+          <ellipse cx="42" cy="35" rx="24" ry="19" />
+          <ellipse cx="72" cy="35" rx="8" ry="6.5" />
+          <path d="M52 19 Q66 2 74 8 Q66 16 58 24 Z" />
+          <path d="M52 51 Q66 68 74 62 Q66 54 58 46 Z" />
+          <path d="M26 22 Q14 12 10 18 Q18 22 24 28 Z" />
+          <path d="M26 48 Q14 58 10 52 Q18 48 24 42 Z" />
+          <path d="M18 35 L6 35" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+        </symbol>
+        <symbol id="arraia" viewBox="0 0 110 70">
+          <path d="M70 35 Q52 4 26 12 Q40 24 40 35 Q40 46 26 58 Q52 66 70 35 Z" />
+          <path d="M70 35 Q84 30 90 35 Q84 40 70 35 Z" />
+          <path d="M30 35 Q14 33 2 38" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+        </symbol>
+        <symbol id="agua-viva" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="26" opacity=".25" />
+          <circle cx="30" cy="30" r="16" opacity=".5" />
+          <circle cx="30" cy="30" r="7" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <!-- A avenida: a barra de cima. A tira embaixo dela é a maré da página: o mar avança conforme você desce. -->
+    <header class="avenida" id="topo">
+      <a class="marca" href="#conteudo" aria-label="Maré Mods, início">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M1 10c1.6-2 3.1-2 4.7 0s3.1 2 4.7 0 3-2 4.6 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          <path d="M1 5.5c1.6-2 3.1-2 4.7 0s3.1 2 4.7 0 3-2 4.6 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".45" />
+        </svg>
+        <span>Maré Mods</span>
+        <small>da Orla</small>
+        <em class="alfa"><span>versão </span>alfa</em>
+      </a>
+      <nav class="menu" aria-label="Seções">
+        <div class="menu-mods">
+          <a href="#mods" data-secao="mods">
+            Mods
+            <svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </a>
+          <ul class="submenu" aria-label="Os mods">
+            <li>
+              <a href="#barra-de-uso"><span class="submenu-n">01</span><span><b>barra-de-uso</b><small>O contexto, a janela de 5h e a semana</small></span></a>
+            </li>
+            <li>
+              <a href="#farol"><span class="submenu-n">02</span><span><b>farol</b><small>Qual sessão espera você</small></span></a>
+            </li>
+            <li>
+              <a href="#mais-mods"><span class="submenu-n">+</span><span><b>Mais a caminho</b><small>Novos mods entram aqui</small></span></a>
+            </li>
+          </ul>
+        </div>
+        <a href="#instalar" data-secao="instalar">Instalar</a>
+        <a href="#confianca" data-secao="confianca">Confiança</a>
+        <a href="#contribuir" data-secao="contribuir">Contribuir</a>
+      </nav>
+      <div class="avenida-acoes">
+        <button type="button" class="pausa" id="pausa" aria-pressed="false" hidden>
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path class="pausa-barras" d="M5 3.5v9M11 3.5v9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            <path class="pausa-seta" d="M5 3l8 5-8 5z" fill="currentColor" />
+          </svg>
+          <span id="pausa-texto">Pausar o movimento</span>
+        </button>
+        <a class="botao botao-azul botao-p" href="#instalar">Instalar</a>
+      </div>
+      <div class="mare" aria-hidden="true"><i id="mare-nivel"></i></div>
+    </header>
+
+    <main id="conteudo">
+      <!-- A praia, vista de cima: o calçadão, a areia e o mar. -->
+      <section class="praia" id="praia" aria-labelledby="titulo">
+        <!-- A ciclovia e o calçadão, com quem passa: de bicicleta e de patinete na ciclovia; a pé, sozinho ou em
+             casal, na pedra. Cada um atravessa a tela, some por um tempo e volta. -->
+        <div class="orla-topo" aria-hidden="true">
+          <div class="ciclovia"></div>
+          <div class="calcadao calcadao-alto"></div>
+
+          <svg class="passante p-ciclista" viewBox="0 0 76 38">
+            <ellipse cx="42" cy="25" rx="26" ry="6" fill="#000" opacity=".24" />
+            <rect x="6" y="16.8" width="18" height="4.4" rx="2.2" fill="#17181b" />
+            <rect x="50" y="16.8" width="18" height="4.4" rx="2.2" fill="#17181b" />
+            <path d="M15 19 H59" stroke="#17181b" stroke-width="2.2" />
+            <path d="M55 10 V28" stroke="#17181b" stroke-width="2.6" stroke-linecap="round" />
+            <ellipse class="pedal pedal-a" cx="33" cy="12.5" rx="3.6" ry="2.2" fill="#17181b" />
+            <ellipse class="pedal pedal-b" cx="33" cy="25.5" rx="3.6" ry="2.2" fill="#17181b" />
+            <path d="M40 12 L54 11 M40 26 L54 27" stroke="#b98a62" stroke-width="2.4" stroke-linecap="round" />
+            <ellipse cx="36" cy="19" rx="10" ry="7.6" fill="#f2a900" />
+            <circle cx="43" cy="19" r="5.2" fill="#fbf7ea" stroke="#17181b" stroke-opacity=".3" />
+          </svg>
+
+          <svg class="passante p-patinete" viewBox="0 0 60 38">
+            <g transform="translate(60 0) scale(-1 1)">
+              <ellipse cx="32" cy="25" rx="22" ry="5.5" fill="#000" opacity=".24" />
+              <rect x="12" y="17.2" width="34" height="3.6" rx="1.8" fill="#2b2f36" />
+              <rect x="7" y="16.5" width="8" height="5" rx="2.5" fill="#17181b" />
+              <rect x="45" y="16.5" width="8" height="5" rx="2.5" fill="#17181b" />
+              <path d="M48 10.5 V27.5" stroke="#17181b" stroke-width="2.4" stroke-linecap="round" />
+              <path d="M31 12 L47 12 M31 26 L47 26" stroke="#b98a62" stroke-width="2.3" stroke-linecap="round" />
+              <ellipse cx="28" cy="19" rx="5.8" ry="9.4" fill="#54c9c1" />
+              <circle cx="30" cy="19" r="4.5" fill="#17181b" />
+            </g>
+          </svg>
+
+          <!-- Sozinhos. -->
+          <svg class="passante p-so-1" viewBox="0 0 40 40">
+            <ellipse cx="24" cy="25" rx="8" ry="11" fill="#000" opacity=".24" />
+            <ellipse class="pe pe-a" cx="21" cy="15.5" rx="4.2" ry="2.4" fill="#17181b" />
+            <ellipse class="pe pe-b" cx="21" cy="24.5" rx="4.2" ry="2.4" fill="#17181b" />
+            <ellipse class="braco braco-a" cx="20" cy="9.6" rx="3.4" ry="2.2" fill="#8a5a3c" />
+            <ellipse class="braco braco-b" cx="20" cy="30.4" rx="3.4" ry="2.2" fill="#8a5a3c" />
+            <ellipse cx="20" cy="20" rx="5.6" ry="10" fill="#0059ff" />
+            <circle cx="21" cy="20" r="4.4" fill="#2a1d14" />
+          </svg>
+          <svg class="passante p-so-2" viewBox="0 0 40 40">
+            <g transform="translate(40 0) scale(-1 1)">
+              <ellipse cx="16" cy="25" rx="8" ry="11" fill="#000" opacity=".24" />
+              <ellipse class="pe pe-a" cx="21" cy="15.5" rx="4.2" ry="2.4" fill="#17181b" />
+              <ellipse class="pe pe-b" cx="21" cy="24.5" rx="4.2" ry="2.4" fill="#17181b" />
+              <ellipse class="braco braco-a" cx="20" cy="9.6" rx="3.4" ry="2.2" fill="#b98a62" />
+              <ellipse class="braco braco-b" cx="20" cy="30.4" rx="3.4" ry="2.2" fill="#b98a62" />
+              <ellipse cx="20" cy="20" rx="5.6" ry="10" fill="#fbf7ea" />
+              <circle cx="21" cy="20" r="4.4" fill="#5a3b22" />
+            </g>
+          </svg>
+          <!-- Quem corre: o passo mais largo e mais rápido. -->
+          <svg class="passante p-so-3 corre" viewBox="0 0 40 40">
+            <ellipse cx="24" cy="25" rx="8" ry="11" fill="#000" opacity=".24" />
+            <ellipse class="pe pe-a" cx="21" cy="15.5" rx="4.6" ry="2.4" fill="#fbf7ea" />
+            <ellipse class="pe pe-b" cx="21" cy="24.5" rx="4.6" ry="2.4" fill="#fbf7ea" />
+            <ellipse class="braco braco-a" cx="20" cy="9.6" rx="3.4" ry="2.2" fill="#6b4630" />
+            <ellipse class="braco braco-b" cx="20" cy="30.4" rx="3.4" ry="2.2" fill="#6b4630" />
+            <ellipse cx="20" cy="20" rx="5.4" ry="9.6" fill="#e5484d" />
+            <circle cx="22" cy="20" r="4.3" fill="#17181b" />
+          </svg>
+
+          <!-- Casais: dois lado a lado, no mesmo passo. -->
+          <svg class="passante p-casal-1" viewBox="0 0 40 62">
+            <g>
+              <ellipse cx="24" cy="25" rx="8" ry="11" fill="#000" opacity=".24" />
+              <ellipse class="pe pe-a" cx="21" cy="15.5" rx="4.2" ry="2.4" fill="#17181b" />
+              <ellipse class="pe pe-b" cx="21" cy="24.5" rx="4.2" ry="2.4" fill="#17181b" />
+              <ellipse class="braco braco-a" cx="20" cy="9.6" rx="3.4" ry="2.2" fill="#b98a62" />
+              <ellipse class="braco braco-b" cx="20" cy="30.4" rx="3.4" ry="2.2" fill="#b98a62" />
+              <ellipse cx="20" cy="20" rx="5.6" ry="10" fill="#f2a900" />
+              <circle cx="21" cy="20" r="4.4" fill="#3a2a1c" />
+            </g>
+            <g class="par" transform="translate(-2 22)">
+              <ellipse cx="24" cy="25" rx="8" ry="11" fill="#000" opacity=".24" />
+              <ellipse class="pe pe-a" cx="21" cy="15.5" rx="4.2" ry="2.4" fill="#17181b" />
+              <ellipse class="pe pe-b" cx="21" cy="24.5" rx="4.2" ry="2.4" fill="#17181b" />
+              <ellipse class="braco braco-a" cx="20" cy="9.6" rx="3.4" ry="2.2" fill="#8a5a3c" />
+              <ellipse class="braco braco-b" cx="20" cy="30.4" rx="3.4" ry="2.2" fill="#8a5a3c" />
+              <ellipse cx="20" cy="20" rx="5.2" ry="9.4" fill="#54c9c1" />
+              <circle cx="21" cy="20" r="4.6" fill="#7a4a24" />
+            </g>
+          </svg>
+          <svg class="passante p-casal-2" viewBox="0 0 40 62">
+            <g transform="translate(40 0) scale(-1 1)">
+              <g>
+                <ellipse cx="16" cy="25" rx="8" ry="11" fill="#000" opacity=".24" />
+                <ellipse class="pe pe-a" cx="21" cy="15.5" rx="4.2" ry="2.4" fill="#17181b" />
+                <ellipse class="pe pe-b" cx="21" cy="24.5" rx="4.2" ry="2.4" fill="#17181b" />
+                <ellipse class="braco braco-a" cx="20" cy="9.6" rx="3.4" ry="2.2" fill="#6b4630" />
+                <ellipse class="braco braco-b" cx="20" cy="30.4" rx="3.4" ry="2.2" fill="#6b4630" />
+                <ellipse cx="20" cy="20" rx="5.6" ry="10" fill="#e5484d" />
+                <circle cx="21" cy="20" r="4.4" fill="#17181b" />
+              </g>
+              <g class="par" transform="translate(2 22)">
+                <ellipse cx="16" cy="25" rx="8" ry="11" fill="#000" opacity=".24" />
+                <ellipse class="pe pe-a" cx="21" cy="15.5" rx="4.2" ry="2.4" fill="#17181b" />
+                <ellipse class="pe pe-b" cx="21" cy="24.5" rx="4.2" ry="2.4" fill="#17181b" />
+                <ellipse class="braco braco-a" cx="20" cy="9.6" rx="3.4" ry="2.2" fill="#b98a62" />
+                <ellipse class="braco braco-b" cx="20" cy="30.4" rx="3.4" ry="2.2" fill="#b98a62" />
+                <ellipse cx="20" cy="20" rx="5.4" ry="9.6" fill="#fbf7ea" />
+                <circle cx="21" cy="20" r="4.4" fill="#c79a4a" />
+              </g>
+            </g>
+          </svg>
+          <svg class="passante p-casal-3" viewBox="0 0 40 62">
+            <g>
+              <ellipse cx="24" cy="25" rx="8" ry="11" fill="#000" opacity=".24" />
+              <ellipse class="pe pe-a" cx="21" cy="15.5" rx="4.2" ry="2.4" fill="#17181b" />
+              <ellipse class="pe pe-b" cx="21" cy="24.5" rx="4.2" ry="2.4" fill="#17181b" />
+              <ellipse class="braco braco-a" cx="20" cy="9.6" rx="3.4" ry="2.2" fill="#8a5a3c" />
+              <ellipse class="braco braco-b" cx="20" cy="30.4" rx="3.4" ry="2.2" fill="#8a5a3c" />
+              <ellipse cx="20" cy="20" rx="5.6" ry="10" fill="#fbf7ea" />
+              <circle cx="21" cy="20" r="4.4" fill="#2a1d14" />
+            </g>
+            <g class="par" transform="translate(-2 22)">
+              <ellipse cx="24" cy="25" rx="8" ry="11" fill="#000" opacity=".24" />
+              <ellipse class="pe pe-a" cx="21" cy="15.5" rx="4.2" ry="2.4" fill="#17181b" />
+              <ellipse class="pe pe-b" cx="21" cy="24.5" rx="4.2" ry="2.4" fill="#17181b" />
+              <ellipse class="braco braco-a" cx="20" cy="9.6" rx="3.4" ry="2.2" fill="#b98a62" />
+              <ellipse class="braco braco-b" cx="20" cy="30.4" rx="3.4" ry="2.2" fill="#b98a62" />
+              <ellipse cx="20" cy="20" rx="5.4" ry="9.6" fill="#0059ff" />
+              <circle cx="21" cy="20" r="4.5" fill="#5a3b22" />
+            </g>
+          </svg>
+        </div>
+        <div class="meio-fio" aria-hidden="true"></div>
+
+        <div class="areia">
+          <div class="enfeites" aria-hidden="true">
+            <svg class="coqueiro coqueiro-1"><use href="#coqueiro-a" /></svg>
+            <svg class="coqueiro coqueiro-2"><use href="#coqueiro-c" /></svg>
+            <svg class="coqueiro coqueiro-3"><use href="#coqueiro-b" /></svg>
+            <svg class="coqueiro coqueiro-4"><use href="#coqueiro-a" /></svg>
+            <svg class="coco coco-1"><use href="#coco" /></svg>
+            <svg class="coco coco-2"><use href="#coco" /></svg>
+            <svg class="coco coco-3"><use href="#coco" /></svg>
+            <svg class="coco coco-4"><use href="#coco" /></svg>
+            <svg class="coco coco-5"><use href="#coco" /></svg>
+            <svg class="canga canga-1"><use href="#canga" /></svg>
+            <svg class="guarda-sol guarda-sol-1"><use href="#guarda-sol" /></svg>
+            <svg class="canga canga-2"><use href="#canga" /></svg>
+            <svg class="guarda-sol guarda-sol-2"><use href="#guarda-sol" /></svg>
+            <svg class="guarda-sol guarda-sol-3"><use href="#guarda-sol" /></svg>
+          </div>
+
+          <div class="praia-conteudo">
+            <div class="praia-texto">
+              <p class="sobretitulo">Mods gratuitos e abertos para o Claude Code</p>
+              <h1 id="titulo">Suas sessões, de frente para o mar.</h1>
+              <p class="apoio">
+                O Maré Mods muda a interface do Claude Code: o contexto da sessão vira uma praia, a janela de 5h vira
+                um pôr do sol e um farol avisa qual sessão espera você. Instale só os que quiser; outros mods vêm aí.
+              </p>
+              <div class="acoes">
+                <a class="botao botao-azul" href="#instalar">Instalar os mods</a>
+                <a class="botao botao-linha" href="https://github.com/orladigital/mare-mods" rel="noopener noreferrer">
+                  Ver no GitHub
+                  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11l6-6M6 5h5v5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </a>
+              </div>
+              <nav class="rol" aria-label="Os mods">
+                <a href="#barra-de-uso"><span>01</span>barra-de-uso</a>
+                <a href="#farol"><span>02</span>farol</a>
+                <a href="#mais-mods"><span>+</span>mais a caminho</a>
+              </nav>
+            </div>
+
+            <figure class="janela" aria-labelledby="janela-legenda">
+              <div class="janela-topo" aria-hidden="true">
+                <i></i><i></i><i></i>
+                <span>sessão · revisar o checkout</span>
+              </div>
+              <div class="janela-miolo">
+                <div class="janela-conversa">
+                  <div class="janela-corpo" aria-hidden="true">
+                    <p class="fala fala-voce">Revise o PR do checkout e rode os testes.</p>
+                    <p class="fala fala-resposta">Vou ler os arquivos do PR, rodar os testes e deixar os comentários.</p>
+                    <p class="fala fala-trabalho"><i></i><span id="trabalho-abertura">Lendo os arquivos do PR</span></p>
+                  </div>
+                  <div class="faixa" id="faixa-abertura" role="img" aria-label="A faixa dos mods acima do prompt: a torre do farol, o contexto da sessão como uma praia, a janela de 5 horas como um pôr do sol e o uso da semana."></div>
+                  <div class="prompt" aria-hidden="true"><b></b>Peça qualquer coisa</div>
+                </div>
+                <div class="painel-farol" aria-hidden="true">
+                  <p class="painel-titulo">Farol</p>
+                  <div class="cena" id="cena-abertura"></div>
+                  <ul class="sessoes sessoes-mini" id="sessoes-abertura"></ul>
+                </div>
+              </div>
+              <figcaption id="janela-legenda">
+                Os dois mods no app desktop: a faixa do barra-de-uso acima do prompt e, ao lado, o painel do farol.
+              </figcaption>
+            </figure>
+          </div>
+
+          <a class="mergulho" href="#mods">
+            <!-- A máscara de mergulho, com o respirador. -->
+            <svg class="mergulho-mascara" viewBox="0 0 32 22" aria-hidden="true">
+              <g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6.5 4.5h15a3 3 0 0 1 3 3v3.5a5 5 0 0 1-5 5h-1.6l-2.6-3.4h-2.6l-2.6 3.4H8.5a5 5 0 0 1-5-5V7.5a3 3 0 0 1 3-3z" />
+                <path d="M23.4 14.6q5.1 1.6 5.1-3.6V2" />
+                <path d="M7.5 8.4h4.5" stroke-opacity=".6" />
+              </g>
+            </svg>
+            <span>Mergulhar nos mods</span>
+            <svg class="mergulho-seta" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v10M3.5 8.5L8 13l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </a>
+        </div>
+
+        <div class="beira-mar" aria-hidden="true">
+          <svg viewBox="0 0 1440 200" preserveAspectRatio="none">
+            <g class="vai-e-vem">
+              <path class="onda onda-espuma" d="M0 64 Q90 34 180 64 T360 64 T540 64 T720 64 T900 64 T1080 64 T1260 64 T1440 64 T1620 64 T1800 64 V200 H0Z" />
+              <path class="onda onda-beira" d="M0 78 Q90 50 180 78 T360 78 T540 78 T720 78 T900 78 T1080 78 T1260 78 T1440 78 T1620 78 T1800 78 V200 H0Z" />
+            </g>
+            <path class="onda onda-meio" d="M0 118 Q120 96 240 118 T480 118 T720 118 T960 118 T1200 118 T1440 118 T1680 118 T1920 118 V200 H0Z" />
+            <path class="onda onda-fundo" d="M0 152 Q75 138 150 152 T300 152 T450 152 T600 152 T750 152 T900 152 T1050 152 T1200 152 T1350 152 T1500 152 T1650 152 T1800 152 V200 H0Z" />
+          </svg>
+        </div>
+      </section>
+
+      <!-- Os mods, mar adentro. -->
+      <section class="secao mar-aberto" id="mods" aria-labelledby="mods-titulo">
+        <div class="vida-marinha" aria-hidden="true">
+          <svg class="bicho cardume cardume-1" viewBox="0 0 150 70">
+            <use href="#peixe" x="4" y="22" width="34" height="16" /><use href="#peixe" x="44" y="6" width="30" height="14" /><use href="#peixe" x="50" y="36" width="34" height="16" />
+            <use href="#peixe" x="92" y="18" width="32" height="15" /><use href="#peixe" x="100" y="48" width="28" height="13" /><use href="#peixe" x="14" y="50" width="26" height="12" />
+          </svg>
+          <svg class="bicho tartaruga tartaruga-1"><use href="#tartaruga" /></svg>
+          <svg class="bicho arraia arraia-1"><use href="#arraia" /></svg>
+          <svg class="bicho cardume cardume-2" viewBox="0 0 150 70">
+            <use href="#peixe" x="6" y="10" width="30" height="14" /><use href="#peixe" x="40" y="30" width="34" height="16" /><use href="#peixe" x="84" y="8" width="30" height="14" />
+            <use href="#peixe" x="88" y="42" width="32" height="15" /><use href="#peixe" x="20" y="48" width="26" height="12" />
+          </svg>
+          <svg class="bicho agua-viva agua-viva-1"><use href="#agua-viva" /></svg>
+          <svg class="bicho agua-viva agua-viva-2"><use href="#agua-viva" /></svg>
+          <svg class="bicho agua-viva agua-viva-3"><use href="#agua-viva" /></svg>
+        </div>
+
+        <div class="secao-cabeca">
+          <p class="etiqueta">Os mods</p>
+          <h2 id="mods-titulo">Os mods de hoje. Mexa neles aqui mesmo.</h2>
+          <p class="apoio">
+            Um mod muda um pedaço da interface do Claude Code: uma faixa acima do prompt, um painel, um botão. Cada um
+            liga e desliga sozinho, no terminal e no app desktop. São dois por enquanto, e a lista cresce.
+          </p>
+        </div>
+
+        <!-- barra-de-uso -->
+        <article class="mod" id="barra-de-uso" aria-labelledby="barra-titulo">
+          <div class="mod-texto">
+            <p class="mod-nome"><span class="indice">01</span><code>barra-de-uso</code><span class="onde">app e terminal</span></p>
+            <h3 id="barra-titulo">Quanto da sessão já foi, num relance.</h3>
+            <p>
+              Uma faixa acima do prompt com o contexto da sessão, a janela de 5h e a semana. No app, o contexto é uma
+              praia: o mar avança sobre a areia e, quando passa do meio-fio do calçadão, vira ressaca.
+            </p>
+            <ul class="pontos">
+              <li><b>Contexto: a praia.</b> O calçadão começa em 85%. Mar na pedra é hora de pensar num <code>/compact</code>.</li>
+              <li><b>5h: o pôr do sol.</b> O sol desce conforme a janela é usada e mostra o horário em que ela renova.</li>
+              <li><b>🐚 Explain.</b> No app, explica um pedido de permissão numa conversa lateral, com uma faixa de risco, sem executar nada.</li>
+              <li><b>Ajustes (⚓).</b> Você escolhe o que aparece. Eles valem nas sessões seguintes.</li>
+            </ul>
+            <div class="comando" data-comando>
+              <code>claude plugin install barra-de-uso --marketplace https://github.com/orladigital/mare-mods.git</code>
+              <button type="button" class="copiar" data-copiar aria-label="Copiar o comando de instalação do barra-de-uso">Copiar</button>
+            </div>
+            <a class="ligacao" href="https://github.com/orladigital/mare-mods/blob/main/plugins/barra-de-uso/README.md" rel="noopener noreferrer">Ler o README do mod</a>
+          </div>
+
+          <div class="demo" data-demo="barra">
+            <p class="mexa">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2l9.5 4.6-3.9 1.5L7 12z" fill="currentColor" /></svg>
+              Mexa você mesmo
+            </p>
+            <div class="demo-topo">
+              <div class="seletor" role="group" aria-label="Onde a faixa aparece">
+                <button type="button" data-superficie="app" aria-pressed="true">No app</button>
+                <button type="button" data-superficie="terminal" aria-pressed="false">No terminal</button>
+              </div>
+              <span class="demo-dica">Arraste os controles</span>
+            </div>
+            <div class="palco" id="palco-barra">
+              <div class="palco-app" id="palco-app">
+                <div class="medida">
+                  <span class="medida-nome">Contexto</span>
+                  <div class="desenho" id="desenho-praia" role="img" aria-label="A praia do contexto"></div>
+                  <span class="medida-valor" id="valor-contexto">62%</span>
+                </div>
+                <div class="medida">
+                  <span class="medida-nome">5h</span>
+                  <div class="desenho" id="desenho-sol" role="img" aria-label="O pôr do sol da janela de 5 horas"></div>
+                  <span class="medida-valor" id="valor-5h">42% · 17:00</span>
+                </div>
+              </div>
+              <div class="palco-terminal" id="palco-terminal" hidden>
+                <div class="terminal" id="linha-terminal" role="img" aria-label="A faixa no terminal, com barras de dez casas em degradê"></div>
+              </div>
+            </div>
+            <div class="controles">
+              <label class="controle">
+                <span>Contexto da sessão</span>
+                <input type="range" id="controle-contexto" min="0" max="100" value="62" />
+              </label>
+              <label class="controle">
+                <span>Janela de 5h</span>
+                <input type="range" id="controle-5h" min="0" max="100" value="42" />
+              </label>
+            </div>
+            <p class="leitura" id="leitura-barra" aria-live="polite">O mar avança sobre a areia conforme o contexto enche.</p>
+          </div>
+        </article>
+
+        <!-- farol -->
+        <article class="mod mod-invertido" id="farol" aria-labelledby="farol-titulo">
+          <div class="mod-texto">
+            <p class="mod-nome"><span class="indice">02</span><code>farol</code><span class="onde">app e terminal</span></p>
+            <h3 id="farol-titulo">Qual sessão espera você, sem abrir uma a uma.</h3>
+            <p>
+              O estado de todas as sessões do Claude Code abertas na máquina, na faixa e num painel. Quando uma delas
+              pede uma permissão ou faz uma pergunta, o farol acende.
+            </p>
+            <ul class="pontos">
+              <li><b>Na faixa.</b> A torre do farol acende em vermelho quando alguma sessão espera você.</li>
+              <li><b>No painel.</b> Um cartão por sessão, na ordem da atenção; no macOS, um clique leva o app para ela.</li>
+              <li><b>Som.</b> Um aviso quando a sessão passa a esperar você. Dá para desligar ou baixar o volume.</li>
+              <li><b>No terminal também.</b> O mesmo painel em cartões de texto, sem animação.</li>
+            </ul>
+            <div class="comando" data-comando>
+              <code>claude plugin install farol --marketplace https://github.com/orladigital/mare-mods.git</code>
+              <button type="button" class="copiar" data-copiar aria-label="Copiar o comando de instalação do farol">Copiar</button>
+            </div>
+            <a class="ligacao" href="https://github.com/orladigital/mare-mods/blob/main/plugins/farol/README.md" rel="noopener noreferrer">Ler o README do mod</a>
+          </div>
+
+          <div class="demo" data-demo="farol">
+            <p class="mexa">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2l9.5 4.6-3.9 1.5L7 12z" fill="currentColor" /></svg>
+              Mexa você mesmo
+            </p>
+            <div class="demo-topo">
+              <span class="demo-rotulo">O painel do farol</span>
+              <div class="intensidade">
+                <span class="intensidade-rotulo" id="rotulo-intensidade">Intensidade dos avisos</span>
+                <div class="seletor" role="group" aria-labelledby="rotulo-intensidade">
+                  <button type="button" data-intensidade="padrao" aria-pressed="true">Padrão</button>
+                  <button type="button" data-intensidade="alta" aria-pressed="false">Alta</button>
+                </div>
+              </div>
+            </div>
+            <div class="cena" id="cena-farol" role="img" aria-label="A cena do farol"></div>
+            <div class="selos" id="selos-farol"></div>
+            <ul class="sessoes" id="sessoes-farol" aria-label="Sessões abertas"></ul>
+            <!-- Cada situação marcada é uma sessão do painel; dá para marcar várias. "Todas livres" desmarca tudo. -->
+            <div class="situacoes" role="group" aria-labelledby="rotulo-estados">
+              <div class="situacoes-topo">
+                <p class="estados-dica" id="rotulo-estados">Marque uma ou mais situações</p>
+                <button type="button" class="todas-livres" data-estado="livres" aria-pressed="false">Todas livres</button>
+              </div>
+              <div class="estados">
+                <button type="button" data-estado="esperando" aria-pressed="true">Esperando</button>
+                <button type="button" data-estado="pergunta" aria-pressed="false">Pergunta</button>
+                <button type="button" data-estado="nao-visto" aria-pressed="false">Não visto</button>
+                <button type="button" data-estado="trabalhando" aria-pressed="true">Trabalhando</button>
+              </div>
+            </div>
+            <p class="leitura" id="leitura-farol" aria-live="polite">Uma sessão espera você: a lanterna pisca em vermelho e os feixes giram.</p>
+          </div>
+        </article>
+
+        <!-- Os próximos -->
+        <article class="mod mod-futuro" id="mais-mods" aria-labelledby="mais-titulo">
+          <p class="mod-nome"><span class="indice">03</span><span class="onde">a caminho</span></p>
+          <h3 id="mais-titulo">Mais mods vêm aí.</h3>
+          <p>
+            O Maré Mods é um marketplace: cada mod novo entra nesta página com a sua demonstração, e você continua
+            instalando só os que quiser. Se sentir falta de algum, conte para a gente.
+          </p>
+          <div class="acoes">
+            <a class="botao botao-branco" href="https://github.com/orladigital/mare-mods" rel="noopener noreferrer">Acompanhar no GitHub</a>
+            <a class="botao botao-linha" href="#contribuir">Sugerir um mod</a>
+          </div>
+        </article>
+      </section>
+
+      <!-- O fim do mar: você sai da água e vê a ponta do farol de frente. À noite, o mar bate nos rochedos, a torre
+           gira os dois feixes, e as pedras claras da frente levam à parte clara da página. O desenho começa 60
+           unidades acima do zero: é a folga de céu para a claridade da lanterna caber inteira. -->
+      <div class="ponta" aria-hidden="true">
+        <svg viewBox="0 -60 1440 620" preserveAspectRatio="xMaxYMax slice">
+          <defs>
+            <linearGradient id="mar-da-noite" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#20507f" />
+              <stop offset=".35" stop-color="#113258" />
+              <stop offset="1" stop-color="#16406c" />
+            </linearGradient>
+            <linearGradient id="feixe-luz" gradientUnits="userSpaceOnUse" x1="1130" y1="55" x2="60" y2="55">
+              <stop offset="0" stop-color="#fff4d6" stop-opacity=".62" />
+              <stop offset=".55" stop-color="#fff4d6" stop-opacity=".16" />
+              <stop offset="1" stop-color="#fff4d6" stop-opacity="0" />
+            </linearGradient>
+            <radialGradient id="clarao" cx="1130" cy="55" r="110" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#fff4d6" stop-opacity=".9" />
+              <stop offset=".35" stop-color="#fff4d6" stop-opacity=".28" />
+              <stop offset="1" stop-color="#fff4d6" stop-opacity="0" />
+            </radialGradient>
+            <linearGradient id="chao-claro" gradientUnits="userSpaceOnUse" x1="0" y1="380" x2="0" y2="520">
+              <stop offset="0" stop-color="#cfc8ba" />
+              <stop offset="1" stop-color="#f3f0e8" />
+            </linearGradient>
+
+            <!-- Quatro rochedos de arestas, como pedra quebrada: o contorno, a face de cima que pega luz, a face
+                 da esquerda, a face da sombra e as arestas entre elas. A cor de cada um vem de quem usa. -->
+            <symbol id="pedra-a" viewBox="0 0 200 150" preserveAspectRatio="none">
+              <path d="M6 150 L4 108 L22 66 L52 30 L96 12 L140 22 L174 52 L194 98 L196 150 Z" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+              <path d="M52 30 L96 12 L140 22 L112 54 L66 60 Z" fill="#fff" opacity=".2" />
+              <path d="M22 66 L52 30 L66 60 L46 104 L4 108 Z" fill="#fff" opacity=".08" />
+              <path d="M140 22 L174 52 L194 98 L196 150 L150 150 L142 98 L112 54 Z" fill="#000" opacity=".2" />
+              <path d="M66 60 L46 104 L54 150 M112 54 L142 98 M46 104 L4 108" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="1.6" stroke-linejoin="round" />
+            </symbol>
+            <symbol id="pedra-b" viewBox="0 0 200 150" preserveAspectRatio="none">
+              <path d="M10 150 L8 106 L30 62 L66 26 L108 8 L146 30 L176 72 L190 116 L188 150 Z" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+              <path d="M66 26 L108 8 L146 30 L120 60 L82 56 Z" fill="#fff" opacity=".2" />
+              <path d="M30 62 L66 26 L82 56 L60 98 L8 106 Z" fill="#fff" opacity=".08" />
+              <path d="M146 30 L176 72 L190 116 L188 150 L142 150 L134 102 L120 60 Z" fill="#000" opacity=".2" />
+              <path d="M82 56 L60 98 L68 150 M120 60 L134 102 M60 98 L8 106" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="1.6" stroke-linejoin="round" />
+            </symbol>
+            <symbol id="pedra-c" viewBox="0 0 200 150" preserveAspectRatio="none">
+              <path d="M4 150 L8 114 L36 80 L88 60 L150 64 L186 90 L197 126 L196 150 Z" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+              <path d="M36 80 L88 60 L150 64 L130 88 L72 94 Z" fill="#fff" opacity=".2" />
+              <path d="M8 114 L36 80 L72 94 L58 126 Z" fill="#fff" opacity=".08" />
+              <path d="M150 64 L186 90 L197 126 L196 150 L164 150 L154 114 L130 88 Z" fill="#000" opacity=".2" />
+              <path d="M72 94 L58 126 L62 150 M130 88 L154 114" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="1.6" stroke-linejoin="round" />
+            </symbol>
+            <symbol id="pedra-d" viewBox="0 0 200 150" preserveAspectRatio="none">
+              <path d="M12 150 L20 96 L48 44 L84 14 L120 10 L160 40 L184 88 L192 150 Z" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+              <path d="M84 14 L120 10 L160 40 L126 62 L92 50 Z" fill="#fff" opacity=".2" />
+              <path d="M48 44 L84 14 L92 50 L70 96 L20 96 Z" fill="#fff" opacity=".08" />
+              <path d="M160 40 L184 88 L192 150 L150 150 L146 100 L126 62 Z" fill="#000" opacity=".2" />
+              <path d="M92 50 L70 96 L78 150 M126 62 L146 100 M70 96 L20 96" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="1.6" stroke-linejoin="round" />
+            </symbol>
+          </defs>
+
+          <!-- O céu: poucas estrelas. -->
+          <g fill="#e8eef6">
+            <circle cx="96" cy="46" r="1.6" opacity=".8" /><circle cx="228" cy="96" r="1.2" opacity=".6" /><circle cx="372" cy="34" r="1.5" opacity=".7" />
+            <circle cx="516" cy="88" r="1.2" opacity=".6" /><circle cx="668" cy="40" r="1.6" opacity=".8" /><circle cx="792" cy="104" r="1.2" opacity=".55" />
+            <circle cx="936" cy="30" r="1.4" opacity=".7" /><circle cx="1284" cy="92" r="1.3" opacity=".6" /><circle cx="1388" cy="38" r="1.5" opacity=".75" />
+            <circle cx="164" cy="-14" r="1.3" opacity=".6" /><circle cx="580" cy="-8" r="1.2" opacity=".55" /><circle cx="860" cy="-18" r="1.4" opacity=".6" />
+            <circle cx="1340" cy="-10" r="1.2" opacity=".55" />
+          </g>
+
+          <!-- O mar, até o horizonte. Cada marola vai e vem no seu tempo. -->
+          <rect x="0" y="150" width="1440" height="240" fill="url(#mar-da-noite)" />
+          <rect x="0" y="149" width="1440" height="2" fill="#6f9cc4" opacity=".55" />
+          <g class="marolas" fill="none" stroke="#7fb0d8" stroke-linecap="round">
+            <path class="marola m1" d="M40 178 q26 -4 52 0 t52 0 t52 0" stroke-width="1.4" stroke-opacity=".3" />
+            <path class="marola m2" d="M560 170 q24 -4 48 0 t48 0 t48 0" stroke-width="1.3" stroke-opacity=".26" />
+            <path class="marola m3" d="M330 204 q34 -6 68 0 t68 0 t68 0 t68 0" stroke-width="1.6" stroke-opacity=".3" />
+            <path class="marola m4" d="M20 232 q36 -6 72 0 t72 0 t72 0" stroke-width="1.7" stroke-opacity=".3" />
+            <path class="marola m5" d="M640 240 q38 -7 76 0 t76 0" stroke-width="1.7" stroke-opacity=".3" />
+            <path class="marola m1" d="M180 268 q40 -7 80 0 t80 0 t80 0 t80 0" stroke-width="1.8" stroke-opacity=".32" />
+            <path class="marola m3" d="M520 296 q44 -8 88 0 t88 0" stroke-width="1.9" stroke-opacity=".32" />
+            <path class="marola m2" d="M30 316 q48 -9 96 0 t96 0 t96 0 t96 0" stroke-width="2" stroke-opacity=".34" />
+            <path class="marola m5" d="M300 352 q52 -10 104 0 t104 0 t104 0" stroke-width="2.1" stroke-opacity=".34" />
+          </g>
+
+          <!-- Os dois feixes saem da lanterna, um para cada lado, e giram: de frente, cada um encolhe, some e
+               reaparece do outro lado. Ficam atrás da torre e acima dos rochedos, sempre à vista. -->
+          <g class="feixe feixe-1"><path d="M1130 55 L-220 -34 L-220 156 Z" fill="url(#feixe-luz)" /></g>
+          <g class="feixe feixe-2"><path d="M1130 55 L-220 -34 L-220 156 Z" fill="url(#feixe-luz)" /></g>
+
+          <!-- Os rochedos de trás, no escuro. -->
+          <use href="#pedra-d" x="800" y="206" width="190" height="142" color="#2a323d" />
+          <use href="#pedra-a" x="950" y="178" width="240" height="170" color="#343c48" />
+          <use href="#pedra-b" x="1150" y="168" width="240" height="180" color="#2f3742" />
+          <use href="#pedra-d" x="1330" y="200" width="190" height="148" color="#262e39" />
+
+          <!-- A pedra do farol: o topo é uma laje plana, onde a torre assenta. -->
+          <g color="#4c525b">
+            <path d="M1004 384 L1012 326 L1036 286 L1070 244 L1190 240 L1226 276 L1250 322 L1254 384 Z" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+            <path d="M1070 244 L1190 240 L1176 272 L1082 276 Z" fill="#fff" opacity=".2" />
+            <path d="M1036 286 L1070 244 L1082 276 L1064 322 L1012 326 Z" fill="#fff" opacity=".08" />
+            <path d="M1190 240 L1226 276 L1250 322 L1254 384 L1196 384 L1190 318 L1176 272 Z" fill="#000" opacity=".2" />
+            <path d="M1082 276 L1064 322 L1070 384 M1176 272 L1190 318 M1064 322 L1012 326" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="1.6" stroke-linejoin="round" />
+          </g>
+
+          <!-- O farol: a base de pedra sobre a laje, a torre branca de faixas vermelhas, a galeria, a lanterna
+               acesa e a cúpula. A sombra no pé prende a torre na pedra. -->
+          <circle class="clarao" cx="1130" cy="55" r="110" fill="url(#clarao)" />
+          <ellipse cx="1140" cy="263" rx="56" ry="6" fill="#000" opacity=".3" />
+          <path d="M1084 264 L1089 248 L1171 248 L1176 264 Z" fill="#9a968d" />
+          <path d="M1146 248 L1171 248 L1176 264 L1150 264 Z" fill="#000" opacity=".18" />
+          <path d="M1096.6 244 L1110 80 L1150 80 L1163.4 244 Z" fill="#f1ece0" />
+          <path d="M1107.4 112 L1152.6 112 L1154.8 138 L1105.2 138 Z" fill="#c9463a" />
+          <path d="M1102.1 176 L1157.9 176 L1160.2 204 L1099.8 204 Z" fill="#c9463a" />
+          <path d="M1138 80 L1150 80 L1163.4 244 L1142 244 Z" fill="#000" opacity=".13" />
+          <rect x="1126" y="150" width="8" height="13" rx="4" fill="#1b2633" />
+          <path d="M1123 244 V227 a7 7 0 0 1 14 0 V244 Z" fill="#1b2633" />
+          <rect x="1091" y="243" width="78" height="6" rx="1.5" fill="#c9c4b8" />
+          <rect x="1100" y="72" width="60" height="8" rx="2" fill="#1b2633" />
+          <path d="M1103 72 V60 M1116 72 V60 M1130 72 V60 M1144 72 V60 M1157 72 V60 M1101 60 H1159" fill="none" stroke="#1b2633" stroke-width="2" />
+          <rect class="lanterna" x="1114" y="38" width="32" height="34" rx="2" fill="#fff4d6" />
+          <path d="M1114 38 V72 M1124.7 38 V72 M1135.3 38 V72 M1146 38 V72" stroke="#1b2633" stroke-width="1.6" />
+          <path d="M1108 39 Q1130 10 1152 39 Z" fill="#7c2d25" />
+          <path d="M1130 22 V8" stroke="#1b2633" stroke-width="2.2" stroke-linecap="round" />
+          <circle cx="1130" cy="7" r="2.6" fill="#1b2633" />
+
+          <!-- Os rochedos do meio, dos dois lados da pedra do farol. -->
+          <use href="#pedra-a" x="770" y="262" width="220" height="122" color="#4a5059" />
+          <use href="#pedra-b" x="912" y="246" width="170" height="138" color="#565b62" />
+          <use href="#pedra-d" x="1218" y="238" width="190" height="146" color="#5f6368" />
+          <use href="#pedra-c" x="1336" y="262" width="200" height="122" color="#4d525a" />
+
+          <!-- A onda quebra na pedra: a espuma sobe e desce, e os respingos saltam. -->
+          <g class="espuma" fill="#eef7ff">
+            <path d="M664 372 C676 350 700 356 716 344 C734 330 756 346 776 338 C800 328 818 348 840 340 C866 330 884 350 908 344 C934 336 956 352 982 346 C1010 338 1034 354 1060 348 C1090 340 1114 356 1144 350 C1176 342 1204 356 1236 350 C1270 342 1300 356 1334 350 C1370 342 1404 354 1440 348 L1440 386 L664 386 Z" opacity=".9" />
+          </g>
+          <g class="respingos" fill="#eef7ff">
+            <circle cx="712" cy="330" r="4" opacity=".7" /><circle cx="742" cy="316" r="2.6" opacity=".6" /><circle cx="852" cy="322" r="3.4" opacity=".65" />
+            <circle cx="906" cy="306" r="2.4" opacity=".5" /><circle cx="1050" cy="326" r="3.2" opacity=".6" /><circle cx="1210" cy="330" r="3.6" opacity=".6" />
+          </g>
+
+          <!-- Os rochedos da frente, mais claros. -->
+          <use href="#pedra-c" x="690" y="312" width="220" height="100" color="#787670" />
+          <use href="#pedra-a" x="868" y="292" width="230" height="120" color="#8b877e" />
+          <use href="#pedra-d" x="1070" y="294" width="200" height="118" color="#969186" />
+          <use href="#pedra-b" x="1240" y="284" width="220" height="128" color="#837f77" />
+
+          <!-- A frente: o chão claro e as pedras claras, com a espuma na beira. -->
+          <path d="M0 416 C160 388 330 410 500 392 C640 378 760 404 900 396 C1080 386 1260 400 1440 388 L1440 560 L0 560 Z" fill="url(#chao-claro)" />
+          <path class="beira-clara" d="M0 416 C160 388 330 410 500 392 C640 378 760 404 900 396 C1080 386 1260 400 1440 388" fill="none" stroke="#f4fbff" stroke-width="7" stroke-linecap="round" opacity=".9" />
+          <g fill="#4a3a17" opacity=".1">
+            <ellipse cx="170" cy="516" rx="150" ry="12" /><ellipse cx="470" cy="524" rx="120" ry="10" /><ellipse cx="760" cy="514" rx="140" ry="12" />
+            <ellipse cx="1040" cy="522" rx="130" ry="10" /><ellipse cx="1300" cy="514" rx="140" ry="12" />
+          </g>
+          <use href="#pedra-a" x="30" y="404" width="270" height="116" color="#c8c1b3" />
+          <use href="#pedra-c" x="340" y="436" width="250" height="90" color="#d9d3c7" />
+          <use href="#pedra-d" x="620" y="398" width="250" height="120" color="#bfb8a9" />
+          <use href="#pedra-c" x="920" y="434" width="240" height="90" color="#d5cfc2" />
+          <use href="#pedra-b" x="1170" y="400" width="270" height="120" color="#c4bdae" />
+        </svg>
+      </div>
+
+      <!-- Instalar: de volta à pedra. -->
+      <section class="secao pedra" id="instalar" aria-labelledby="instalar-titulo">
+        <div class="secao-cabeca">
+          <p class="etiqueta">Instalar</p>
+          <h2 id="instalar-titulo">Um comando. Sem conta, sem chave.</h2>
+          <p class="apoio">
+            O repositório é público: não precisa de conta no GitHub nem de chave SSH. Os mods são os mesmos no app
+            desktop e no terminal; o que muda é só por onde você instala.
+          </p>
+        </div>
+
+        <div class="instalador">
+          <div class="instalador-escolhas">
+            <div class="escolha">
+              <span class="escolha-nome" id="escolha-mod">Quais mods</span>
+              <div class="seletor seletor-claro" role="group" aria-labelledby="escolha-mod">
+                <button type="button" data-mod="todos" aria-pressed="true">Todos</button>
+                <button type="button" data-mod="barra-de-uso" aria-pressed="false">barra-de-uso</button>
+                <button type="button" data-mod="farol" aria-pressed="false">farol</button>
+              </div>
+            </div>
+            <div class="escolha">
+              <span class="escolha-nome" id="escolha-onde">Instalar pelo</span>
+              <div class="seletor seletor-claro" role="group" aria-labelledby="escolha-onde">
+                <button type="button" data-onde="app" aria-pressed="true">App desktop</button>
+                <button type="button" data-onde="terminal" aria-pressed="false">Terminal</button>
+              </div>
+            </div>
+            <a class="ver-mods" href="#mods">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13.5v-10M3.5 7.5L8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              Ainda não viu os mods? Veja o que cada um faz
+            </a>
+          </div>
+
+          <div class="passos" id="passos-app">
+            <ol>
+              <li>
+                <p><b>Clique no +</b> ao lado do prompt, depois em <b>Plugins</b> e em <b>Add marketplace</b>, e informe:</p>
+                <div class="comando" data-comando>
+                  <code>https://github.com/orladigital/mare-mods.git</code>
+                  <button type="button" class="copiar" data-copiar aria-label="Copiar o endereço do marketplace">Copiar</button>
+                </div>
+              </li>
+              <li>
+                <p><b>Clique em Add plugin</b> e escolha <span id="mod-no-app"><code>barra-de-uso</code>; depois, de novo, <code>farol</code></span>.</p>
+              </li>
+              <li>
+                <p><b>Feche e abra o app</b> (Cmd+Q), para as sessões já abertas pegarem os mods.</p>
+              </li>
+            </ol>
+          </div>
+
+          <div class="passos" id="passos-terminal" hidden>
+            <ol>
+              <li>
+                <p><b>Rode no terminal</b>, fora de uma sessão do Claude Code<span id="um-por-mod">, um comando por mod</span>:</p>
+                <div class="comandos" id="comandos-instalar">
+                  <div class="comando" data-comando>
+                    <code>claude plugin install barra-de-uso --marketplace https://github.com/orladigital/mare-mods.git</code>
+                    <button type="button" class="copiar" data-copiar aria-label="Copiar o comando de instalação do barra-de-uso">Copiar</button>
+                  </div>
+                  <div class="comando" data-comando>
+                    <code>claude plugin install farol --marketplace https://github.com/orladigital/mare-mods.git</code>
+                    <button type="button" class="copiar" data-copiar aria-label="Copiar o comando de instalação do farol">Copiar</button>
+                  </div>
+                </div>
+                <p class="nota">Dentro de uma sessão, o mesmo comando começa com <code>/plugin install</code>.</p>
+              </li>
+              <li>
+                <p><b>Aceite o marketplace</b> (<code>y</code>) e escolha o escopo de usuário, para o mod valer em todos os projetos.</p>
+              </li>
+              <li>
+                <p><b>Abra uma sessão nova.</b> O mod passa a valer nas sessões novas, no terminal e no app.</p>
+              </li>
+            </ol>
+          </div>
+
+          <p class="requisitos">
+            <b>Requisitos:</b> Claude Code <span data-versao-minima>2.1.316</span> ou mais novo e o <code>git</code> instalado.
+            <a href="https://github.com/orladigital/mare-mods/blob/main/docs/compatibilidade.md" rel="noopener noreferrer">Onde cada mod funciona</a>
+          </p>
+
+          <details class="manutencao">
+            <summary>Atualizar, desligar e desinstalar</summary>
+            <dl>
+              <div><dt>Atualizar a lista de mods</dt><dd><code>claude plugin marketplace update mare-mods</code></dd></div>
+              <div><dt>Atualizar um mod</dt><dd><code>claude plugin update <span data-mod-nome>nome-do-mod</span></code></dd></div>
+              <div><dt>Desligar e religar</dt><dd><code>claude plugin disable <span data-mod-nome>nome-do-mod</span></code> · <code>claude plugin enable <span data-mod-nome>nome-do-mod</span></code></dd></div>
+              <div><dt>Desinstalar</dt><dd><code>claude plugin uninstall <span data-mod-nome>nome-do-mod</span></code></dd></div>
+            </dl>
+          </details>
+        </div>
+      </section>
+
+      <!-- Confiança -->
+      <section class="secao pedra pedra-segue" id="confianca" aria-labelledby="confianca-titulo">
+        <div class="secao-cabeca">
+          <p class="etiqueta">Confiança</p>
+          <h2 id="confianca-titulo">Você instala código na sua máquina. Leia antes.</h2>
+          <p class="apoio">Um mod roda dentro do seu Claude Code. Por isso, tudo aqui é aberto e passa pelas mesmas regras antes de entrar.</p>
+        </div>
+        <ol class="garantias">
+          <li>
+            <h3>Código aberto</h3>
+            <p>Licença Apache 2.0. Cada linha de cada mod está no repositório, para ler antes de instalar.</p>
+          </li>
+          <li>
+            <h3>Testado a cada mudança</h3>
+            <p>Toda mudança passa por validação e testes automáticos de cada mod, no terminal e no app.</p>
+          </li>
+          <li>
+            <h3>Canário semanal</h3>
+            <p>Toda semana os mods são testados na versão mais nova do Claude Code. Se algo quebra, uma issue é aberta.</p>
+          </li>
+          <li>
+            <h3>Sem rede escondida</h3>
+            <p>Um mod só usa a rede se o README dele disser para onde vai e por quê.</p>
+          </li>
+          <li>
+            <h3>Sem segredos nem dados pessoais</h3>
+            <p>Uma varredura barra chaves, tokens, e-mails e caminhos pessoais em cada mudança.</p>
+          </li>
+          <li>
+            <h3>Um mod de cada vez</h3>
+            <p>Você instala só o que quer. Cada mod liga, desliga e sai sem mexer nos outros.</p>
+          </li>
+        </ol>
+        <p class="franqueza">
+          <b>Um aviso franco:</b> a API de mods do Claude Code está em early access e pode mudar entre versões. Quando
+          isso quebrar um mod, o canário avisa e a correção sai numa versão nova.
+        </p>
+      </section>
+
+      <!-- Contribuir: de novo na areia. -->
+      <div class="meio-fio" aria-hidden="true"></div>
+      <section class="secao areia-fim" id="contribuir" aria-labelledby="contribuir-titulo">
+        <div class="enfeites" aria-hidden="true">
+          <svg class="canga canga-3"><use href="#canga" /></svg>
+          <svg class="guarda-sol guarda-sol-4"><use href="#guarda-sol" /></svg>
+          <svg class="guarda-sol guarda-sol-5"><use href="#guarda-sol" /></svg>
+          <svg class="coqueiro coqueiro-5"><use href="#coqueiro-b" /></svg>
+        </div>
+        <div class="convite">
+          <p class="etiqueta">Contribuir</p>
+          <h2 id="contribuir-titulo">Tem uma ideia de mod?</h2>
+          <p class="apoio">
+            O repositório explica
+            <a href="https://github.com/orladigital/mare-mods/blob/main/docs/criar-um-mod.md" rel="noopener noreferrer">como um mod é feito</a>,
+            o que ele precisa cumprir para entrar e as armadilhas que já encontramos. Problema ou sugestão também é
+            bem-vindo.
+          </p>
+          <div class="acoes">
+            <a class="botao botao-tinta" href="https://github.com/orladigital/mare-mods/issues" rel="noopener noreferrer">Abrir uma issue</a>
+            <a class="botao botao-linha" href="https://github.com/orladigital/mare-mods/blob/main/docs/requisitos.md" rel="noopener noreferrer">Requisitos</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="rodape">
+      <div class="meio-fio" aria-hidden="true"></div>
+      <div class="calcadao" aria-hidden="true"></div>
+      <div class="rodape-conteudo">
+        <div class="rodape-marca">
+          <a class="marca" href="#conteudo" aria-label="Maré Mods, início">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M1 10c1.6-2 3.1-2 4.7 0s3.1 2 4.7 0 3-2 4.6 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+              <path d="M1 5.5c1.6-2 3.1-2 4.7 0s3.1 2 4.7 0 3-2 4.6 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".45" />
+            </svg>
+            <span>Maré Mods</span>
+          </a>
+          <p>Feito na <a href="https://www.orla.tech/" rel="noopener noreferrer">Orla</a>, um estúdio de IA centrado em pessoas. O nome vem da orla de Copacabana, e o calçadão também.</p>
+        </div>
+        <nav class="rodape-ligacoes" aria-label="Rodapé">
+          <div>
+            <h3>O projeto</h3>
+            <a href="https://github.com/orladigital/mare-mods" rel="noopener noreferrer">GitHub</a>
+            <a href="https://github.com/orladigital/mare-mods/issues" rel="noopener noreferrer">Problemas e ideias</a>
+          </div>
+          <div>
+            <h3>Sobre</h3>
+            <a href="https://github.com/orladigital/mare-mods/blob/main/LICENSE" rel="noopener noreferrer">Licença Apache 2.0</a>
+            <a href="https://www.orla.tech/" rel="noopener noreferrer">orla.tech</a>
+          </div>
+        </nav>
+      </div>
+      <p class="rodape-nota">
+        Esta página não usa cookies nem analytics e não carrega nada de terceiros. Claude e Claude Code são marcas da
+        Anthropic; o Maré Mods é um projeto independente da Orla, sem vínculo com a Anthropic.
+      </p>
+    </footer>
+
+    <!-- O índice lateral: um risco por parte da página, com o nome ao passar o mouse. Só em tela larga. -->
+    <nav class="trilha" aria-label="Índice da página">
+      <a href="#praia" data-parte="praia"><span>A praia</span></a>
+      <a href="#barra-de-uso" data-parte="barra-de-uso"><span>barra-de-uso</span></a>
+      <a href="#farol" data-parte="farol"><span>farol</span></a>
+      <a href="#mais-mods" data-parte="mais-mods"><span>Mais mods</span></a>
+      <a href="#instalar" data-parte="instalar"><span>Instalar</span></a>
+      <a href="#confianca" data-parte="confianca"><span>Confiança</span></a>
+      <a href="#contribuir" data-parte="contribuir"><span>Contribuir</span></a>
+    </nav>
+
+    <div class="sr" id="anuncio" role="status" aria-live="polite"></div>
+  </body>
+</html>

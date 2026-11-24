@@ -5,3 +5,9 @@ plugins/*/.claude-plugin/types/
 # O Claude Code grava no settings.local.json, em texto puro, cada comando aprovado com "não perguntar de novo",
 # com a senha ou a chave que estava nele, e só o ignora no exclude global da máquina, que nem todo mundo tem.
 **/.claude/settings.local.json
+# Arquivos de ambiente. A página (site/) e a publicação dela não usam variável nem segredo; se um dia usarem, o
+# valor fica nos segredos do GitHub, nunca num arquivo.
+.env
+.env.*
+# O que o workflow de publicação monta antes de enviar (pages.yml).
+_site/
