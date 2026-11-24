@@ -19,6 +19,21 @@ claude plugin validate . && claude plugin test . && npx -y -p typescript@5.6.3 t
 
 Na raiz, depois de mexer no `marketplace.json`: `claude plugin validate .`.
 
+## A página (`site/`)
+
+A página dos mods, publicada no GitHub Pages a partir de `site/` pelo workflow `pages.yml`. É HTML, CSS e
+JavaScript puros: sem dependência, sem build, sem segredo e sem nada carregado de fora da pasta. Leia
+`site/README.md` antes de mexer. Depois de cada mudança:
+
+```bash
+node --test scripts/site.test.mjs scripts/dados-pessoais.test.mjs
+```
+
+- Mod novo no `marketplace.json` ou versão mínima nova no `ci.yml` pede a mesma mudança na página: o teste cobra.
+- Arquivo novo em `site/` só vai ao ar quando entra na lista do `pages.yml`: o teste cobra também.
+- Nada de script ou estilo dentro do HTML, nem de fonte, imagem ou script de outro endereço.
+- No `pages.yml`, ação nova ou versão nova entra fixada pelo commit, com a versão no comentário.
+
 ## Regras
 
 - Textos, comentários, testes e mensagens de commit em português do Brasil.
